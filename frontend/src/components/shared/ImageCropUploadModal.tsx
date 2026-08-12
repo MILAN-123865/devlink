@@ -16,11 +16,19 @@ import {
   Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
+feat/availability-scheduling
+
+  Camera,
+ main
 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/services/imageUpload";
 import { cn } from "@/lib/utils";
+ feat/availability-scheduling
 import { TypoCaption } from "@/components/shared/Typography";
+
+import { CameraCapture } from "@/components/shared/CameraCapture";
+ main
 
 export type ImageCropMode = "avatar" | "banner";
 
@@ -276,6 +284,7 @@ export function ImageCropUploadModal({
         )}
 
         {/* Upload State / Dropzone vs Canvas View */}
+ feat/availability-scheduling
         {!previewUrl ? (
           <div
             onDragOver={handleDragOver}
@@ -306,6 +315,64 @@ export function ImageCropUploadModal({
               onChange={handleFileChange}
               className="hidden"
             />
+
+        {isCameraActive ? (
+          <CameraCapture
+            onCapture={(file) => {
+              setIsCameraActive(false);
+              validateAndLoadFile(file);
+            }}
+            onCancel={() => setIsCameraActive(false)}
+          />
+        ) : !previewUrl ? (
+          <div className="flex flex-col gap-4">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer text-center",
+                isDragging
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-muted/30 hover:border-primary/60 hover:bg-muted/50",
+              )}
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Upload size={24} />
+              </div>
+              <p className="mt-3 text-sm font-medium text-foreground">
+                Drag & drop your image here, or <span className="text-primary underline">browse</span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Supports JPEG, PNG, WebP, GIF · Max {maxSizeMB}MB
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                data-testid="file-input"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+            
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-border"></div>
+              <span className="shrink-0 px-4 text-xs text-muted-foreground uppercase tracking-wider">or</span>
+              <div className="flex-grow border-t border-border"></div>
+            </div>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 gap-2 rounded-xl"
+              onClick={() => setIsCameraActive(true)}
+            >
+              <Camera size={18} />
+              Take a Photo
+            </Button>
+ main
           </div>
         ) : (
           <div className="space-y-4">
@@ -347,9 +414,9 @@ export function ImageCropUploadModal({
                       className="h-1.5 flex-1 appearance-none rounded-lg bg-border accent-primary cursor-pointer"
                     />
                     <ZoomIn size={14} className="text-muted-foreground shrink-0" />
-                    <TypoCaption>
+                    <span className="w-10 font-mono text-muted-foreground text-right">
                       {Math.round(zoom * 100)}%
-                    </TypoCaption>
+                    </span>
                   </div>
 
                   {/* Action Buttons */}
@@ -399,7 +466,7 @@ export function ImageCropUploadModal({
                       </>
                     )}
                   </span>
-                  <TypoCaption>{uploadProgress}%</TypoCaption>
+                  <span className="font-mono text-muted-foreground">{uploadProgress}%</span>
                 </div>
 
                 {/* Progress Bar Container */}

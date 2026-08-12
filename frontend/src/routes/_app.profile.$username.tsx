@@ -34,6 +34,7 @@ import { FollowButton } from "@/components/shared/FollowButton";
 import { useFollowStatus } from "@/hooks/useFollow";
 import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
 import { ContributionHeatmap } from "@/components/profile/ContributionHeatmap";
+import { GitHubInsights } from "@/components/github/GitHubInsights";
 import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typography";
 
 export const Route = createFileRoute("/_app/profile/$username")({
@@ -591,8 +592,23 @@ function ProfilePage() {
             </ul>
           </Card>
 
-          <ContributionHeatmap username={b.handle} className="mt-4" />
-
+          {(() => {
+            const githubUrl = b.githubUrl;
+            let githubUsername = undefined;
+            if (githubUrl) {
+              try {
+                const url = new URL(githubUrl);
+                githubUsername = url.pathname.split('/').filter(Boolean).pop();
+              } catch (e) {
+                // Ignore invalid URLs
+              }
+            }
+            
+            if (githubUsername) {
+              return <div className="mt-4"><GitHubInsights username={githubUsername} /></div>;
+            }
+            return <ContributionHeatmap username={b.handle} className="mt-4" />;
+          })()}
           <ActivityTimeline userId={b.id} />
         </div>
       </div>

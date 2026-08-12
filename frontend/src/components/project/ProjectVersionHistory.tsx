@@ -56,10 +56,18 @@ export function ProjectVersionHistory({
 
   const compareMutation = useMutation({
     mutationFn: async (v1: number) => {
+ feat/availability-scheduling
       const res: any = await api.get(
         `/api/projects/${projectId}/versions/compare?v1=${v1}&v2=current`,
       );
       return res.data || res;
+
+      const res = (await api.get(
+        `/api/projects/${projectId}/versions/compare?v1=${v1}&v2=current`,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      )) as any;
+      return res?.data || res;
+ main
     },
     onSuccess: (data) => {
       setCompareData(data);

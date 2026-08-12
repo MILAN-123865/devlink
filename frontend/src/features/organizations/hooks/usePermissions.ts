@@ -11,7 +11,12 @@ export function useOrganization(orgId: string) {
   const { data: members, isLoading } = useQuery({
     queryKey: ['organizations', orgId, 'members'],
     queryFn: async () => {
+ feat/availability-scheduling
       return api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
+
+      const res = await api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
+      return res;
+ main
     },
   });
 

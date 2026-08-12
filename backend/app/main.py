@@ -523,9 +523,14 @@ from app.routers import (
 
 # Router inclusions
 app.include_router(skill_matrix.router, prefix="/api", tags=["Skill Matrix"])
+ feat/availability-scheduling
 
 from app.routers import availability
 app.include_router(availability.router, prefix="/api/availability", tags=["Availability"])
+
+from app.routers import github
+app.include_router(github.router, prefix="/api", tags=["GitHub Insights"])
+ main
 
 from app.routers import github
 app.include_router(github.router, prefix="/api", tags=["GitHub Insights"])

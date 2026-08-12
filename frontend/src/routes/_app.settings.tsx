@@ -8,7 +8,10 @@ import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
 import { OAuthAccountsSection } from "@/components/settings/OAuthAccountsSection";
 import { MFASection } from "@/features/settings/components/MFASection";
 import { UserSessionsActivity } from "@/components/settings/UserSessionsActivity";
+ feat/availability-scheduling
 import { AvailabilitySettings } from "@/components/availability/AvailabilitySettings";
+
+ main
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
