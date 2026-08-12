@@ -5,47 +5,46 @@ import uuid
 from fastapi import (
     APIRouter,
     Depends,
+    File,
     HTTPException,
     Query,
     Request,
-    status,
-    File,
     UploadFile,
+    status,
 )
 
 # pyrefly: ignore [missing-import]
-
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
-from app.dependencies import get_database
-from app.dependencies import get_current_user
-from app.middleware.rate_limit import limiter, SEARCH_LIMIT
+
+from app.core.security import hash_password
+from app.dependencies import get_current_user, get_database
+from app.middleware.rate_limit import SEARCH_LIMIT, limiter
 from app.models.user import User
 from app.schemas.user import (
-    UserCreate,
-    UserResponse,
     CurrentUser,
-    UserStats,
-    UserUpdate,
-    UsernameAvailabilityResponse,
-    ProfileCompletionResponse,
     PrivacySettings,
     PrivacySettingsUpdate,
+    ProfileCompletionResponse,
+    ResumeParseResponse,
+    UserCreate,
+    UsernameAvailabilityResponse,
+    UserResponse,
+    UserStats,
+    UserUpdate,
 )
 from app.schemas.user_report import (
     UserReportCreate,
     UserReportResponse,
 )
-from app.core.security import hash_password
 from app.services.user_service import UserService
-from app.core.cache import cached
-from app.utils.validators import validate_username
 from app.utils.uploads import (
-    validate_resume_upload,
+    save_image_upload,
     save_resume_upload,
     validate_image_upload,
-    save_image_upload,
+    validate_resume_upload,
 )
+from app.utils.validators import validate_username
 
 router = APIRouter(
     tags=["Users"],
@@ -204,7 +203,7 @@ def get_user_profile_completion(
     return UserService.get_profile_completion(db, user)
 
 
-from app.dependencies import get_database, get_current_user, get_optional_current_user
+from app.dependencies import get_current_user, get_database, get_optional_current_user
 from app.services.block_service import BlockService
 
 
@@ -304,8 +303,8 @@ def update_me(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database),
 ):
-    from app.services.audit_log_service import AuditLogService
     from app.models.audit_log import AuditAction
+    from app.services.audit_log_service import AuditLogService
 
     # Extract old values for fields that are being updated
     old_values = {}
@@ -374,6 +373,32 @@ async def upload_resume(
     full_resume_url = str(request.base_url).rstrip("/") + resume_url
 
     return UserService.update_resume_url(db, current_user, full_resume_url)
+
+
+@router.post(
+    "/me/resume/parse",
+    response_model=ResumeParseResponse,
+    summary="Upload and parse resume",
+)
+async def parse_resume(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database),
+):
+    from app.services.resume_parser_service import ResumeParserService
+    
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    contents = await file.read()
+    try:
+        validate_resume_upload(file.filename, file.content_type, len(contents))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ResumeParserService.parse_resume(contents, file.filename)
+
 
 
 @router.post(

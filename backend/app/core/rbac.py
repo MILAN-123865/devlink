@@ -130,6 +130,11 @@ ORG_UPDATE = "org:update"
 ORG_DELETE = "org:delete"
 ORG_MANAGE_MEMBERS = "org:manage_members"
 ORG_MANAGE_TOKENS = "org:manage_tokens"
+ORG_MANAGE_ROLES = "org:manage_roles"
+ORG_MANAGE_JOBS = "org:manage_jobs"
+ORG_MANAGE_CANDIDATES = "org:manage_candidates"
+ORG_MANAGE_CONTENT = "org:manage_content"
+ORG_VIEW_CONTENT = "org:view_content"
 
 ORG_ROLE_PERMISSIONS: dict[OrgMemberRole, frozenset[str]] = {
     OrgMemberRole.OWNER: frozenset(
@@ -138,10 +143,17 @@ ORG_ROLE_PERMISSIONS: dict[OrgMemberRole, frozenset[str]] = {
             ORG_DELETE,
             ORG_MANAGE_MEMBERS,
             ORG_MANAGE_TOKENS,
+            ORG_MANAGE_ROLES,
+            ORG_MANAGE_JOBS,
+            ORG_MANAGE_CANDIDATES,
+            ORG_MANAGE_CONTENT,
+            ORG_VIEW_CONTENT,
         }
     ),
-    OrgMemberRole.ADMIN: frozenset({ORG_UPDATE, ORG_MANAGE_MEMBERS, ORG_MANAGE_TOKENS}),
-    OrgMemberRole.MEMBER: frozenset(),
+    OrgMemberRole.ADMIN: frozenset({ORG_UPDATE, ORG_MANAGE_MEMBERS, ORG_MANAGE_TOKENS, ORG_MANAGE_ROLES, ORG_MANAGE_JOBS, ORG_MANAGE_CANDIDATES, ORG_MANAGE_CONTENT, ORG_VIEW_CONTENT}),
+    OrgMemberRole.RECRUITER: frozenset({ORG_MANAGE_JOBS, ORG_MANAGE_CANDIDATES, ORG_VIEW_CONTENT}),
+    OrgMemberRole.MAINTAINER: frozenset({ORG_UPDATE, ORG_MANAGE_CONTENT, ORG_VIEW_CONTENT}),
+    OrgMemberRole.MEMBER: frozenset({ORG_VIEW_CONTENT}),
 }
 
 
@@ -430,7 +442,7 @@ def get_user_permissions(db: Session, user_id: uuid.UUID) -> set[str]:
         for perms in SYSTEM_ROLE_PERMISSIONS.values():
             permissions.update(perms)
         permissions.update(
-            {ORG_UPDATE, ORG_DELETE, ORG_MANAGE_MEMBERS, ORG_MANAGE_TOKENS}
+            {ORG_UPDATE, ORG_DELETE, ORG_MANAGE_MEMBERS, ORG_MANAGE_TOKENS, ORG_MANAGE_ROLES, ORG_MANAGE_JOBS, ORG_MANAGE_CANDIDATES, ORG_MANAGE_CONTENT, ORG_VIEW_CONTENT}
         )
         permissions.update(
             {

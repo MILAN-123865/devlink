@@ -129,6 +129,8 @@ class UserService:
             activity_type=ActivityType.PROFILE_UPDATED,
             title="Updated profile",
             description=f"{db_user.first_name} {db_user.last_name} updated their profile.",
+            target_id=db_user.id,
+            target_type="user",
             icon="user-round-pen",
             color="info",
         )

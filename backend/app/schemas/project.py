@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from app.models.project import ProjectStage, ProjectVisibility
+from app.models.project import ProjectStage, ProjectStatus, ProjectVisibility
 
 # ==========================================================
 # Base Project Schema
@@ -37,6 +37,19 @@ class ProjectBase(BaseModel):
 
     stage: ProjectStage = ProjectStage.IDEA
     visibility: ProjectVisibility = ProjectVisibility.PUBLIC
+    status: ProjectStatus = ProjectStatus.RECRUITING
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_and_normalize_status(cls, v: Any) -> Any:
+        if v is None:
+            return v
+        from app.services.project_status_service import _parse_status_enum
+
+        try:
+            return _parse_status_enum(v)
+        except ValueError:
+            return v
 
     tech_stack: Optional[str] = None
     requirements: Optional[str] = None
@@ -102,6 +115,19 @@ class ProjectUpdate(BaseModel):
     description: Optional[str] = None
     stage: Optional[ProjectStage] = None
     visibility: Optional[ProjectVisibility] = None
+    status: Optional[ProjectStatus] = None
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_and_normalize_status(cls, v: Any) -> Any:
+        if v is None:
+            return v
+        from app.services.project_status_service import _parse_status_enum
+
+        try:
+            return _parse_status_enum(v)
+        except ValueError:
+            return v
     tech_stack: Optional[str] = None
     requirements: Optional[str] = None
     repository_url: Optional[str] = None

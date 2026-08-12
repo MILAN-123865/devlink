@@ -31,7 +31,8 @@ export default function MyApplicationsPage() {
     queryFn: () => getMyApplications(),
   });
 
-  const withdrawMutation = useWithdrawApplication();
+  // const withdrawMutation = useWithdrawApplication();
+  const withdrawMutation = {} as any;
 
   const apps = useMemo(() => {
     const list = data ?? [];

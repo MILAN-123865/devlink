@@ -50,3 +50,15 @@ class MessageResponse(MessageBase):
     updated_at: datetime
     edited_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+    read_at: Optional[datetime] = None
+
+
+class BulkReadRequest(BaseModel):
+    message_ids: Optional[list[uuid.UUID]] = None
+    conversation_id: Optional[uuid.UUID] = None
+
+
+class BulkReadResponse(BaseModel):
+    updated_count: int
+    read_at: datetime
+

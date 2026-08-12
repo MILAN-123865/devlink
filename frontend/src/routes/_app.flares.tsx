@@ -239,7 +239,6 @@ function FlaresPage() {
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="space-y-4">
         {/* Compose Card */}
-
         <PostComposer
           placeholder="Share an update, a tip, or ask the community…"
           onPost={handlePost}

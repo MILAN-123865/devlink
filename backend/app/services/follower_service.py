@@ -48,12 +48,17 @@ class FollowerService:
         db.flush()
         db.refresh(relationship)
 
+        following_user = db.get(User, following_id)
+        following_username = following_user.username if following_user else str(following_id)
+
         ActivityService.record_activity(
             db=db,
             actor_id=follower_id,
             activity_type=ActivityType.FOLLOWED_USER,
             title="Followed a builder",
-            description=str(following_id),
+            description=f"Started following @{following_username}",
+            target_id=following_id,
+            target_type="user",
             icon="user-plus",
             color="success",
         )

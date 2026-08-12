@@ -32,6 +32,7 @@ class ActivityType(str, Enum):
     PROJECT_ARCHIVED = "project_archived"
     PROJECT_MILESTONE = "project_milestone"
     PROJECT_ANNOUNCEMENT = "project_announcement"
+    PROJECT_JOINED = "project_joined"
 
     BUILDER_FLARE_CREATED = "builder_flare_created"
 

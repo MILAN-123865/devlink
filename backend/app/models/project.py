@@ -40,6 +40,15 @@ class ProjectVisibility(str, Enum):
     PRIVATE = "private"
 
 
+class ProjectStatus(str, Enum):
+    DRAFT = "draft"
+    RECRUITING = "recruiting"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    PAUSED = "paused"
+    ARCHIVED = "archived"
+
+
 class Project(Base):
     """
     DevLink Project Model
@@ -220,6 +229,13 @@ class Project(Base):
     # ----------------------------------------------------------
     # Status
     # ----------------------------------------------------------
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default=ProjectStatus.RECRUITING.value,
+        nullable=False,
+        index=True,
+    )
 
     is_featured: Mapped[bool] = mapped_column(
         Boolean,

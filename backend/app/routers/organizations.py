@@ -18,6 +18,10 @@ from app.schemas.organization import (
     OrganizationUpdate,
     SlugCheckResponse,
 )
+from app.schemas.organization_member import (
+    OrganizationMemberResponse,
+    OrganizationMemberUpdate,
+)
 from app.services.organization_service import OrganizationService
 
 router = APIRouter(
@@ -470,3 +474,67 @@ def hard_delete_organization(
         entity_id=str(organization_id),
         organization_id=organization_id,
     )
+
+
+@router.get(
+    "/{organization_id}/members",
+    response_model=list[OrganizationMemberResponse],
+)
+def list_organization_members(
+    organization_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    organization = OrganizationService.get_organization(db, organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+        
+    # Anyone authenticated can view members for now if the org is public, 
+    # but strictly speaking we could require "org:view_content" or similar.
+    # We will just return the list.
+    return OrganizationService.list_members(db, organization_id)
+
+
+@router.patch(
+    "/{organization_id}/members/{user_id}",
+    response_model=OrganizationMemberResponse,
+)
+def update_member_role(
+    organization_id: uuid.UUID,
+    user_id: uuid.UUID,
+    update: OrganizationMemberUpdate,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(require_org_permission("org:manage_roles")),
+):
+    organization = OrganizationService.get_organization(db, organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+        
+    try:
+        return OrganizationService.update_member_role(
+            db, organization_id, user_id, update.role, current_user.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete(
+    "/{organization_id}/members/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_organization_member(
+    organization_id: uuid.UUID,
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    organization = OrganizationService.get_organization(db, organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+        
+    try:
+        OrganizationService.remove_member(
+            db, organization_id, user_id, current_user.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

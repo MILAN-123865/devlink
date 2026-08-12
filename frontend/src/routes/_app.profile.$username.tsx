@@ -28,10 +28,12 @@ import { analyticsApi } from "@/api/modules/analytics";
 import SkillsCard from "@/components/profile/SkillsCard";
 import ExperienceCard from "@/components/profile/ExperienceCard";
 import { ProfileViewersList } from "@/components/profile/ProfileViewersList";
+import { PinnedProjectsCard } from "@/components/profile/PinnedProjectsCard";
 import { ProfileCompletionChecklist } from "@/components/profile/ProfileCompletionChecklist";
 import { FollowButton } from "@/components/shared/FollowButton";
 import { useFollowStatus } from "@/hooks/useFollow";
 import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
+import { ContributionHeatmap } from "@/components/profile/ContributionHeatmap";
 import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typography";
 
 export const Route = createFileRoute("/_app/profile/$username")({
@@ -244,7 +246,7 @@ function ProfilePage() {
         <ProfileCompletionChecklist
           userProfile={{
             avatar: avatarUrl,
-            banner: bannerUrl ?? undefined,
+            banner: bannerUrl || undefined,
             bio: b.bio,
             skills: b.profileSkills?.map((s) => s.name) ?? b.skills,
             experience: b.experienceLevel || b.role || b.company,
@@ -537,16 +539,7 @@ function ProfilePage() {
           <SkillsCard skills={b.profileSkills ?? []} />
           <ExperienceCard role={b.role} company={b.company} experienceLevel={b.experienceLevel} />
 
-          {b.pinnedProjects?.length ? (
-            <Card className="p-4">
-              <p className="text-[13px] font-semibold text-foreground">Pinned Projects</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {b.pinnedProjects.map((project) => (
-                  <TagChip key={project}>{project}</TagChip>
-                ))}
-              </div>
-            </Card>
-          ) : null}
+          <PinnedProjectsCard username={b.handle} isOwnProfile={me} />
 
           {b.badges && b.badges.length > 0 && (
             <Card className="p-4">
@@ -597,6 +590,8 @@ function ProfilePage() {
               ))}
             </ul>
           </Card>
+
+          <ContributionHeatmap username={b.handle} className="mt-4" />
 
           <ActivityTimeline userId={b.id} />
         </div>

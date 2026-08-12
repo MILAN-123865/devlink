@@ -152,17 +152,20 @@ export function useApplyToFlare() {
       message,
       portfolioUrl,
       githubUrl,
+      resumeUrl,
     }: {
       flareId: UUID;
       projectId: UUID;
       message?: string;
       portfolioUrl?: string;
       githubUrl?: string;
+      resumeUrl?: string;
     }) =>
       applyToFlare(flareId, projectId, {
         message,
         portfolio_url: portfolioUrl,
         github_url: githubUrl,
+        resume_url: resumeUrl,
       }),
 
     onSuccess: () => {

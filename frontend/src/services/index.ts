@@ -32,7 +32,7 @@ import type {
   IssueUpdateInput,
   TechStackResponse,
 } from "@/api";
-import type { Hackathon, Flare } from "@/mocks/seed";
+import type { Hackathon, Flare, Message } from "@/mocks/seed";
 
 const delay = 120;
 const mock = <T>(v: T): Promise<T> => new Promise((r) => setTimeout(() => r(v), delay));
@@ -96,6 +96,12 @@ export const projectsService = {
       () => projectsApi.trending(),
       [...seed.projects].sort((a, b) => b.stars - a.stars).slice(0, 5),
     ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createDraft: (body: any) => withFallback(() => projectsApi.createDraft(body as any), {} as any),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  updateDraft: (id: string, body: any) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    withFallback(() => projectsApi.updateDraft(id, body as any), {} as any),
 };
 
 export const buildersService = {
@@ -263,10 +269,10 @@ export const messagesService = {
           attachment_url: m.attachment_url,
           attachment_name: m.attachment_name,
           attachment_size: m.attachment_size,
-          mime_type: m.mime_type,
-        }),
-      );
-    }, seed.messages[id] ?? []);
+        }));
+      },
+      seed.messages[id] ?? [],
+    );
   },
   send: (
     conversationId: string,

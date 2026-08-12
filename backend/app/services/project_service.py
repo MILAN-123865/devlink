@@ -64,6 +64,7 @@ class ProjectService:
             description=project.description,
             stage=project.stage,
             visibility=project.visibility,
+            status=project.status,
             tech_stack=project.tech_stack,
             repository_url=project.repository_url,
             website_url=project.website_url,
@@ -249,6 +250,26 @@ class ProjectService:
         data = project.model_dump(exclude_unset=True)
 
         from datetime import datetime, timezone
+        from app.models.project import ProjectStatus
+        from app.services.project_status_service import ProjectStatusService
+
+        current_status = getattr(db_project, "status", None) or (
+            ProjectStatus.ARCHIVED if db_project.is_archived else ProjectStatus.RECRUITING
+        )
+
+        if "status" in data and data["status"] is not None:
+            new_status = data["status"]
+            ProjectStatusService.validate_status_transition(current_status, new_status)
+            if new_status == ProjectStatus.ARCHIVED:
+                data["is_archived"] = True
+            else:
+                data["is_archived"] = False
+        elif "is_archived" in data and data["is_archived"] is True and not db_project.is_archived:
+            ProjectStatusService.validate_status_transition(current_status, ProjectStatus.ARCHIVED)
+            data["status"] = ProjectStatus.ARCHIVED
+        elif "is_archived" in data and data["is_archived"] is False and db_project.is_archived:
+            ProjectStatusService.validate_status_transition(current_status, ProjectStatus.DRAFT)
+            data["status"] = ProjectStatus.DRAFT
 
         if "scheduled_publish_at" in data and data["scheduled_publish_at"] is not None:
             data["is_published"] = data["scheduled_publish_at"] <= datetime.now(
@@ -280,10 +301,18 @@ class ProjectService:
         db: Session,
         db_project: Project,
     ) -> Project:
+        from app.models.project import ProjectStatus
+        from app.services.project_status_service import ProjectStatusService
 
+        current_status = getattr(db_project, "status", None) or (
+            ProjectStatus.ARCHIVED if db_project.is_archived else ProjectStatus.RECRUITING
+        )
+        ProjectStatusService.validate_status_transition(current_status, ProjectStatus.ARCHIVED)
+
+        db_project.status = ProjectStatus.ARCHIVED.value
         db_project.is_archived = True
 
-        db.flush()
+        db.commit()
         db.refresh(db_project)
 
         ActivityService.record_activity(
@@ -305,10 +334,20 @@ class ProjectService:
         db: Session,
         db_project: Project,
     ) -> Project:
+        from app.models.project import ProjectStatus
+        from app.services.project_status_service import ProjectStatusService
 
+        current_status = (
+            ProjectStatus.ARCHIVED
+            if db_project.is_archived
+            else (getattr(db_project, "status", None) or ProjectStatus.RECRUITING)
+        )
+        ProjectStatusService.validate_status_transition(current_status, ProjectStatus.DRAFT)
+
+        db_project.status = ProjectStatus.DRAFT.value
         db_project.is_archived = False
 
-        db.flush()
+        db.commit()
         db.refresh(db_project)
 
         return db_project

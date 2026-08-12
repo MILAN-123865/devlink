@@ -20,7 +20,7 @@ def test_create_activity(client: TestClient, db: Session, register_and_login):
     }
 
     response = client.post(
-        "/activities/", json=activity_data, headers={"Authorization": f"Bearer {token}"}
+        "/api/activities/", json=activity_data, headers={"Authorization": f"Bearer {token}"}
     )
 
     if response.status_code != 201:
@@ -56,7 +56,7 @@ def test_list_activities_cursor_pagination(
     db.commit()
 
     # Page 1: limit 2
-    response1 = client.get("/activities/?limit=2")
+    response1 = client.get("/api/activities/?limit=2")
     assert response1.status_code == 200
     data1 = response1.json()
     assert len(data1) == 2
@@ -65,7 +65,7 @@ def test_list_activities_cursor_pagination(
 
     # Page 2: pass cursor
     cursor = data1[1]["created_at"]
-    response2 = client.get(f"/activities/?limit=2&cursor={cursor}")
+    response2 = client.get(f"/api/activities/?limit=2&cursor={cursor}")
     assert response2.status_code == 200
     data2 = response2.json()
     assert len(data2) == 2
@@ -97,13 +97,13 @@ def test_list_activities_filters(client: TestClient, db: Session, register_and_l
     db.commit()
 
     # Filter by target_type
-    res_type = client.get("/activities/?target_type=project")
+    res_type = client.get("/api/activities/?target_type=project")
     data_type = res_type.json()
     assert len(data_type) == 1
     assert data_type[0]["title"] == "P1"
 
     # Filter by activity_types
-    res_act = client.get("/activities/?activity_types=followed_user")
+    res_act = client.get("/api/activities/?activity_types=followed_user")
     data_act = res_act.json()
     assert len(data_act) == 1
     assert data_act[0]["title"] == "F1"

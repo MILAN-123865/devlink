@@ -12,6 +12,10 @@ import json
 import logging
 
 from app.core.config import settings
+from app.schemas.ai import (
+    ProjectDescriptionGenerateRequest,
+    ProjectDescriptionGenerateResponse,
+)
 from app.schemas.tech_stack import (
     TechStackRecommendation,
     TechStackRequest,
@@ -22,6 +26,15 @@ logger = logging.getLogger(__name__)
 
 # pyrefly: ignore [missing-import]
 from openai import OpenAI
+
+DESCRIPTION_SYSTEM_PROMPT = """You are an expert technical writer and project manager helping developers write compelling project descriptions.
+
+Given a short prompt or idea, generate a comprehensive, professional project description. The description should:
+1. Clearly state the project's purpose and value proposition.
+2. Outline key features or functionality.
+3. Be engaging, well-structured, and concise (around 2-3 paragraphs).
+
+Return the description as plain text, formatted nicely with markdown if appropriate. Do not include JSON formatting or other structural wrappers."""
 
 SYSTEM_PROMPT = """You are a senior software architect helping developers choose the best tech stack for their project.
 
@@ -178,3 +191,43 @@ class AIService:
         except Exception as e:
             logger.error("OpenAI API error: %s", e)
             return _fallback_response(request)
+
+    @staticmethod
+    def generate_project_description(request: ProjectDescriptionGenerateRequest) -> ProjectDescriptionGenerateResponse:
+        """
+        Generate a comprehensive project description based on a short prompt using OpenAI.
+        """
+        fallback_description = (
+            "A comprehensive project description could not be generated at this time. "
+            "Please manually describe your project's goals, key features, and target audience."
+        )
+
+        if not settings.OPENAI_API_KEY:
+            logger.info("OPENAI_API_KEY not configured, using fallback description")
+            return ProjectDescriptionGenerateResponse(description=fallback_description)
+
+        try:
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": DESCRIPTION_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": f"Project idea: {request.prompt}",
+                    },
+                ],
+                temperature=0.7,
+                max_tokens=1000,
+            )
+
+            content = response.choices[0].message.content or ""
+            if not content.strip():
+                logger.warning("Empty description from OpenAI, using fallback")
+                return ProjectDescriptionGenerateResponse(description=fallback_description)
+
+            return ProjectDescriptionGenerateResponse(description=content.strip())
+
+        except Exception as e:
+            logger.error("OpenAI API error generating description: %s", e)
+            return ProjectDescriptionGenerateResponse(description=fallback_description)

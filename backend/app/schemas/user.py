@@ -3,18 +3,24 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, time
 from enum import Enum
-from typing import Optional
 
 # pyrefly: ignore [missing-import]
 from pydantic import (
     BaseModel,
     ConfigDict,
-    EmailStr,
     Field,
-    HttpUrl,
     model_validator,
 )
-from app.core.validation import NameStr, UsernameStr, ValidEmail, HeadlineStr, BioStr, ValidURL, SanitizedStr
+
+from app.core.validation import (
+    BioStr,
+    HeadlineStr,
+    NameStr,
+    SanitizedStr,
+    UsernameStr,
+    ValidEmail,
+    ValidURL,
+)
 
 
 class AvailabilitySlot(BaseModel):
@@ -45,11 +51,11 @@ class PrivacySettings(BaseModel):
 
 
 class PrivacySettingsUpdate(BaseModel):
-    email: Optional[PrivacyVisibility] = None
-    github: Optional[PrivacyVisibility] = None
-    resume: Optional[PrivacyVisibility] = None
-    social_links: Optional[PrivacyVisibility] = None
-    availability: Optional[PrivacyVisibility] = None
+    email: PrivacyVisibility | None = None
+    github: PrivacyVisibility | None = None
+    resume: PrivacyVisibility | None = None
+    social_links: PrivacyVisibility | None = None
+    availability: PrivacyVisibility | None = None
 
 
 # ==========================================================
@@ -63,28 +69,32 @@ class UserBase(BaseModel):
 
     username: UsernameStr
 
-    public_email: Optional[ValidEmail] = None
+    public_email: ValidEmail | None = None
 
-    headline: Optional[HeadlineStr] = None
+    headline: HeadlineStr | None = None
 
-    bio: Optional[BioStr] = None
+    bio: BioStr | None = None
 
-    location: Optional[SanitizedStr] = None
-    timezone: Optional[SanitizedStr] = None
+    location: SanitizedStr | None = None
+    timezone: SanitizedStr | None = None
 
-    website: Optional[ValidURL] = None
-    resume_url: Optional[ValidURL] = None
-    portfolio_url: Optional[ValidURL] = None
-    github_url: Optional[ValidURL] = None
-    linkedin_url: Optional[ValidURL] = None
+    website: ValidURL | None = None
+    resume_url: ValidURL | None = None
+    portfolio_url: ValidURL | None = None
+    github_url: ValidURL | None = None
+    linkedin_url: ValidURL | None = None
 
-    role: Optional[SanitizedStr] = None
-    experience_level: Optional[SanitizedStr] = None
-    company: Optional[SanitizedStr] = None
+    role: SanitizedStr | None = None
+    experience_level: SanitizedStr | None = None
+    company: SanitizedStr | None = None
+
+    experience: list | None = None
+    education: list | None = None
+    certifications: list | None = None
 
     open_to_work: bool = True
     is_private: bool = False
-    privacy_settings: Optional[PrivacySettings] = Field(default_factory=PrivacySettings)
+    privacy_settings: PrivacySettings | None = Field(default_factory=PrivacySettings)
     availability: list[AvailabilitySlot] = Field(default_factory=list)
 
 
@@ -121,30 +131,34 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    first_name: Optional[NameStr] = None
-    last_name: Optional[NameStr] = None
+    first_name: NameStr | None = None
+    last_name: NameStr | None = None
 
-    headline: Optional[HeadlineStr] = None
-    bio: Optional[BioStr] = None
+    headline: HeadlineStr | None = None
+    bio: BioStr | None = None
 
-    location: Optional[SanitizedStr] = None
-    timezone: Optional[SanitizedStr] = None
-    public_email: Optional[ValidEmail] = None
+    location: SanitizedStr | None = None
+    timezone: SanitizedStr | None = None
+    public_email: ValidEmail | None = None
 
-    website: Optional[ValidURL] = None
-    resume_url: Optional[ValidURL] = None
-    portfolio_url: Optional[ValidURL] = None
-    github_url: Optional[ValidURL] = None
-    linkedin_url: Optional[ValidURL] = None
+    website: ValidURL | None = None
+    resume_url: ValidURL | None = None
+    portfolio_url: ValidURL | None = None
+    github_url: ValidURL | None = None
+    linkedin_url: ValidURL | None = None
 
-    role: Optional[SanitizedStr] = None
-    experience_level: Optional[SanitizedStr] = None
-    company: Optional[SanitizedStr] = None
+    role: SanitizedStr | None = None
+    experience_level: SanitizedStr | None = None
+    company: SanitizedStr | None = None
 
-    open_to_work: Optional[bool] = None
-    is_private: Optional[bool] = None
-    privacy_settings: Optional[PrivacySettingsUpdate] = None
-    availability: Optional[list[AvailabilitySlot]] = None
+    experience: list | None = None
+    education: list | None = None
+    certifications: list | None = None
+
+    open_to_work: bool | None = None
+    is_private: bool | None = None
+    privacy_settings: PrivacySettingsUpdate | None = None
+    availability: list[AvailabilitySlot] | None = None
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -170,30 +184,17 @@ class UserResponse(UserBase):
 
     id: uuid.UUID
 
-    profile_image: Optional[str] = None
-    cover_image: Optional[str] = None
-    badges: list[str] = Field(default_factory=list)
 
-    is_active: bool
-    is_verified: bool
-    premium: bool = False
-    is_superuser: bool
+# ==========================================================
+# Resume Parse Response
+# ==========================================================
 
-    last_seen: Optional[datetime] = Field(
-        default=None,
-        description="The date and time when the user was last active.",
-    )
-    is_online: bool = Field(
-        default=False,
-        description="Whether the user is currently online based on the active threshold.",
-    )
-    last_active_at: Optional[datetime] = None
-
-    created_at: datetime
-    updated_at: datetime
-
-    deleted_at: Optional[datetime] = None
-    deleted_by_id: Optional[uuid.UUID] = None
+class ResumeParseResponse(BaseModel):
+    skills: list[str] = Field(default_factory=list)
+    technologies: list[str] = Field(default_factory=list)
+    experience: list[dict] = Field(default_factory=list)
+    education: list[dict] = Field(default_factory=list)
+    certifications: list[dict] = Field(default_factory=list)
 
 
 # ==========================================================
@@ -203,8 +204,8 @@ class UserResponse(UserBase):
 
 class CurrentUser(UserResponse):
     email: ValidEmail
-    email_verified_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
+    email_verified_at: datetime | None = None
+    last_login: datetime | None = None
 
 
 # ==========================================================
@@ -273,7 +274,7 @@ class ProfileCompletionResponse(BaseModel):
         default=False,
         description="Whether the profile completion reward is unlocked",
     )
-    reward_badge: Optional[str] = Field(
+    reward_badge: str | None = Field(
         default=None,
         description="Badge awarded for 100% profile completion",
     )

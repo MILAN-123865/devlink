@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { Eye, EyeOff, Github, Linkedin } from "lucide-react";
@@ -242,13 +240,7 @@ function AuthScreen() {
                 )}
               </div>
             </div>
-            <div className="mb-4">
-              <label className={lbl}>Username</label>
-              <input className={inp} {...signUpForm.register("username")} />
-              {signUpForm.formState.errors.username && (
-                <p className={err}>{signUpForm.formState.errors.username.message}</p>
-              )}
-            </div>
+
             <div className="mb-4">
               <label className={lbl}>Email</label>
               <input type="email" className={inp} {...signUpForm.register("email")} />

@@ -21,7 +21,7 @@ from app.services.activity_service import ActivityService
 from app.core.cache import cached
 
 router = APIRouter(
-    prefix="/activities",
+    prefix="",
     tags=["Activities"],
 )
 

@@ -35216,3 +35216,51 @@ def process_image_upload(self, image_url, sizes):
 [2m2026-08-03T14:09:00.873341Z[0m [[32m[1mdebug    [0m] [1mUsing proactor: IocpProactor  [0m [[0m[1m[34masyncio[0m][0m
 [2m2026-08-03T14:09:00.902104Z[0m [[32m[1minfo     [0m] [1mhttp_request                  [0m [[0m[1m[34mdevlink.request[0m][0m [36mcorrelation_id[0m=[35mcorr_5ca55d4d7d864e3aa7936e132fdcdf22[0m [36mduration[0m=[35m16.09[0m [36mip[0m=[35mtestclient[0m [36mmethod[0m=[35mPOST[0m [36mpath[0m=[35m/api/auth/microsoft[0m [36mrequest_id[0m=[35mreq_6d915dc4798741bb8b65403473ac21aa[0m [36mstatus[0m=[35m400[0m [36muser_agent[0m=[35mtestclient[0m
 [2m2026-08-03T14:09:00.911126Z[0m [[32m[1minfo     [0m] [1mHTTP Request: POST http://testserver/api/auth/microsoft "HTTP/1.1 400 Bad Request"[0m [[0m[1m[34mhttpx[0m][0m
+[2m2026-08-11T06:46:52.156234Z[0m [[32m[1mdebug    [0m] [1mloaded lazy attr 'SafeConfigParser': <class 'configparser.ConfigParser'>[0m [[0m[1m[34mpasslib.utils.compat[0m][0m
+[2m2026-08-11T06:46:52.157981Z[0m [[32m[1mdebug    [0m] [1mloaded lazy attr 'NativeStringIO': <class '_io.StringIO'>[0m [[0m[1m[34mpasslib.utils.compat[0m][0m
+[2m2026-08-11T06:46:52.159386Z[0m [[32m[1mdebug    [0m] [1mloaded lazy attr 'BytesIO': <class '_io.BytesIO'>[0m [[0m[1m[34mpasslib.utils.compat[0m][0m
+[2m2026-08-11T06:46:52.278757Z[0m [[32m[1mdebug    [0m] [1mregistered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>[0m [[0m[1m[34mpasslib.registry[0m][0m
+[2m2026-08-11T06:47:32.553058Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.address`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.578659Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.address` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.632485Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.automotive`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.651041Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.automotive` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.687528Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.bank`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.701597Z[0m [[32m[1mdebug    [0m] [1mSpecified locale `en_US` is not available for provider `faker.providers.bank`. Locale reset to `en_GB` for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.725854Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.barcode`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.729991Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.barcode` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.760298Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.color`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.769612Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.color` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.793189Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.company`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.809287Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.company` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.831671Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.credit_card`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.834587Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.credit_card` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.860852Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.currency`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.871626Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.currency` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.895962Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.date_time`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.908609Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.date_time` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.930792Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.emoji` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.931732Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.file` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.932691Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.geo`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.939493Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.geo` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.960517Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.internet`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.974855Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.internet` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.994987Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.isbn`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:32.997860Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.isbn` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.031165Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.job`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.042738Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.job` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.068182Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.lorem`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.080160Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.lorem` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.081103Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.misc`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.083706Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.misc` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.110656Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.passport`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.113999Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.passport` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.145213Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.person`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.173275Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.person` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.210187Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.phone_number`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.235524Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.phone_number` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.261194Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.profile` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.261808Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.python` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.262706Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.sbn` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.263280Z[0m [[32m[1mdebug    [0m] [1mLooking for locale `en_US` in provider `faker.providers.ssn`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.279684Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.ssn` has been localized to `en_US`.[0m [[0m[1m[34mfaker.factory[0m][0m
+[2m2026-08-11T06:47:33.302100Z[0m [[32m[1mdebug    [0m] [1mProvider `faker.providers.user_agent` does not feature localization. Specified locale `en_US` is not utilized for this provider.[0m [[0m[1m[34mfaker.factory[0m][0m

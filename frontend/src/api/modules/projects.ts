@@ -58,6 +58,8 @@ export const projectsApi = {
   update: (id: string, body: Partial<ExtendedProject>) =>
     api.put<ExtendedProject>(`/api/projects/${id}`, body),
   remove: (id: string) => api.delete<void>(`/api/projects/${id}`),
+  generateDescription: (prompt: string) =>
+    api.post<{ description: string }>("/api/projects/generate-description", { prompt }),
   apply: (id: string, message: string, role?: string) =>
     api.post<void>(`/api/projects/${id}/apply`, { message, role }),
   trending: () => api.get<ExtendedProject[]>("/api/projects/trending"),

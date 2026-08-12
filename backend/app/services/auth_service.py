@@ -604,7 +604,231 @@ class AuthService:
         }
 
     # =====================================================
+    # Microsoft OAuth
+    # =====================================================
+    
+    def microsoft_login(self, microsoft_user: dict, primary_email: str):
+        microsoft_id = str(microsoft_user["id"])
+        
+        # 1. Check if user already exists by microsoft_id
+        user = self.db.scalar(select(User).where(User.microsoft_id == microsoft_id))
+        
+        if not user:
+            # 2. Check if user exists by primary email
+            user = self.db.scalar(select(User).where(User.email == primary_email))
+            
+            if user:
+                # User exists by email, link Microsoft account safely
+                if user.microsoft_id and user.microsoft_id != microsoft_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email is linked to another Microsoft account."
+                    )
+                
+                user.microsoft_id = microsoft_id
+                
+                # Assume verified since it came from MS
+                if not user.is_verified:
+                    user.is_verified = True
+                    user.email_verified_at = datetime.now(timezone.utc)
+            else:
+                # 3. Create new user
+                name_parts = (
+                    microsoft_user.get("displayName") or 
+                    microsoft_user.get("givenName") or 
+                    "Microsoft User"
+                ).split(" ")
+                
+                first_name = name_parts[0] if len(name_parts) > 0 and name_parts[0] else "Microsoft"
+                last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else "User"
+                
+                base_username = (microsoft_user.get("userPrincipalName") or primary_email).split("@")[0].lower()[:50]
+                username = base_username
+                counter = 1
+                while self.db.scalar(select(User).where(User.username == username)):
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                    
+                import secrets
+                random_password = secrets.token_urlsafe(32)
+                
+                user = User(
+                    first_name=first_name,
+                    last_name=last_name,
+                    username=username,
+                    email=primary_email,
+                    password_hash=hash_password(random_password),
+                    microsoft_id=microsoft_id,
+                    is_active=True,
+                    is_verified=True,
+                    created_at=datetime.now(timezone.utc),
+                    email_verified_at=datetime.now(timezone.utc),
+                )
+                self.db.add(user)
+                self.db.commit()
+                self.db.refresh(user)
+                event_bus.publish(
+                    "USER_REGISTERED",
+                    email=user.email,
+                    user_id=str(user.id),
+                )
+                
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is disabled.",
+            )
+            
+        user.last_login = datetime.now(timezone.utc)
+        self.db.commit()
 
+        access_token = create_access_token(
+            str(user.id),
+            {
+                "username": user.username,
+                "email": user.email,
+            },
+        )
+
+        refresh_token = create_refresh_token(str(user.id))
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
+        RefreshTokenService.create_token_for_user(
+            db=self.db,
+            user_id=user.id,
+            token_str=refresh_token,
+            expires_at=expires_at,
+        )
+        self.db.commit()
+
+        event_bus.publish(
+            "USER_LOGIN",
+            email=user.email,
+            user_id=str(user.id),
+        )
+
+        return {
+            "success": True,
+            "message": "Microsoft login successful.",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user,
+        }
+
+    # =====================================================
+    # Google OAuth
+    # =====================================================
+    
+    def google_login(self, google_user: dict, primary_email: str):
+        google_id = str(google_user["id"])
+        
+        # 1. Check if user already exists by google_id
+        user = self.db.scalar(select(User).where(User.google_id == google_id))
+        
+        if not user:
+            # 2. Check if user exists by primary email
+            user = self.db.scalar(select(User).where(User.email == primary_email))
+            
+            if user:
+                # User exists by email, link Google account safely
+                if user.google_id and user.google_id != google_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email is linked to another Google account."
+                    )
+                
+                user.google_id = google_id
+                
+                # Assume verified since it came from Google
+                if not user.is_verified:
+                    user.is_verified = True
+                    user.email_verified_at = datetime.now(timezone.utc)
+            else:
+                # 3. Create new user
+                first_name = google_user.get("given_name") or "Google"
+                last_name = google_user.get("family_name") or "User"
+                
+                base_username = primary_email.split("@")[0].lower()[:50]
+                username = base_username
+                counter = 1
+                while self.db.scalar(select(User).where(User.username == username)):
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                    
+                import secrets
+                random_password = secrets.token_urlsafe(32)
+                
+                user = User(
+                    first_name=first_name,
+                    last_name=last_name,
+                    username=username,
+                    email=primary_email,
+                    password_hash=hash_password(random_password),
+                    google_id=google_id,
+                    profile_image=google_user.get("picture"),
+                    is_active=True,
+                    is_verified=True,
+                    created_at=datetime.now(timezone.utc),
+                    email_verified_at=datetime.now(timezone.utc),
+                )
+                self.db.add(user)
+                self.db.commit()
+                self.db.refresh(user)
+                event_bus.publish(
+                    "USER_REGISTERED",
+                    email=user.email,
+                    user_id=str(user.id),
+                )
+                
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is disabled.",
+            )
+            
+        user.last_login = datetime.now(timezone.utc)
+        self.db.commit()
+
+        access_token = create_access_token(
+            str(user.id),
+            {
+                "username": user.username,
+                "email": user.email,
+            },
+        )
+
+        refresh_token = create_refresh_token(str(user.id))
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
+        RefreshTokenService.create_token_for_user(
+            db=self.db,
+            user_id=user.id,
+            token_str=refresh_token,
+            expires_at=expires_at,
+        )
+        self.db.commit()
+
+        event_bus.publish(
+            "USER_LOGIN",
+            email=user.email,
+            user_id=str(user.id),
+        )
+
+        return {
+            "success": True,
+            "message": "Google login successful.",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user,
+        }
+
+    # =====================================================
     # Get User by ID
     # =====================================================
 

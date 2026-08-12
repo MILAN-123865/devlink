@@ -536,7 +536,13 @@ app.include_router(mfa.router, prefix="/api")
 app.include_router(global_announcements.router, prefix="/api", tags=["Global Announcements"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(blocks.router, prefix="/api/blocks", tags=["User Blocks"])
+from app.routers import testimonials
+
+app.include_router(testimonials.router, prefix="/api", tags=["Testimonials"])
 app.include_router(export.router, prefix="/api/users", tags=["Export"])
+from app.routers import pinned_projects
+
+app.include_router(pinned_projects.router, prefix="/api", tags=["Pinned Projects"])
 from app.routers import feedback
 
 app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
@@ -553,9 +559,15 @@ app.include_router(
     project_milestones.router, prefix="/api", tags=["Project Milestones"]
 )
 app.include_router(project_milestones.router, prefix="/api", tags=["Project Milestones"])
+from app.routers import project_time_logs
+
+app.include_router(project_time_logs.router, prefix="/api", tags=["Project Time Tracking"])
 from app.routers import calendar as calendar_router
 app.include_router(calendar_router.router, prefix="/api", tags=["Calendar"])
 app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
+from app.routers import project_releases
+
+app.include_router(project_releases.router, prefix="/api", tags=["Project Releases"])
 app.include_router(builder_flares.router, prefix="/api/flare", tags=["Builder's Flare"])
 app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 app.include_router(message_drafts.router, prefix="/api", tags=["Message Drafts"])
@@ -576,6 +588,9 @@ app.include_router(
     tags=["Bookmark Collections"],
 )
 app.include_router(activities.router, prefix="/api/activities", tags=["Activities"])
+from app.routers import activity_heatmap
+
+app.include_router(activity_heatmap.router, prefix="/api", tags=["Activity Heatmap"])
 app.include_router(
     conversations.router, prefix="/api/conversations", tags=["Conversations"]
 )

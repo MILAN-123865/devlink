@@ -38,13 +38,7 @@ const RECENT_SEARCHES_KEY = "devlink-recent-searches";
 const MAX_RECENT_SEARCHES = 5;
 
 type SearchCategory =
-  | "developers"
-  | "projects"
-  | "posts"
-  | "messages"
-  | "hackathons"
-  | "repositories"
-  | "commands";
+  "developers" | "projects" | "posts" | "messages" | "hackathons" | "repositories" | "commands";
 
 export interface SearchResultItem {
   id: string;
@@ -73,62 +67,65 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
 
   const debouncedQuery = useDebounce(query, 250);
 
-  const commands = useMemo<SearchResultItem[]>(() => [
-    {
-      id: "cmd-dashboard",
-      category: "commands",
-      title: "Go to Dashboard",
-      subtitle: "Jump to your home dashboard feed",
-      url: "/dashboard",
-      icon: <LayoutDashboard size={16} className="text-primary" />,
-      badge: "Navigation",
-    },
-    {
-      id: "cmd-projects",
-      category: "commands",
-      title: "Go to Projects",
-      subtitle: "Browse and discover active projects",
-      url: "/projects",
-      icon: <FolderGit2 size={16} className="text-emerald-500" />,
-      badge: "Navigation",
-    },
-    {
-      id: "cmd-builders",
-      category: "commands",
-      title: "Go to Builders",
-      subtitle: "Find other developers and collaborators",
-      url: "/builders",
-      icon: <Users size={16} className="text-blue-500" />,
-      badge: "Navigation",
-    },
-    {
-      id: "cmd-flares",
-      category: "commands",
-      title: "Go to Flares",
-      subtitle: "View the community feed and updates",
-      url: "/flares",
-      icon: <Rss size={16} className="text-amber-500" />,
-      badge: "Navigation",
-    },
-    {
-      id: "cmd-hackathons",
-      category: "commands",
-      title: "Go to Hackathons",
-      subtitle: "Join hackathons and team listings",
-      url: "/hackathons",
-      icon: <Trophy size={16} className="text-yellow-500" />,
-      badge: "Navigation",
-    },
-    {
-      id: "cmd-theme",
-      category: "commands",
-      title: "Toggle Theme",
-      subtitle: "Switch between Light and Dark mode",
-      url: "action:toggle-theme",
-      icon: <Sparkles size={16} className="text-rose-500" />,
-      badge: "Action",
-    },
-  ], [toggleTheme]);
+  const commands = useMemo<SearchResultItem[]>(
+    () => [
+      {
+        id: "cmd-dashboard",
+        category: "commands",
+        title: "Go to Dashboard",
+        subtitle: "Jump to your home dashboard feed",
+        url: "/dashboard",
+        icon: <LayoutDashboard size={16} className="text-primary" />,
+        badge: "Navigation",
+      },
+      {
+        id: "cmd-projects",
+        category: "commands",
+        title: "Go to Projects",
+        subtitle: "Browse and discover active projects",
+        url: "/projects",
+        icon: <FolderGit2 size={16} className="text-emerald-500" />,
+        badge: "Navigation",
+      },
+      {
+        id: "cmd-builders",
+        category: "commands",
+        title: "Go to Builders",
+        subtitle: "Find other developers and collaborators",
+        url: "/builders",
+        icon: <Users size={16} className="text-blue-500" />,
+        badge: "Navigation",
+      },
+      {
+        id: "cmd-flares",
+        category: "commands",
+        title: "Go to Flares",
+        subtitle: "View the community feed and updates",
+        url: "/flares",
+        icon: <Rss size={16} className="text-amber-500" />,
+        badge: "Navigation",
+      },
+      {
+        id: "cmd-hackathons",
+        category: "commands",
+        title: "Go to Hackathons",
+        subtitle: "Join hackathons and team listings",
+        url: "/hackathons",
+        icon: <Trophy size={16} className="text-yellow-500" />,
+        badge: "Navigation",
+      },
+      {
+        id: "cmd-theme",
+        category: "commands",
+        title: "Toggle Theme",
+        subtitle: "Switch between Light and Dark mode",
+        url: "action:toggle-theme",
+        icon: <Sparkles size={16} className="text-rose-500" />,
+        badge: "Action",
+      },
+    ],
+    [toggleTheme],
+  );
 
   // Load recent searches on mount
   useEffect(() => {

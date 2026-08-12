@@ -177,12 +177,33 @@ class ApplicationService:
         db.flush()
         db.refresh(db_application)
 
-        # Trigger notification
         project_title = (
             db_application.project.title if db_application.project else "Project"
         )
         owner_id = db_application.project.owner_id if db_application.project else None
 
+        # Create ProjectMember record for applicant if not already present
+        from app.models.project_member import ProjectMember, MemberRole
+        existing_pm = db.scalar(
+            select(ProjectMember).where(
+                ProjectMember.project_id == db_application.project_id,
+                ProjectMember.user_id == db_application.applicant_id,
+            )
+        )
+        if not existing_pm:
+            pm = ProjectMember(
+                project_id=db_application.project_id,
+                user_id=db_application.applicant_id,
+                role=MemberRole.MEMBER,
+                is_active=True,
+            )
+            db.add(pm)
+        else:
+            existing_pm.is_active = True
+
+        db.commit()
+
+        # Trigger notification
         notification_data = NotificationCreate(
             recipient_id=db_application.applicant_id,
             type=NotificationType.APPLICATION_ACCEPTED,
@@ -197,6 +218,22 @@ class ApplicationService:
             recipient_id=db_application.applicant_id,
             sender_id=owner_id,
             notification=notification_data,
+        )
+
+        # Record activity for joining project
+        from app.models.activity import ActivityType
+        from app.services.activity_service import ActivityService
+
+        ActivityService.record_activity(
+            db=db,
+            actor_id=db_application.applicant_id,
+            activity_type=ActivityType.PROJECT_JOINED,
+            title="Joined project",
+            description=f"Joined project '{project_title}'",
+            target_id=db_application.project_id,
+            target_type="project",
+            icon="user-check",
+            color="success",
         )
 
         return db_application

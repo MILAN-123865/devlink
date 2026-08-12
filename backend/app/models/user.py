@@ -1,23 +1,21 @@
 from __future__ import annotations
 
-
 import uuid
 from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     ForeignKey,
     String,
     Text,
-    JSON,
     func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from enum import Enum
 from app.database.base import Base
 
 
@@ -31,11 +29,6 @@ class UserRole(str, Enum):
     VIEWER = "viewer"
     MODERATOR = "moderator"
 
-
-class UserRole(str, Enum):
-    USER = "user"
-    DEVELOPER = "developer"
-    ADMIN = "admin"
 
 
 class User(Base):
@@ -205,6 +198,21 @@ class User(Base):
         nullable=True,
     )
 
+    experience: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    education: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    certifications: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     open_to_work: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -334,6 +342,12 @@ class User(Base):
     # ------------------------------------------------------------------
     # OAuth
     # ------------------------------------------------------------------
+
+    microsoft_id: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        unique=True,
+    )
 
     github_id: Mapped[str | None] = mapped_column(
         String(100),

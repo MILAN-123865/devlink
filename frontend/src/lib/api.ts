@@ -190,3 +190,9 @@ export async function applyToFlare(
     flare_id: flareId,
   });
 }
+
+export async function getProjectBuilderFlares(
+  projectId: UUID,
+): Promise<{ id: UUID; role: string; title: string; openings: number; status: string }[]> {
+  return api.get(`/builder-flares/project/${projectId}`);
+}

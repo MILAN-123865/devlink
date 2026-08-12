@@ -5,6 +5,7 @@ from collections import Counter
 from typing import List, Optional, Sequence
 
 from sqlalchemy import func, or_
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models.organization import Organization
@@ -66,6 +67,122 @@ def _is_postgres(db: Session) -> bool:
 # ---------------------------------------------------------------------
 
 
+def _score_user(u: User, q: str) -> float:
+    score = 0.0
+    q_lower = q.lower()
+    if u.role and q_lower in u.role.lower():
+        score += 10.0
+    if u.headline and q_lower in u.headline.lower():
+        score += 5.0
+    if u.bio and q_lower in u.bio.lower():
+        score += 5.0
+
+    if getattr(u, "is_verified", False):
+        score += 10.0
+
+    last = getattr(u, "last_active_at", None) or getattr(u, "last_login", None)
+    if last:
+        now = datetime.now(timezone.utc)
+        if last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
+        days_ago = (now - last).days
+        score += max(0, 20 - (days_ago * 0.5))
+
+    if getattr(u, "profile_image", None):
+        score += 5.0
+    if getattr(u, "bio", None) and len(u.bio) > 20:
+        score += 5.0
+    if getattr(u, "location", None):
+        score += 2.0
+    if getattr(u, "github_url", None):
+        score += 3.0
+    if getattr(u, "linkedin_url", None):
+        score += 3.0
+    if getattr(u, "portfolio_url", None):
+        score += 3.0
+    if getattr(u, "resume_url", None):
+        score += 3.0
+    return score
+
+
+def _score_project(p: Project, q: str) -> float:
+    score = 0.0
+    q_lower = q.lower()
+
+    if p.tech_stack and q_lower in p.tech_stack.lower():
+        score += 10.0
+    if p.tags and any(q_lower in str(tag).lower() for tag in p.tags):
+        score += 10.0
+
+    score += (p.stars or 0) * 2.0
+    score += (p.views or 0) * 0.1
+    score += (p.applications_count or 0) * 5.0
+
+    if getattr(p, "updated_at", None):
+        now = datetime.now(timezone.utc)
+        updated = p.updated_at
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+        days_ago = (now - updated).days
+        score += max(0, 20 - (days_ago * 0.2))
+
+    if getattr(p, "logo_url", None):
+        score += 5.0
+    if getattr(p, "banner_url", None):
+        score += 2.0
+    if getattr(p, "repository_url", None):
+        score += 5.0
+    if getattr(p, "demo_url", None):
+        score += 5.0
+    if getattr(p, "website_url", None):
+        score += 2.0
+    if getattr(p, "description", None) and len(p.description) > 50:
+        score += 5.0
+    return score
+
+
+def _score_organization(o: Organization, q: str) -> float:
+    score = 0.0
+    q_lower = q.lower()
+
+    if o.description and q_lower in o.description.lower():
+        score += 10.0
+
+    score += (o.members_count or 0) * 2.0
+    if getattr(o, "verified", False):
+        score += 20.0
+
+    if getattr(o, "updated_at", None):
+        now = datetime.now(timezone.utc)
+        updated = o.updated_at
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+        days_ago = (now - updated).days
+        score += max(0, 20 - (days_ago * 0.5))
+
+    if getattr(o, "logo_url", None):
+        score += 5.0
+    if getattr(o, "location", None):
+        score += 2.0
+    if getattr(o, "description", None) and len(o.description) > 50:
+        score += 5.0
+    if getattr(o, "website_url", None):
+        score += 3.0
+    return score
+
+
+def _score_skill(s: Skill, q: str) -> float:
+    score = 0.0
+    q_lower = q.lower()
+    if s.name and q_lower in s.name.lower():
+        score += 20.0
+    if getattr(s, "category", None) and q_lower in s.category.lower():
+        score += 10.0
+    if getattr(s, "description", None):
+        score += 5.0
+    return score
+
+
 def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
     """Search active users by name / username / role / headline.
 
@@ -75,6 +192,8 @@ def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
     clean_q = _normalize_query(q)
     if not clean_q:
         return []
+
+    fetch_limit = max(limit * 3, 100)
 
     if _is_postgres(db):
         ts_vector = func.to_tsvector(
@@ -90,7 +209,7 @@ def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
             + func.coalesce(User.headline, ""),
         )
         ts_query = func.websearch_to_tsquery("english", clean_q)
-        return (
+        results = (
             db.query(User)
             .filter(
                 User.is_active.is_(True),
@@ -100,33 +219,32 @@ def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
                 User.is_verified.desc(),
                 User.premium.desc(),
                 func.ts_rank(ts_vector, ts_query).desc(),
-                User.username.asc()
+                User.username.asc(),
             )
-            .limit(limit)
+            .limit(fetch_limit)
+            .all()
+        )
+    else:
+        pattern = _ilike_pattern(q)
+        results = (
+            db.query(User)
+            .filter(
+                User.is_active.is_(True),
+                or_(
+                    User.username.ilike(pattern),
+                    User.first_name.ilike(pattern),
+                    User.last_name.ilike(pattern),
+                    User.role.ilike(pattern),
+                    User.headline.ilike(pattern),
+                ),
+            )
+            .order_by(User.is_verified.desc(), User.premium.desc(), User.username.asc())
+            .limit(fetch_limit)
             .all()
         )
 
-    pattern = _ilike_pattern(q)
-    return (
-        db.query(User)
-        .filter(
-            User.is_active.is_(True),
-            or_(
-                User.username.ilike(pattern),
-                User.first_name.ilike(pattern),
-                User.last_name.ilike(pattern),
-                User.role.ilike(pattern),
-                User.headline.ilike(pattern),
-            ),
-        )
-        .order_by(
-            User.is_verified.desc(),
-            User.premium.desc(),
-            User.username.asc()
-        )
-        .limit(limit)
-        .all()
-    )
+    results.sort(key=lambda x: _score_user(x, clean_q), reverse=True)
+    return results[:limit]
 
 
 def search_projects(db: Session, q: str, limit: int = 20) -> List[Project]:
@@ -138,6 +256,8 @@ def search_projects(db: Session, q: str, limit: int = 20) -> List[Project]:
     clean_q = _normalize_query(q)
     if not clean_q:
         return []
+
+    fetch_limit = max(limit * 3, 100)
 
     if _is_postgres(db):
         ts_vector = func.to_tsvector(
@@ -151,7 +271,7 @@ def search_projects(db: Session, q: str, limit: int = 20) -> List[Project]:
             + func.coalesce(Project.tech_stack, ""),
         )
         ts_query = func.websearch_to_tsquery("english", clean_q)
-        return (
+        results = (
             db.query(Project)
             .filter(
                 Project.is_published.is_(True),
@@ -163,27 +283,30 @@ def search_projects(db: Session, q: str, limit: int = 20) -> List[Project]:
                 Project.stars.desc(),
                 Project.created_at.desc(),
             )
-            .limit(limit)
+            .limit(fetch_limit)
+            .all()
+        )
+    else:
+        pattern = _ilike_pattern(q)
+        results = (
+            db.query(Project)
+            .filter(
+                Project.is_published.is_(True),
+                Project.is_archived.is_(False),
+                or_(
+                    Project.title.ilike(pattern),
+                    Project.tagline.ilike(pattern),
+                    Project.description.ilike(pattern),
+                    Project.tech_stack.ilike(pattern),
+                ),
+            )
+            .order_by(Project.stars.desc(), Project.created_at.desc())
+            .limit(fetch_limit)
             .all()
         )
 
-    pattern = _ilike_pattern(q)
-    return (
-        db.query(Project)
-        .filter(
-            Project.is_published.is_(True),
-            Project.is_archived.is_(False),
-            or_(
-                Project.title.ilike(pattern),
-                Project.tagline.ilike(pattern),
-                Project.description.ilike(pattern),
-                Project.tech_stack.ilike(pattern),
-            ),
-        )
-        .order_by(Project.stars.desc(), Project.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+    results.sort(key=lambda x: _score_project(x, clean_q), reverse=True)
+    return results[:limit]
 
 
 def search_organizations(db: Session, q: str, limit: int = 20) -> List[Organization]:
@@ -195,6 +318,8 @@ def search_organizations(db: Session, q: str, limit: int = 20) -> List[Organizat
     clean_q = _normalize_query(q)
     if not clean_q:
         return []
+
+    fetch_limit = max(limit * 3, 100)
 
     if _is_postgres(db):
         ts_vector = func.to_tsvector(
@@ -208,7 +333,7 @@ def search_organizations(db: Session, q: str, limit: int = 20) -> List[Organizat
             + func.coalesce(Organization.location, ""),
         )
         ts_query = func.websearch_to_tsquery("english", clean_q)
-        return (
+        results = (
             db.query(Organization)
             .filter(
                 Organization.active.is_(True),
@@ -219,26 +344,29 @@ def search_organizations(db: Session, q: str, limit: int = 20) -> List[Organizat
                 Organization.members_count.desc(),
                 Organization.name.asc(),
             )
-            .limit(limit)
+            .limit(fetch_limit)
+            .all()
+        )
+    else:
+        pattern = _ilike_pattern(q)
+        results = (
+            db.query(Organization)
+            .filter(
+                Organization.active.is_(True),
+                or_(
+                    Organization.name.ilike(pattern),
+                    Organization.slug.ilike(pattern),
+                    Organization.description.ilike(pattern),
+                    Organization.location.ilike(pattern),
+                ),
+            )
+            .order_by(Organization.members_count.desc(), Organization.name.asc())
+            .limit(fetch_limit)
             .all()
         )
 
-    pattern = _ilike_pattern(q)
-    return (
-        db.query(Organization)
-        .filter(
-            Organization.active.is_(True),
-            or_(
-                Organization.name.ilike(pattern),
-                Organization.slug.ilike(pattern),
-                Organization.description.ilike(pattern),
-                Organization.location.ilike(pattern),
-            ),
-        )
-        .order_by(Organization.members_count.desc(), Organization.name.asc())
-        .limit(limit)
-        .all()
-    )
+    results.sort(key=lambda x: _score_organization(x, clean_q), reverse=True)
+    return results[:limit]
 
 
 def search_skills(db: Session, q: str, limit: int = 20) -> List[Skill]:
@@ -250,6 +378,8 @@ def search_skills(db: Session, q: str, limit: int = 20) -> List[Skill]:
     clean_q = _normalize_query(q)
     if not clean_q:
         return []
+
+    fetch_limit = max(limit * 3, 100)
 
     if _is_postgres(db):
         ts_vector = func.to_tsvector(
@@ -263,29 +393,32 @@ def search_skills(db: Session, q: str, limit: int = 20) -> List[Skill]:
             + func.coalesce(Skill.description, ""),
         )
         ts_query = func.websearch_to_tsquery("english", clean_q)
-        return (
+        results = (
             db.query(Skill)
             .filter(ts_vector.op("@@")(ts_query))
             .order_by(func.ts_rank(ts_vector, ts_query).desc(), Skill.name.asc())
-            .limit(limit)
+            .limit(fetch_limit)
+            .all()
+        )
+    else:
+        pattern = _ilike_pattern(q)
+        results = (
+            db.query(Skill)
+            .filter(
+                or_(
+                    Skill.name.ilike(pattern),
+                    Skill.normalized_name.ilike(pattern),
+                    Skill.category.ilike(pattern),
+                    Skill.description.ilike(pattern),
+                )
+            )
+            .order_by(Skill.name.asc())
+            .limit(fetch_limit)
             .all()
         )
 
-    pattern = _ilike_pattern(q)
-    return (
-        db.query(Skill)
-        .filter(
-            or_(
-                Skill.name.ilike(pattern),
-                Skill.normalized_name.ilike(pattern),
-                Skill.category.ilike(pattern),
-                Skill.description.ilike(pattern),
-            )
-        )
-        .order_by(Skill.name.asc())
-        .limit(limit)
-        .all()
-    )
+    results.sort(key=lambda x: _score_skill(x, clean_q), reverse=True)
+    return results[:limit]
 
 
 def search_tags(db: Session, q: str, limit: int = 20) -> List[SearchResultTag]:

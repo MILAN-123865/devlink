@@ -34,22 +34,54 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ProjectTimeline } from "@/components/project/ProjectTimeline";
 import { ProjectInsightsCard } from "@/components/projects/ProjectInsightsCard";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
+import { getMyApplications } from "@/lib/api";
+import { useWithdrawApplication } from "@/hooks/useApplications";
+import { ApplyModal } from "@/features/projects/components/ApplyModal";
 
 export const Route = createFileRoute("/_app/projects/$projectId")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.projectId} — DevLink` },
-      { name: "description", content: "Project details, members, activity and repositories." },
-    ],
-  }),
+  loader: async ({ params }) => {
+    try {
+      const project = await projectsService.get(params.projectId);
+      if (!project) throw notFound();
+      return { project };
+    } catch (e) {
+      throw notFound();
+    }
+  },
+  head: ({ loaderData, params }) => {
+    const p = loaderData?.project;
+    return {
+      meta: [
+        { title: `${p ? p.name : params.projectId} — DevLink` },
+        {
+          name: "description",
+          content: p?.description || "Project details, members, activity and repositories.",
+        },
+        { property: "og:title", content: `${p ? p.name : params.projectId} | DevLink Project` },
+        {
+          property: "og:description",
+          content: p?.description || "Check out this project on DevLink.",
+        },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${p ? p.name : params.projectId} | DevLink Project` },
+        {
+          name: "twitter:description",
+          content: p?.description || "Check out this project on DevLink.",
+        },
+      ],
+    };
+  },
   component: ProjectDetail,
 });
 
 function ProjectDetail() {
   const { projectId } = Route.useParams();
+  const loaderData = Route.useLoaderData();
   const { data: p, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: () => projectsService.get(projectId),
+    initialData: loaderData?.project,
   });
   const [tab, setTab] = useState<
     "overview" | "workspace" | "members" | "activity" | "repos" | "dashboard"
@@ -71,6 +103,14 @@ function ProjectDetail() {
     (m) => m.user_id === currentUser.id || m.username === currentUser.name,
   );
   const currentUserRole = isOwner ? "owner" : memberObj?.role || "";
+
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const { data: myApps } = useQuery({
+    queryKey: ["myApplications"],
+    queryFn: getMyApplications,
+  });
+  const projectApplication = myApps?.find(a => a.project_id === projectId);
+  const withdrawMutation = useWithdrawApplication();
 
   // Tag generator state
   const [showTagGenerator, setShowTagGenerator] = useState(false);
@@ -212,6 +252,30 @@ function ProjectDetail() {
                 {copied ? "Copied!" : "Copy invite link"}
               </button>
             )}
+
+            {!isOwner && projectApplication ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-medium text-primary">
+                  Status: {projectApplication.status}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => withdrawMutation.mutate(projectApplication.id)}
+                  disabled={withdrawMutation.isPending}
+                  className="inline-flex items-center rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+                >
+                  Withdraw
+                </button>
+              </div>
+            ) : !isOwner ? (
+              <button
+                type="button"
+                onClick={() => setIsApplyModalOpen(true)}
+                className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:opacity-90"
+              >
+                Apply
+              </button>
+            ) : null}
 
             <ShareProjectButton projectTitle={p.name} projectDescription={p.description} />
 
@@ -408,6 +472,12 @@ function ProjectDetail() {
       {tab === "dashboard" && (
         <ProjectDashboard projectId={projectId} currentUserRole={currentUserRole} />
       )}
+
+      <ApplyModal
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+        projectId={projectId}
+      />
     </div>
   );
 }

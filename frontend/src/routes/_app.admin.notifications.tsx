@@ -24,6 +24,9 @@ function AdminNotificationsPage() {
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-notification-stats"],
+    // The API client already resolves to the parsed body. Reading `.data` off
+    // it handed React Query `undefined`, so every tile rendered its `|| 0`
+    // fallback no matter what the server said.
     queryFn: async () => {
       return api.get<{
         total: number;

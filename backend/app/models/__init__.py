@@ -85,9 +85,17 @@ from .security_event import SecurityEvent, SecurityEventType, SecurityEventSever
 from .profile_suggestion import ProfileSuggestionDismissal
 from .request_log import RequestLog  # noqa: F401
 from .background_job import BackgroundJob, JobStatus
+from .testimonial import (  # noqa: F401
+    Testimonial,
+    TestimonialRelationship,
+    TestimonialStatus,
+)
 from .badge import Badge, UserBadge  # noqa: F401
+from .project_release import ProjectRelease, ReleaseStatus, ReleaseType  # noqa: F401
 from .centralized_analytics import CentralizedAnalyticsEvent, AnalyticsEventType  # noqa: F401
 from .global_announcement import GlobalAnnouncement, AnnouncementSeverity, TargetAudience  # noqa: F401
 from .post import Post  # noqa: F401
+from .pinned_project import PinnedProject  # noqa: F401
 
 from .project_comment import ProjectComment  # noqa: F401
+from .project_time_log import ProjectTimeLog  # noqa: F401
