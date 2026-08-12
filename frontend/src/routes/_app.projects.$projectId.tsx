@@ -4,6 +4,7 @@ import { projectsService } from "@/services";
 import { Card, TagChip, Avatar, Skeleton } from "@/components/shared/primitives";
 import { api } from "@/api";
 import { ProjectDashboard } from "@/features/projects/components/ProjectDashboard";
+import { ProjectCalendar } from "@/features/projects/components/ProjectCalendar";
 import { CollaborativeWorkspace } from "@/components/projects/CollaborativeWorkspace";
 import { ProjectMembersList } from "@/features/projects/components/ProjectMembersList";
 import {
@@ -84,7 +85,7 @@ function ProjectDetail() {
     initialData: loaderData?.project,
   });
   const [tab, setTab] = useState<
-    "overview" | "workspace" | "members" | "activity" | "repos" | "dashboard"
+    "overview" | "workspace" | "members" | "activity" | "repos" | "dashboard" | "calendar"
   >("overview");
   const [copied, setCopied] = useState(false);
   const isOwner = p?.owner === currentUser.name;
@@ -109,7 +110,7 @@ function ProjectDetail() {
     queryKey: ["myApplications"],
     queryFn: getMyApplications,
   });
-  const projectApplication = myApps?.find(a => a.project_id === projectId);
+  const projectApplication = myApps?.find((a) => a.project_id === projectId);
   const withdrawMutation = useWithdrawApplication();
 
   // Tag generator state
@@ -160,7 +161,7 @@ function ProjectDetail() {
     return (
       <div className="space-y-4">
         <BackButton to="/projects" label="Back to projects" />
-        
+
         {/* Header Card Skeleton */}
         <Card className="p-5">
           <div className="flex items-start gap-4">
@@ -220,8 +221,8 @@ function ProjectDetail() {
   if (!p) throw notFound();
 
   const tabs = dashboard
-    ? (["overview", "workspace", "members", "activity", "repos", "dashboard"] as const)
-    : (["overview", "workspace", "members", "activity", "repos"] as const);
+    ? (["overview", "workspace", "members", "activity", "repos", "dashboard", "calendar"] as const)
+    : (["overview", "workspace", "members", "activity", "repos", "calendar"] as const);
 
   return (
     <div className="space-y-4">
@@ -392,9 +393,7 @@ function ProjectDetail() {
                         ))}
                       </div>
                       <div className="flex items-center justify-between">
-                        <TypoCaption as="p">
-                          {selectedTags.length} tags selected
-                        </TypoCaption>
+                        <TypoCaption as="p">{selectedTags.length} tags selected</TypoCaption>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => tagMutation.mutate()}
@@ -471,6 +470,9 @@ function ProjectDetail() {
       {tab === "workspace" && <CollaborativeWorkspace projectId={projectId} />}
       {tab === "dashboard" && (
         <ProjectDashboard projectId={projectId} currentUserRole={currentUserRole} />
+      )}
+      {tab === "calendar" && (
+        <ProjectCalendar projectId={projectId} currentUserRole={currentUserRole} />
       )}
 
       <ApplyModal
