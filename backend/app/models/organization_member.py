@@ -23,6 +23,8 @@ from app.database.base import Base
 class OrgMemberRole(str, Enum):
     OWNER = "owner"
     ADMIN = "admin"
+    RECRUITER = "recruiter"
+    MAINTAINER = "maintainer"
     MEMBER = "member"
 
 
