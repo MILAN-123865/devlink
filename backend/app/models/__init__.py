@@ -99,3 +99,4 @@ from .pinned_project import PinnedProject  # noqa: F401
 
 from .project_comment import ProjectComment  # noqa: F401
 from .project_time_log import ProjectTimeLog  # noqa: F401
+from .user_availability import UserAvailability  # noqa: F401

@@ -9,6 +9,7 @@ import { OAuthAccountsSection } from "@/components/settings/OAuthAccountsSection
 import { MFASection } from "@/features/settings/components/MFASection";
 import { UserSessionsActivity } from "@/components/settings/UserSessionsActivity";
 import { BillingDashboard } from "@/features/settings/components/BillingDashboard";
+import { AvailabilitySettings } from "@/components/availability/AvailabilitySettings";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +28,7 @@ import {
   Save,
   ChevronRight,
   ExternalLink,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -39,6 +41,7 @@ const tabs = [
   { id: "account", label: "Account", icon: User },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "availability", label: "Availability", icon: Calendar },
   { id: "security", label: "Security", icon: Shield },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "export", label: "Export Data", icon: Download },
@@ -477,6 +480,12 @@ function SettingsPage() {
                     <Save size={15} /> Save preferences
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {tab === "availability" && (
+              <div className="p-6 space-y-6">
+                <AvailabilitySettings />
               </div>
             )}
 
