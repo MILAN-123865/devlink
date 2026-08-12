@@ -62,10 +62,6 @@ export function ProjectVersionHistory({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       )) as any;
       return res?.data || res;
-      const res: any = await api.get(
-        `/api/projects/${projectId}/versions/compare?v1=${v1}&v2=current`,
-      );
-      return res.data || res;
     },
     onSuccess: (data) => {
       setCompareData(data);

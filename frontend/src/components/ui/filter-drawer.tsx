@@ -217,7 +217,7 @@ export function FilterDrawer({
             type="range"
             min={min}
             max={max}
-            step={step}
+            step={stepValue}
             value={val as any}
             onChange={(e) => handleTextChange(section.id, e.target.value as any)}
             className="w-full cursor-pointer accent-primary"
