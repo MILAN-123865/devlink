@@ -1,19 +1,16 @@
-import { apiClient } from "../client";
+import { api } from "../client";
 import { UserAvailability, AvailabilityUpdate } from "../../types/availability";
 
 export const availabilityApi = {
   getMyAvailability: async (): Promise<UserAvailability> => {
-    const { data } = await apiClient.get("/api/availability/me");
-    return data;
+    return api.get<UserAvailability>("/api/availability/me");
   },
 
   updateMyAvailability: async (updateData: AvailabilityUpdate): Promise<UserAvailability> => {
-    const { data } = await apiClient.put("/api/availability/me", updateData);
-    return data;
+    return api.put<UserAvailability>("/api/availability/me", updateData);
   },
 
   getUserAvailability: async (username: string): Promise<UserAvailability> => {
-    const { data } = await apiClient.get(`/api/availability/${username}`);
-    return data;
+    return api.get<UserAvailability>(`/api/availability/${username}`);
   }
 };

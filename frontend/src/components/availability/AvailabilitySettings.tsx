@@ -89,7 +89,7 @@ export const AvailabilitySettings: React.FC = () => {
         <div className="border-t border-surface-200 pt-6 flex justify-end">
           <LoadingButton
             onClick={handleSave}
-            isLoading={updateMutation.isPending}
+            loading={updateMutation.isPending}
             className="w-full sm:w-auto"
           >
             Save Availability
