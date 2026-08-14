@@ -533,7 +533,10 @@ function Landing() {
       </section>
 
       {/* ===== AI FEATURES SECTION ===== */}
-      <section id="ai-features" className="border-b border-border py-16 bg-gradient-to-b from-background to-surface/10">
+      <section
+        id="ai-features"
+        className="border-b border-border py-16 bg-gradient-to-b from-background to-surface/10"
+      >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-8">
             <TypoHeading as="h2">AI Features</TypoHeading>
@@ -568,7 +571,10 @@ function Landing() {
                 desc: "Personalized suggestions for projects, teammates and next steps.",
               },
             ].map((f) => (
-              <div key={f.title} className="rounded-md border border-border bg-card p-5 flex flex-col items-start">
+              <div
+                key={f.title}
+                className="rounded-md border border-border bg-card p-5 flex flex-col items-start"
+              >
                 <span className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary">
                   <f.icon size={18} />
                 </span>
@@ -1047,7 +1053,6 @@ function Landing() {
               Start for free, upgrade when you need more power. No hidden fees.
             </TypoCaption>
           </div>
-
           <div className="mt-12 flex justify-center">
             <div className="relative flex items-center rounded-full bg-surface border border-border p-1.5 shadow-sm">
               <button
@@ -1093,7 +1098,6 @@ function Landing() {
               </button>
             </div>
           </div>
-
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-center">
             {[
               {
@@ -1186,7 +1190,6 @@ function Landing() {
               </div>
             ))}
           </div>
-
           {/* Trust / Billing Info */}
           <div className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-sm text-muted-foreground font-medium">
             <div className="flex items-center gap-2">
@@ -1202,7 +1205,6 @@ function Landing() {
               <span>No credit card for Hobby</span>
             </div>
           </div>
-
           {/* Feature Comparison */}
           <div className="mt-32 max-w-4xl mx-auto">
             <div className="text-center mb-10">
@@ -1241,7 +1243,6 @@ function Landing() {
               </table>
             </div>
           </div>
-
           {/* FAQ Section */}
           <div className="mt-32 max-w-3xl mx-auto">
             <div className="text-center mb-10">

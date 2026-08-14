@@ -188,6 +188,7 @@ def update_notification(
 )
 def delete_notification(
     notification_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database),
 ):
 
@@ -200,6 +201,12 @@ def delete_notification(
         raise HTTPException(
             status_code=404,
             detail="Notification not found",
+        )
+
+    if notification.recipient_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this notification",
         )
 
     NotificationService.delete_notification(
