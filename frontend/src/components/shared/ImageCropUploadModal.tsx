@@ -280,36 +280,7 @@ export function ImageCropUploadModal({
         )}
 
         {/* Upload State / Dropzone vs Canvas View */}
-        {!previewUrl ? (
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer text-center",
-              isDragging
-                ? "border-primary bg-primary/10"
-                : "border-border bg-muted/30 hover:border-primary/60 hover:bg-muted/50",
-            )}
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Upload size={24} />
-            </div>
-            <p className="mt-3 text-sm font-medium text-foreground">
-              Drag & drop your image here, or <span className="text-primary underline">browse</span>
-            </p>
-            <TypoCaption as="p">
-              Supports JPEG, PNG, WebP, GIF · Max {maxSizeMB}MB
-            </TypoCaption>
-            <input
-              ref={fileInputRef}
-              type="file"
-              data-testid="file-input"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+
 
         {isCameraActive ? (
           <CameraCapture

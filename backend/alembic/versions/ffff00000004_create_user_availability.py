@@ -29,16 +29,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('user_id')
     )
-    
-    # RLS policies
-    op.execute('ALTER TABLE user_availability ENABLE ROW LEVEL SECURITY;')
-    op.execute('''
-        CREATE POLICY "Users manage own availability"
-        ON user_availability
-        FOR ALL
-        USING (auth.uid() = user_id)
-        WITH CHECK (auth.uid() = user_id);
-    ''')
+
 
 def downgrade() -> None:
     op.drop_table('user_availability')
