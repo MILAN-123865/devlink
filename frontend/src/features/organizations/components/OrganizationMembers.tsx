@@ -18,23 +18,19 @@ export function OrganizationMembers({ orgId }: OrganizationMembersProps) {
   const { data: members, isLoading } = useQuery({
     queryKey: ['organizations', orgId, 'members'],
     queryFn: async () => {
- feat/availability-scheduling
       return api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
 
       const res = await api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
       return res;
- main
     },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: OrganizationMemberRole }) => {
- feat/availability-scheduling
       return api.patch<OrganizationMember>(`/organizations/${orgId}/members/${userId}`, { role });
 
       const res = await api.patch<OrganizationMember>(`/organizations/${orgId}/members/${userId}`, { role });
       return res;
- main
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizations', orgId, 'members'] });

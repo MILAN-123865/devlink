@@ -27,10 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TypoSection, TypoHeading } from "@/components/shared/Typography";
- feat/availability-scheduling
-
 import { ShareProfileButton } from "@/components/shared/ShareProfileButton";
- main
 import {
   builders,
   currentUser,

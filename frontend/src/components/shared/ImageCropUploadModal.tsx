@@ -16,19 +16,15 @@ import {
   Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
-feat/availability-scheduling
 
   Camera,
- main
 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/services/imageUpload";
 import { cn } from "@/lib/utils";
- feat/availability-scheduling
 import { TypoCaption } from "@/components/shared/Typography";
 
 import { CameraCapture } from "@/components/shared/CameraCapture";
- main
 
 export type ImageCropMode = "avatar" | "banner";
 
@@ -284,7 +280,6 @@ export function ImageCropUploadModal({
         )}
 
         {/* Upload State / Dropzone vs Canvas View */}
- feat/availability-scheduling
         {!previewUrl ? (
           <div
             onDragOver={handleDragOver}
@@ -372,7 +367,6 @@ export function ImageCropUploadModal({
               <Camera size={18} />
               Take a Photo
             </Button>
- main
           </div>
         ) : (
           <div className="space-y-4">

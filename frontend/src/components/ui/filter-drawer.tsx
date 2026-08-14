@@ -205,11 +205,9 @@ export function FilterDrawer({
     if (type === "range") {
       const min = section.min ?? 0;
       const max = section.max ?? 100;
- feat/availability-scheduling
       const step = section.step ?? 1;
 
       const stepValue = section.step ?? 1;
- main
       const val = asNumber(draftValues[section.id], min);
 
       return (
@@ -223,7 +221,6 @@ export function FilterDrawer({
             type="range"
             min={min}
             max={max}
-feat/availability-scheduling
             step={step}
             value={val}
             onChange={(e) => handleTextChange(section.id, Number(e.target.value))}
@@ -231,7 +228,6 @@ feat/availability-scheduling
             step={stepValue}
             value={val as any}
             onChange={(e) => handleTextChange(section.id, e.target.value as any)}
- main
             className="w-full cursor-pointer accent-primary"
             aria-label={section.title}
           />
