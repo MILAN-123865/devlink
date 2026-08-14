@@ -94,6 +94,8 @@ class UserBase(BaseModel):
 
     open_to_work: bool = True
     is_private: bool = False
+    is_active: bool = True
+    is_verified: bool = False
     privacy_settings: PrivacySettings | None = Field(default_factory=PrivacySettings)
     availability: list[AvailabilitySlot] = Field(default_factory=list)
 

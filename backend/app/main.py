@@ -523,7 +523,8 @@ from app.routers import (
 
 # Router inclusions
 app.include_router(skill_matrix.router, prefix="/api", tags=["Skill Matrix"])
-
+from app.routers import github
+app.include_router(github.router, prefix="/api", tags=["GitHub Insights"])
 
 app.include_router(media.router, prefix="/api", tags=["Media"])
 from app.routers import link_previews
@@ -706,6 +707,15 @@ app.include_router(feature_flags.router, prefix="/api", tags=["Feature Flags"])
 
 from app.routers import reputation
 app.include_router(reputation.router, prefix="/api", tags=["User Reputation System"])
+
+from app.routers import developer_insights
+app.include_router(developer_insights.router, prefix="/api", tags=["Developer Insights"])
+
+from app.routers import project_collaboration_metrics
+app.include_router(project_collaboration_metrics.router, prefix="/api", tags=["Project Collaboration Metrics"])
+from app.routers import team_activity
+app.include_router(team_activity.router, prefix="/api", tags=["Team Activity Timeline"])
+
 
 
 
