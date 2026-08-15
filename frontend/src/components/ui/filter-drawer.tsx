@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import * as React from "react";
@@ -389,6 +388,17 @@ export function FilterDrawer({
     return Object.values(searchQueries).some((q) => q && q.trim());
   }, [searchQueries]);
 
+  // Check if there are any filters active (selected chips or search queries)
+  const hasActiveFilters = React.useMemo(() => {
+    // Check if any multi/select section has selected values
+    const hasSelected = sections.some((section) => {
+      const isMulti = section.type !== "select" && section.type !== "range";
+      const selectedList = asList(draftValues[section.id]);
+      return selectedList.length > 0;
+    });
+    return hasSelected || hasAnySearchQuery;
+  }, [sections, draftValues, searchQueries, hasAnySearchQuery]);
+
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -428,17 +438,6 @@ export function FilterDrawer({
       </Drawer>
     );
   }
-
-  // Check if there are any filters active (selected chips or search queries)
-  const hasActiveFilters = React.useMemo(() => {
-    // Check if any multi/select section has selected values
-    const hasSelected = sections.some((section) => {
-      const isMulti = section.type !== "select" && section.type !== "range";
-      const selectedList = asList(draftValues[section.id]);
-      return selectedList.length > 0;
-    });
-    return hasSelected || hasAnySearchQuery;
-  }, [sections, draftValues, searchQueries]);
 
   if (!hasActiveFilters && !open) {
     // Show empty state when no filters are active and drawer is closed
