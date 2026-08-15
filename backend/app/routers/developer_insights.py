@@ -35,4 +35,6 @@ def get_developer_insights(
         description="Date range filter: 7d, 30d, 90d, 1y, or all",
     ),
 ) -> DeveloperInsightsResponse:
-    return DeveloperInsightsService.get_user_insights(db=db, user=current_user, date_range=range)
+    return DeveloperInsightsService.get_user_insights(
+        db=db, user=current_user, date_range=range
+    )

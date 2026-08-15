@@ -18,7 +18,9 @@ class DeveloperInsightsMetrics(BaseModel):
     profile_views: int = Field(0, description="Total profile views")
     followers_gained: int = Field(0, description="Followers gained in range")
     messages_sent: int = Field(0, description="Messages sent")
-    contribution_streak: int = Field(0, description="Current contribution streak in days")
+    contribution_streak: int = Field(
+        0, description="Current contribution streak in days"
+    )
     ai_match_success_rate: float = Field(0.0, description="AI match success percentage")
 
 

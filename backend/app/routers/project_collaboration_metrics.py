@@ -7,10 +7,17 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.project_collaboration_metrics import ProjectCollaborationMetricsResponse
-from app.services.project_collaboration_metrics_service import ProjectCollaborationMetricsService
+from app.schemas.project_collaboration_metrics import (
+    ProjectCollaborationMetricsResponse,
+)
+from app.services.project_collaboration_metrics_service import (
+    ProjectCollaborationMetricsService,
+)
 
-router = APIRouter(prefix="/projects/{project_id}/collaboration-metrics", tags=["Project Collaboration Metrics"])
+router = APIRouter(
+    prefix="/projects/{project_id}/collaboration-metrics",
+    tags=["Project Collaboration Metrics"],
+)
 
 
 @router.get(
@@ -31,4 +38,6 @@ def get_project_collaboration_metrics(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProjectCollaborationMetricsResponse:
-    return ProjectCollaborationMetricsService.get_metrics_for_project(db=db, project_id=project_id)
+    return ProjectCollaborationMetricsService.get_metrics_for_project(
+        db=db, project_id=project_id
+    )
