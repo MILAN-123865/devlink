@@ -1,10 +1,10 @@
-﻿"\""\"create project_calendar_events table
+"""create project_calendar_events table
 
 Revision ID: 1a2b3c4d5ea1
 Revises: ea6d6738e0b0
 Create Date: 2026-08-12 20:10:00.000000
 
-"\""\"
+"""
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
