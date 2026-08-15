@@ -193,4 +193,3 @@ def test_update_user_invalid_payload(client: TestClient, register_and_login):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 422
-

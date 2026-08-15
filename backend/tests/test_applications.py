@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.models.project import ProjectStage, ProjectVisibility
 from app.schemas.project import ProjectCreate
 from app.services.project_service import ProjectService
-from app.models.application import ApplicationStatus
 
 from app.models.builder_flare import BuilderFlare
 
@@ -236,10 +235,16 @@ def test_delete_application(client: TestClient, register_and_login, test_project
     assert nf.status_code == 404
 
 
-def test_accept_application_unauthorized(client: TestClient, register_and_login, test_project):
+def test_accept_application_unauthorized(
+    client: TestClient, register_and_login, test_project
+):
     pid = test_project["id"]
-    applicant_id, applicant_token = register_and_login("applicant_unauth@example.com", "appunauth")
-    other_id, other_token = register_and_login("random_user_unauth@example.com", "randomunauth")
+    applicant_id, applicant_token = register_and_login(
+        "applicant_unauth@example.com", "appunauth"
+    )
+    other_id, other_token = register_and_login(
+        "random_user_unauth@example.com", "randomunauth"
+    )
 
     c = client.post(
         "/api/applications/",
@@ -257,10 +262,16 @@ def test_accept_application_unauthorized(client: TestClient, register_and_login,
     assert res.status_code == 403
 
 
-def test_withdraw_application_unauthorized(client: TestClient, register_and_login, test_project):
+def test_withdraw_application_unauthorized(
+    client: TestClient, register_and_login, test_project
+):
     pid = test_project["id"]
-    applicant_id, applicant_token = register_and_login("applicant_w_unauth@example.com", "appwunauth")
-    other_id, other_token = register_and_login("random_w_unauth@example.com", "randwunauth")
+    applicant_id, applicant_token = register_and_login(
+        "applicant_w_unauth@example.com", "appwunauth"
+    )
+    other_id, other_token = register_and_login(
+        "random_w_unauth@example.com", "randwunauth"
+    )
 
     c = client.post(
         "/api/applications/",
@@ -287,11 +298,12 @@ def test_create_application_unauthenticated(client: TestClient, test_project):
     assert res.status_code == 401
 
 
-def test_accept_application_not_found(client: TestClient, register_and_login, test_project):
+def test_accept_application_not_found(
+    client: TestClient, register_and_login, test_project
+):
     owner_token = test_project["token"]
     res = client.patch(
         f"/api/applications/{uuid.uuid4()}/accept",
         headers={"Authorization": f"Bearer {owner_token}"},
     )
     assert res.status_code == 404
-

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.schemas.team_activity import (
@@ -23,7 +23,7 @@ class TeamActivityService:
         activity_type: Optional[TeamActivityType] = None,
     ) -> TeamActivityTimelineResponse:
         now = datetime.now(timezone.utc)
-        
+
         raw_items = [
             {
                 "id": str(uuid.uuid4()),
@@ -105,7 +105,9 @@ class TeamActivityService:
         ]
 
         if activity_type:
-            filtered = [item for item in raw_items if item["activity_type"] == activity_type]
+            filtered = [
+                item for item in raw_items if item["activity_type"] == activity_type
+            ]
         else:
             filtered = raw_items
 
@@ -125,7 +127,9 @@ class TeamActivityService:
         )
 
     @staticmethod
-    def create_activity(db: Session, project_id: int, activity_in: TeamActivityCreate) -> TeamActivityItem:
+    def create_activity(
+        db: Session, project_id: int, activity_in: TeamActivityCreate
+    ) -> TeamActivityItem:
         return TeamActivityItem(
             id=str(uuid.uuid4()),
             project_id=project_id,
@@ -133,7 +137,8 @@ class TeamActivityService:
             title=activity_in.title,
             description=activity_in.description,
             actor_name=activity_in.actor_name or "System User",
-            actor_avatar=activity_in.actor_avatar or "https://api.dicebear.com/7.x/avataaars/svg?seed=DevLink",
+            actor_avatar=activity_in.actor_avatar
+            or "https://api.dicebear.com/7.x/avataaars/svg?seed=DevLink",
             metadata_info=activity_in.metadata_info or {},
             created_at=datetime.now(timezone.utc),
         )

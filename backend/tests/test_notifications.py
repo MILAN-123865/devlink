@@ -306,4 +306,3 @@ def test_delete_notification_unauthorized(client: TestClient, register_and_login
         headers={"Authorization": f"Bearer {token2}"},
     )
     assert res.status_code in (403, 404)
-

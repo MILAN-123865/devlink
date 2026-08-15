@@ -15,7 +15,9 @@ from app.schemas.team_activity import (
 )
 from app.services.team_activity_service import TeamActivityService
 
-router = APIRouter(prefix="/projects/{project_id}/activity-timeline", tags=["Team Activity Timeline"])
+router = APIRouter(
+    prefix="/projects/{project_id}/activity-timeline", tags=["Team Activity Timeline"]
+)
 
 
 @router.get(
@@ -37,10 +39,16 @@ def get_team_activity_timeline(
     current_user: Annotated[User, Depends(get_current_user)],
     page: int = Query(default=1, ge=1, description="Page number for pagination"),
     limit: int = Query(default=10, ge=1, le=50, description="Items per page"),
-    activity_type: Optional[TeamActivityType] = Query(default=None, description="Filter by activity type"),
+    activity_type: Optional[TeamActivityType] = Query(
+        default=None, description="Filter by activity type"
+    ),
 ) -> TeamActivityTimelineResponse:
     return TeamActivityService.get_project_timeline(
-        db=db, project_id=project_id, page=page, limit=limit, activity_type=activity_type
+        db=db,
+        project_id=project_id,
+        page=page,
+        limit=limit,
+        activity_type=activity_type,
     )
 
 
@@ -59,4 +67,6 @@ def create_team_activity_event(
 ) -> TeamActivityItem:
     if not activity_in.actor_name:
         activity_in.actor_name = getattr(current_user, "username", "Team Member")
-    return TeamActivityService.create_activity(db=db, project_id=project_id, activity_in=activity_in)
+    return TeamActivityService.create_activity(
+        db=db, project_id=project_id, activity_in=activity_in
+    )
