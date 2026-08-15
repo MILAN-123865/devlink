@@ -135,7 +135,7 @@ export function FilterDrawer({
 
   // Track search queries per section for pills display
   const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(
-    Object.fromKeys(sections.map((s) => [s.id, ""]))
+    Object.fromEntries(sections.map((s) => [s.id, ""])),
   );
 
   // Update search query state
@@ -176,7 +176,7 @@ export function FilterDrawer({
   const handleReset = () => {
     onReset();
     setDraftValues({});
-    setSearchQueries(Object.fromKeys(sections.map((s) => [s.id, ""])));
+    setSearchQueries(Object.fromEntries(sections.map((s) => [s.id, ""])));
     onOpenChange(false);
   };
 
@@ -186,7 +186,7 @@ export function FilterDrawer({
     optionValue: string,
     label: string,
     isSelected: boolean,
-    hasSearchQuery: boolean
+    hasSearchQuery: boolean,
   ) => {
     const isSearchMode = sections.find((s) => s.id === sectionId)?.type === "search";
 
@@ -201,18 +201,16 @@ export function FilterDrawer({
             ? "border-primary bg-primary/10 text-primary font-semibold"
             : "border-border bg-surface text-muted-foreground hover:border-foreground/30 hover:text-foreground",
           // Show pill as "active search" when there's a search query
-          hasSearchMode && isSelected
+          isSearchMode && isSelected
             ? "border-primary bg-primary/10 text-primary font-semibold"
-            : ""
+            : "",
         )}
         aria-pressed={isSelected}
         aria-label={`${sectionId}: ${optionLabel(sectionId, optionValue)}`}
       >
         {isSelected && <Check size={12} className="shrink-0" />}
         <span>{label}</span>
-        {hasSearchQuery && (
-          <span className="ml-1 text-[10px] opacity-70">🔍 active</span>
-        )}
+        {hasSearchQuery && <span className="ml-1 text-[10px] opacity-70">🔍 active</span>}
       </button>
     );
   };
@@ -245,7 +243,7 @@ export function FilterDrawer({
           className="w-full rounded-md border border-border bg-surface py-1.5 pl-8 pr-3 text-[13px] text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           aria-label={section.title}
         />
-        {hasSearchQuery && (
+        {hasQuery && (
           <button
             type="button"
             onClick={() => {
@@ -336,7 +334,7 @@ export function FilterDrawer({
             option.value,
             option.label,
             isSelected,
-            sectionSearchQuery !== ""
+            sectionSearchQuery !== "",
           );
         })}
       </div>
@@ -350,9 +348,7 @@ export function FilterDrawer({
           key={section.id}
           className="space-y-1.5 border-b border-border/50 pb-4 last:border-b-0 last:pb-0"
         >
-          <TypoCard>
-            {section.title}
-          </TypoCard>
+          <TypoCard>{section.title}</TypoCard>
           {renderSectionContent(section)}
         </div>
       ))}

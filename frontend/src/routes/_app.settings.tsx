@@ -96,9 +96,7 @@ function SettingsPage() {
     <div className="mx-auto max-w-5xl space-y-6 py-6">
       <div className="px-0">
         <TypoHeading as="h1">Settings</TypoHeading>
-        <TypoCaption as="p">
-          Manage your account settings and preferences
-        </TypoCaption>
+        <TypoCaption as="p">Manage your account settings and preferences</TypoCaption>
       </div>
 
       <Separator />
@@ -130,15 +128,11 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Profile</TypoHeading>
-                  <TypoCaption as="p">
-                    Manage your public profile information
-                  </TypoCaption>
+                  <TypoCaption as="p">Manage your public profile information</TypoCaption>
                 </div>
 
                 <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-4">
-                  <TypoSection>
-                    Profile Media
-                  </TypoSection>
+                  <TypoSection>Profile Media</TypoSection>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-5 text-center">
                       <UserAvatar
@@ -152,9 +146,7 @@ function SettingsPage() {
                         <p className="text-sm font-medium text-foreground">Avatar</p>
                         <TypoCaption as="p">Recommended: 400x400px</TypoCaption>
                         <p className="text-xs font-semibold text-foreground">Avatar Photo</p>
-                        <TypoCaption as="p">
-                          Drag & drop or crop before upload
-                        </TypoCaption>
+                        <TypoCaption as="p">Drag & drop or crop before upload</TypoCaption>
                       </div>
                       <Button
                         type="button"
@@ -183,9 +175,7 @@ function SettingsPage() {
                         <p className="text-sm font-medium text-foreground">Banner</p>
                         <TypoCaption as="p">Recommended: 1200x400px</TypoCaption>
                         <p className="text-xs font-semibold text-foreground">Header Banner</p>
-                        <TypoCaption as="p">
-                          3:1 aspect ratio landscape
-                        </TypoCaption>
+                        <TypoCaption as="p">3:1 aspect ratio landscape</TypoCaption>
                       </div>
                       <Button
                         type="button"
@@ -250,9 +240,7 @@ function SettingsPage() {
                       defaultValue="Product engineer. React / Postgres / Rust."
                       placeholder="Tell us about yourself"
                     />
-                    <TypoCaption as="p">
-                      Brief description for your profile
-                    </TypoCaption>
+                    <TypoCaption as="p">Brief description for your profile</TypoCaption>
                   </div>
                   <div className="flex items-center gap-3 pt-2">
                     <Button type="submit" className="gap-2" disabled={savingAccount}>
@@ -314,18 +302,14 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Appearance</TypoHeading>
-                  <TypoCaption as="p">
-                    Customize how DevLink looks for you
-                  </TypoCaption>
+                  <TypoCaption as="p">Customize how DevLink looks for you</TypoCaption>
                 </div>
 
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground">Theme</p>
-                      <TypoCaption as="p">
-                        Select your preferred color scheme
-                      </TypoCaption>
+                      <TypoCaption as="p">Select your preferred color scheme</TypoCaption>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="default" size="sm" className="gap-2">
@@ -345,9 +329,7 @@ function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground">Reduced motion</p>
-                      <TypoCaption as="p">
-                        Minimize animations across the interface
-                      </TypoCaption>
+                      <TypoCaption as="p">Minimize animations across the interface</TypoCaption>
                     </div>
                     <Switch />
                   </div>
@@ -355,9 +337,7 @@ function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground">Compact mode</p>
-                      <TypoCaption as="p">
-                        Reduce spacing for a denser layout
-                      </TypoCaption>
+                      <TypoCaption as="p">Reduce spacing for a denser layout</TypoCaption>
                     </div>
                     <Switch />
                   </div>
@@ -369,16 +349,12 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Notifications</TypoHeading>
-                  <TypoCaption as="p">
-                    Choose what notifications you receive
-                  </TypoCaption>
+                  <TypoCaption as="p">Choose what notifications you receive</TypoCaption>
                 </div>
 
                 <div className="space-y-5">
                   <div>
-                    <TypoSection>
-                      Push notifications
-                    </TypoSection>
+                    <TypoSection>Push notifications</TypoSection>
                     <div className="space-y-4">
                       {[
                         {
@@ -429,9 +405,7 @@ function SettingsPage() {
                   <Separator />
 
                   <div>
-                    <TypoSection>
-                      Email notifications
-                    </TypoSection>
+                    <TypoSection>Email notifications</TypoSection>
                     <div className="space-y-4">
                       {[
                         {
@@ -483,9 +457,7 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Security</TypoHeading>
-                  <TypoCaption as="p">
-                    Manage your password and account security
-                  </TypoCaption>
+                  <TypoCaption as="p">Manage your password and account security</TypoCaption>
                 </div>
 
                 <form
@@ -566,9 +538,7 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Billing</TypoHeading>
-                  <TypoCaption as="p">
-                    Manage your subscription and payment methods
-                  </TypoCaption>
+                  <TypoCaption as="p">Manage your subscription and payment methods</TypoCaption>
                 </div>
 
                 <div className="rounded-lg border border-border p-5 space-y-4">
@@ -610,9 +580,7 @@ function SettingsPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Export Data</TypoHeading>
-                  <TypoCaption as="p">
-                    Download a copy of your DevLink data
-                  </TypoCaption>
+                  <TypoCaption as="p">Download a copy of your DevLink data</TypoCaption>
                 </div>
 
                 <div className="rounded-lg border border-border p-5 space-y-4">
