@@ -358,6 +358,9 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const payload = await parseBody(res);
   if (!res.ok) {
     const message =
+      (typeof payload === "object" && payload && "error" in payload && typeof (payload as any).error === "object" && (payload as any).error?.message
+        ? String((payload as any).error.message)
+        : null) ??
       (typeof payload === "object" && payload && "detail" in payload
         ? String((payload as { detail: unknown }).detail)
         : null) ??
