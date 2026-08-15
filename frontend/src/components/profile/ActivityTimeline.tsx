@@ -2,7 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { activitiesService } from "@/services";
 import { Card, Skeleton } from "@/components/shared/primitives";
 import { formatDistanceToNow } from "date-fns";
-import { UserPlus, Edit3, FolderPlus, Award, Clock, MessageCircle, FileText, Github } from "lucide-react";
+import {
+  UserPlus,
+  Edit3,
+  FolderPlus,
+  Award,
+  Clock,
+  MessageCircle,
+  FileText,
+  Github,
+} from "lucide-react";
 import type { BackendActivity } from "@/services";
 
 interface ActivityTimelineProps {
@@ -34,7 +43,11 @@ function getActivityIcon(type: string) {
 }
 
 export function ActivityTimeline({ userId }: ActivityTimelineProps) {
-  const { data: activities, isLoading, isError } = useQuery({
+  const {
+    data: activities,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["user-activities", userId],
     queryFn: () => activitiesService.user(userId),
   });
@@ -42,7 +55,7 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
   return (
     <Card className="p-4 mt-4">
       <p className="text-[13px] font-semibold text-foreground mb-4">Activity Timeline</p>
-      
+
       {isLoading && (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
@@ -57,16 +70,10 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
         </div>
       )}
 
-      {isError && (
-        <p className="text-[13px] text-destructive">
-          Failed to load recent activity.
-        </p>
-      )}
+      {isError && <p className="text-[13px] text-destructive">Failed to load recent activity.</p>}
 
       {!isLoading && !isError && activities?.length === 0 && (
-        <p className="text-[13px] text-muted-foreground">
-          No recent activity to show.
-        </p>
+        <p className="text-[13px] text-muted-foreground">No recent activity to show.</p>
       )}
 
       {!isLoading && !isError && activities && activities.length > 0 && (
@@ -77,13 +84,9 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
                 {getActivityIcon(activity.activity_type)}
               </span>
               <div className="flex flex-col">
-                <p className="text-[13px] font-medium text-foreground">
-                  {activity.title}
-                </p>
+                <p className="text-[13px] font-medium text-foreground">{activity.title}</p>
                 {activity.description && (
-                  <p className="text-[12px] text-muted-foreground mt-0.5">
-                    {activity.description}
-                  </p>
+                  <p className="text-[12px] text-muted-foreground mt-0.5">{activity.description}</p>
                 )}
                 <time className="text-[11px] text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}

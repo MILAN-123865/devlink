@@ -357,7 +357,6 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const res = await coreFetch(path, opts);
   const payload = await parseBody(res);
   if (!res.ok) {
-
     const message =
       (typeof payload === "object" && payload && "detail" in payload
         ? String((payload as { detail: unknown }).detail)

@@ -16,7 +16,7 @@ const COMMON_TIMEZONES = [
   "Europe/Paris",
   "Asia/Kolkata",
   "Asia/Tokyo",
-  "Australia/Sydney"
+  "Australia/Sydney",
 ];
 
 export const TimezoneSelector: React.FC<Props> = ({ value, onChange }) => {
@@ -34,9 +34,7 @@ export const TimezoneSelector: React.FC<Props> = ({ value, onChange }) => {
           </option>
         ))}
       </select>
-      <p className="text-xs text-surface-400 mt-2">
-        All times will be displayed in this timezone.
-      </p>
+      <p className="text-xs text-surface-400 mt-2">All times will be displayed in this timezone.</p>
     </div>
   );
 };

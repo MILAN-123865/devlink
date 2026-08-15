@@ -12,5 +12,5 @@ export const availabilityApi = {
 
   getUserAvailability: async (username: string): Promise<UserAvailability> => {
     return api.get<UserAvailability>(`/api/availability/${username}`);
-  }
+  },
 };

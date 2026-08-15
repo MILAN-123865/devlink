@@ -12,7 +12,7 @@ import { Calendar } from "lucide-react";
 export const AvailabilitySettings: React.FC = () => {
   const { data: availability, isLoading } = useMyAvailability();
   const updateMutation = useUpdateAvailability();
-  
+
   const [formData, setFormData] = useState<AvailabilityUpdate>({
     timezone: "UTC",
     working_hours: {},
@@ -51,7 +51,9 @@ export const AvailabilitySettings: React.FC = () => {
         </div>
         <div>
           <h2 className="text-lg font-semibold text-surface-900">Availability Settings</h2>
-          <p className="text-sm text-surface-500">Manage when you are available for collaboration.</p>
+          <p className="text-sm text-surface-500">
+            Manage when you are available for collaboration.
+          </p>
         </div>
       </div>
 

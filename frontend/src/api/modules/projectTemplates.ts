@@ -82,7 +82,7 @@ export const projectTemplatesApi = {
 
   updateTemplate: async (
     templateId: string,
-    data: ProjectTemplateUpdateInput
+    data: ProjectTemplateUpdateInput,
   ): Promise<ProjectTemplate> => {
     return await api.patch<ProjectTemplate>(`/api/templates/${templateId}`, data);
   },
@@ -92,20 +92,20 @@ export const projectTemplatesApi = {
   },
 
   toggleFavorite: async (
-    templateId: string
+    templateId: string,
   ): Promise<{ success: boolean; is_favorited: boolean; stars_count: number }> => {
     return await api.post<{ success: boolean; is_favorited: boolean; stars_count: number }>(
-      `/api/templates/${templateId}/favorite`
+      `/api/templates/${templateId}/favorite`,
     );
   },
 
   cloneTemplate: async (
     templateId: string,
-    data?: ProjectTemplateCloneInput
+    data?: ProjectTemplateCloneInput,
   ): Promise<{ id: string; title: string; slug: string }> => {
     return await api.post<{ id: string; title: string; slug: string }>(
       `/api/templates/${templateId}/clone`,
-      data
+      data,
     );
   },
 };

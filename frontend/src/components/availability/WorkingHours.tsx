@@ -54,10 +54,7 @@ export const WorkingHours: React.FC<Props> = ({ value, onChange }) => {
           return (
             <div key={day} className="flex flex-col sm:flex-row sm:items-start gap-4">
               <div className="flex items-center gap-3 w-40 shrink-0 h-10">
-                <Switch
-                  checked={isEnabled}
-                  onCheckedChange={(c) => handleToggleDay(day, c)}
-                />
+                <Switch checked={isEnabled} onCheckedChange={(c) => handleToggleDay(day, c)} />
                 <span className="text-sm font-medium capitalize text-surface-700">{day}</span>
               </div>
 
@@ -65,32 +62,33 @@ export const WorkingHours: React.FC<Props> = ({ value, onChange }) => {
                 {!isEnabled && (
                   <div className="h-10 flex items-center text-sm text-surface-400">Unavailable</div>
                 )}
-                
-                {isEnabled && slots.map((slot, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <input
-                      type="time"
-                      value={slot.start}
-                      onChange={(e) => handleUpdateSlot(day, idx, "start", e.target.value)}
-                      className="bg-surface-50 border border-surface-200 rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                    />
-                    <span className="text-surface-400">-</span>
-                    <input
-                      type="time"
-                      value={slot.end}
-                      onChange={(e) => handleUpdateSlot(day, idx, "end", e.target.value)}
-                      className="bg-surface-50 border border-surface-200 rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                    />
-                    
-                    <button
-                      onClick={() => handleRemoveSlot(day, idx)}
-                      className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                
+
+                {isEnabled &&
+                  slots.map((slot, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <input
+                        type="time"
+                        value={slot.start}
+                        onChange={(e) => handleUpdateSlot(day, idx, "start", e.target.value)}
+                        className="bg-surface-50 border border-surface-200 rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      />
+                      <span className="text-surface-400">-</span>
+                      <input
+                        type="time"
+                        value={slot.end}
+                        onChange={(e) => handleUpdateSlot(day, idx, "end", e.target.value)}
+                        className="bg-surface-50 border border-surface-200 rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      />
+
+                      <button
+                        onClick={() => handleRemoveSlot(day, idx)}
+                        className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+
                 {isEnabled && (
                   <button
                     onClick={() => handleAddSlot(day)}

@@ -23,9 +23,7 @@ export const MeetingAvailability: React.FC<Props> = ({ value, onChange }) => {
           </option>
         ))}
       </select>
-      <p className="text-xs text-surface-400 mt-2">
-        How long a typical meeting slot should be.
-      </p>
+      <p className="text-xs text-surface-400 mt-2">How long a typical meeting slot should be.</p>
     </div>
   );
 };

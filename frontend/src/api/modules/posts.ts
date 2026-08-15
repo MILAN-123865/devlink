@@ -4,7 +4,8 @@ import { analyzeSpam } from "@/lib/validation/spamDetection";
 
 export const postsApi = {
   list: (query?: { page?: number; limit?: number }) => api.get<Flare[]>("/api/posts", { query }),
-  drafts: (query?: { page?: number; limit?: number }) => api.get<Flare[]>("/api/posts/drafts", { query }),
+  drafts: (query?: { page?: number; limit?: number }) =>
+    api.get<Flare[]>("/api/posts/drafts", { query }),
   create: async (body: { content: string; image?: string; tags?: string[] }) => {
     const spamCheck = analyzeSpam(body.content);
     if (spamCheck.isSpam) {
