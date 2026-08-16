@@ -1,3 +1,4 @@
+
 def test_get_skill_matrix(client, register_and_login):
     _, token = register_and_login("skillmatrix1@example.com", "skillmatrix1")
     headers = {"Authorization": f"Bearer {token}"}

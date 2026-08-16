@@ -206,6 +206,57 @@ export interface Deadline {
   severity: "danger" | "warning" | "info";
 }
 
+export interface OrganizationMember {
+  id: ID;
+  name: string;
+  role: string;
+  department: string;
+  avatar: string;
+  joinedAt: string;
+}
+
+export interface OrganizationOpening {
+  id: ID;
+  title: string;
+  location: string;
+  type: "Full-time" | "Part-time" | "Contract";
+  description?: string;
+}
+
+export interface OrganizationProject {
+  id: ID;
+  name: string;
+  category: string;
+  description: string;
+  website?: string;
+  repoUrl?: string;
+  members?: number;
+}
+
+export interface OrganizationStats {
+  projects: number;
+  members: number;
+  activeUsers: number;
+  satisfaction: number;
+}
+
+export interface OrganizationBanner {
+  id: ID;
+  name: string;
+  tagline: string;
+  logoUrl: string;
+  color: string;
+}
+
+export interface ActivityItem {
+  id: ID;
+  type: "join" | "project" | "hire" | "update";
+  title: string;
+  description: string;
+  ago: string;
+  icon: string;
+}
+
 const AV = (seed: string) =>
   `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
@@ -822,6 +873,131 @@ export const deadlines: Deadline[] = [
   },
   { id: "d4", project: "Project Milestone", milestone: "v1.0", dueDays: 10, severity: "info" },
 ];
+
+export const organization = {
+  id: "org1",
+  name: "DevLink Labs",
+  tagline: "Building the network for developers",
+  logoUrl: "https://devlink.io/logo.svg",
+  color: "from-primary-500 to-primary-600",
+  members: 15,
+  openPositions: 4,
+  activeUsers: 3421,
+  satisfaction: 97,
+  team: [
+    {
+      id: "m1",
+      name: "Nancy Patel",
+      role: "Founder & CEO",
+      department: "Executive",
+      avatar: AV("Nancy"),
+      joinedAt: "2022-01-15",
+    },
+    {
+      id: "m2",
+      name: "Rahul Verma",
+      role: "Lead Developer",
+      department: "Engineering",
+      avatar: AV("Rahul"),
+      joinedAt: "2022-03-20",
+    },
+    {
+      id: "m3",
+      name: "Ankit Singh",
+      role: "Design Lead",
+      department: "Design",
+      avatar: AV("Ankit"),
+      joinedAt: "2022-05-10",
+    },
+    {
+      id: "m4",
+      name: "Sneha Iyer",
+      role: "Product Manager",
+      department: "Product",
+      avatar: AV("Sneha"),
+      joinedAt: "2022-07-05",
+    },
+    {
+      id: "m5",
+      name: "Alex Johnson",
+      role: "DevOps Engineer",
+      department: "Engineering",
+      avatar: AV("Alex"),
+      joinedAt: "2023-01-10",
+    },
+  ],
+  openings: [
+    {
+      id: "o1",
+      title: "Senior Frontend Developer",
+      location: "Remote",
+      type: "Full-time",
+    },
+    {
+      id: "o2",
+      title: "UI/UX Designer",
+      location: "San Francisco, CA",
+      type: "Full-time",
+    },
+    {
+      id: "o3",
+      title: "DevOps Engineer",
+      location: "New York, NY",
+      type: "Contract",
+    },
+  ],
+  projects: [
+    {
+      id: "p1",
+      name: "DevLink Platform",
+      category: "Web Application",
+      description:
+        "A network platform for developers to showcase their skills and connect with opportunities",
+      website: "https://devlink.io",
+      repoUrl: "https://github.com/devlink/platform",
+    },
+    {
+      id: "p2",
+      name: "Portfolio Builder",
+      category: "Tool",
+      description: "Customizable portfolio builder for developers",
+      repoUrl: "https://github.com/devlink/portfolio-builder",
+    },
+    {
+      id: "p3",
+      name: "Flares API",
+      category: "Backend",
+      description: "API for creating and managing developer flares",
+      repoUrl: "https://github.com/devlink/flares-api",
+    },
+  ],
+  activity: [
+    {
+      id: "a1",
+      type: "join",
+      title: "Alex Johnson joined the team",
+      description: "Started as DevOps Engineer",
+      ago: "2 days ago",
+      icon: "UserPlus",
+    },
+    {
+      id: "a2",
+      type: "project",
+      title: "DevLink Platform v2.0 launched",
+      description: "Major update with new features and improved performance",
+      ago: "1 week ago",
+      icon: "Globe",
+    },
+    {
+      id: "a3",
+      type: "hire",
+      title: "Hiring Senior Frontend Developer",
+      description: "Now hiring for remote position",
+      ago: "3 days ago",
+      icon: "Briefcase",
+    },
+  ],
+};
 
 export const currentUser = {
   id: "me",

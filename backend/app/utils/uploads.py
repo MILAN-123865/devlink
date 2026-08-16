@@ -76,6 +76,45 @@ def save_resume_upload(contents: bytes, filename: str, user_id: uuid.UUID | str)
 
     return f"/uploads/resumes/{safe_name}"
 
+ALLOWED_VIDEO_EXTENSIONS: Final[set[str]] = {
+    ".mp4",
+    ".webm",
+    ".mov",
+}
+
+ALLOWED_VIDEO_MIME_TYPES: Final[set[str]] = {
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+}
+
+
+def validate_video_introduction_upload(
+    filename: str | None,
+    content_type: str | None,
+    size_bytes: int,
+) -> None:
+    if not filename:
+        raise ValueError("Please upload a video file.")
+
+    ext = Path(filename).suffix.lower()
+
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise ValueError("Unsupported video format. Allowed: MP4, WebM, MOV.")
+
+    normalized_content_type = (content_type or "").lower()
+
+    if normalized_content_type not in ALLOWED_VIDEO_MIME_TYPES:
+        raise ValueError("Please upload a valid video file.")
+
+    if size_bytes > MAX_IMAGE_SIZE_BYTES:
+        raise ValueError(
+            f"Video file must be smaller than "
+            f"{settings.MAX_UPLOAD_SIZE_MB}MB."
+        )
+
+
+def save_video_introduction_upload(
 def validate_voice_introduction_upload(
     filename: str | None, content_type: str | None, size_bytes: int
 ) -> None:
@@ -108,6 +147,7 @@ def save_voice_introduction_upload(
 ) -> str:
     scan_file_for_malware(contents, filename)
 
+    upload_dir = Path(settings.UPLOAD_DIR) / "video_introductions"
     upload_dir = Path(settings.UPLOAD_DIR) / "voice_introductions"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,6 +157,7 @@ def save_voice_introduction_upload(
     destination = upload_dir / safe_name
     destination.write_bytes(contents)
 
+    return f"/uploads/video_introductions/{safe_name}"
     return f"/uploads/voice_introductions/{safe_name}"
 
 def validate_image_upload(
