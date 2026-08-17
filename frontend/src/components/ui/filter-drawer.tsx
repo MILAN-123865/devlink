@@ -185,7 +185,7 @@ export function FilterDrawer({
     optionValue: string,
     label: string,
     isSelected: boolean,
-    hasQuery: boolean,
+    hasSearchQuery: boolean,
     isMulti: boolean = true,
   ) => {
     const isSearchMode = sections.find((s) => s.id === sectionId)?.type === "search";
@@ -210,7 +210,7 @@ export function FilterDrawer({
       >
         {isSelected && <Check size={12} className="shrink-0" />}
         <span>{label}</span>
-        {hasQuery && <span className="ml-1 text-[10px] opacity-70">🔍 active</span>}
+        {hasSearchQuery && <span className="ml-1 text-[10px] opacity-70">🔍 active</span>}
       </button>
     );
   };
