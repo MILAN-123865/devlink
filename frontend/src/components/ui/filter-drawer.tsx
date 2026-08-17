@@ -135,7 +135,7 @@ export function FilterDrawer({
 
   // Track search queries per section for pills display
   const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(
-    Object.fromEntries(sections.map((s) => [s.id, ""]))
+    Object.fromEntries(sections.map((s) => [s.id, ""])),
   );
 
   // Update search query state
@@ -187,6 +187,7 @@ export function FilterDrawer({
     label: string,
     isSelected: boolean,
     hasSearchQuery: boolean,
+    isMulti: boolean = true,
   ) => {
     const isSearchMode = sections.find((s) => s.id === sectionId)?.type === "search";
 
@@ -194,7 +195,7 @@ export function FilterDrawer({
       <button
         key={optionValue}
         type="button"
-        onClick={() => handleOptionToggle(sectionId, optionValue, false)}
+        onClick={() => handleOptionToggle(sectionId, optionValue, isMulti)}
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px] font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer",
           isSelected
@@ -335,6 +336,7 @@ export function FilterDrawer({
             option.label,
             isSelected,
             sectionSearchQuery !== "",
+            isMulti,
           );
         })}
       </div>
