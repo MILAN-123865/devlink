@@ -53,6 +53,7 @@ export const projectsApi = {
     opensource?: boolean | string;
     tech?: string;
   }) => api.get<ExtendedProject[]>("/api/projects", { query }),
+  myProjects: () => api.get<ExtendedProject[]>("/api/projects/me/list"),
   get: (id: string) => api.get<ExtendedProject>(`/api/projects/${id}`),
   create: (body: Partial<ExtendedProject>) => api.post<ExtendedProject>("/api/projects", body),
   update: (id: string, body: Partial<ExtendedProject>) =>
