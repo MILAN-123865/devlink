@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ProjectDraftFormData = any;
 
 export const saveDraftToLocalStorage = (data: ProjectDraftFormData) => {};
