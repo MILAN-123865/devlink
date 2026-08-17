@@ -1110,7 +1110,7 @@ class AuthService:
             extra={"jti": jti, "hash_frag": pwd_hash_frag},
         )
 
-        # lgtm[py/weak-sensitive-data-hashing]
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
         token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
         # Store single-use recovery token record

@@ -86,6 +86,31 @@ export interface BackendActivity {
   created_at: string;
 }
 
+export const organizationService = {
+  get: () =>
+    withFallback<typeof seed.organization>(async () => seed.organization, seed.organization),
+  members: () =>
+    withFallback<typeof seed.organization.team>(
+      async () => seed.organization.team,
+      seed.organization.team,
+    ),
+  openings: () =>
+    withFallback<typeof seed.organization.openings>(
+      async () => seed.organization.openings,
+      seed.organization.openings,
+    ),
+  projects: () =>
+    withFallback<typeof seed.organization.projects>(
+      async () => seed.organization.projects,
+      seed.organization.projects,
+    ),
+  activity: () =>
+    withFallback<typeof seed.organization.activity>(
+      async () => seed.organization.activity,
+      seed.organization.activity,
+    ),
+};
+
 export const projectsService = {
   list: (params?: Record<string, unknown>) =>
     withFallback(() => projectsApi.list(params), seed.projects),

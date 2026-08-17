@@ -197,12 +197,12 @@ class UserUpdate(BaseModel):
 # Public User Response
 # ==========================================================
 
-
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-
+    video_introduction_url: ValidURL | None = None
+    video_introduction_thumbnail_url: ValidURL | None = None
 
 # ==========================================================
 # Resume Parse Response

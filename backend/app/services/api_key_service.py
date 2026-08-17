@@ -32,7 +32,7 @@ class ApiKeyService:
         secret = secrets.token_urlsafe(32)
         raw_key = f"dlk_live_{secret}"
         prefix = raw_key[:14]  # e.g., 'dlk_live_XXXXX'
-        # lgtm[py/weak-sensitive-data-hashing]
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
         hashed_key = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
         return raw_key, prefix, hashed_key
 
@@ -288,7 +288,7 @@ class ApiKeyService:
                 detail="Missing API Key header",
             )
 
-        # lgtm[py/weak-sensitive-data-hashing]
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
         hashed_input = hashlib.sha256(raw_key.strip().encode("utf-8")).hexdigest()
 
         key = db.scalar(

@@ -132,6 +132,16 @@ class User(Base):
         nullable=True,
     )
 
+    video_introduction_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    video_introduction_thumbnail_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
     location: Mapped[str | None] = mapped_column(
         String(150),
         nullable=True,

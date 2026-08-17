@@ -135,7 +135,7 @@ export function FilterDrawer({
 
   // Track search queries per section for pills display
   const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(
-    Object.fromEntries(sections.map((s) => [s.id, ""])),
+    Object.fromEntries(sections.map((s) => [s.id, ""]))
   );
 
   // Update search query state
