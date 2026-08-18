@@ -549,18 +549,23 @@ class UserService:
 
         return db_report
 
-
     @staticmethod
     def update_video_introduction_url(
-       db: Session,
-       user: User,
-       video_introduction_url: str,
-       video_introduction_thumbnail_url: str | None = None,
+        db: Session,
+        user: User,
+        video_introduction_url: str,
+        video_introduction_thumbnail_url: str | None = None,
     ) -> User:
-       user.video_introduction_url = video_introduction_url
-       user.video_introduction_thumbnail_url = video_introduction_thumbnail_url
+        user.video_introduction_url = video_introduction_url
 
-       db.commit()
-       db.refresh(user)
+        # Only overwrite the thumbnail when the caller actually supplied one.
+        # Assigning `None` unconditionally meant that re-uploading a video
+        # through the endpoint (which does not generate a thumbnail) wiped a
+        # thumbnail that had been set previously.
+        if video_introduction_thumbnail_url is not None:
+            user.video_introduction_thumbnail_url = video_introduction_thumbnail_url
 
-       return user
+        db.commit()
+        db.refresh(user)
+
+        return user

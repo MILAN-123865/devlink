@@ -18,7 +18,7 @@ import {
 } from "@/components/shared/primitives";
 import { HighlightText } from "@/components/shared/HighlightText";
 import { LastActive } from "@/components/shared/LastActive";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 import {
@@ -35,6 +35,8 @@ import {
 import { motion } from "framer-motion";
 import { containerVariants } from "@/lib/animations";
 import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typography";
+import { useSavedSearches } from "@/stores/useSavedSearches";
+import { SaveSearchDialog } from "@/components/shared/SaveSearchDialog";
 
 export const Route = createFileRoute("/_app/builders")({
   head: () => ({
@@ -46,6 +48,12 @@ export const Route = createFileRoute("/_app/builders")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { tab?: string; q?: string } => {
+    return {
+      tab: typeof search.tab === "string" ? search.tab : undefined,
+      q: typeof search.q === "string" ? search.q : undefined,
+    };
+  },
   component: BuildersPage,
 });
 
@@ -254,10 +262,28 @@ function BuilderRecommendationsEmptyState({ onExplore }: { onExplore: () => void
 
 function BuildersPage() {
   const childMatches = useChildMatches();
-  const search = Route.useSearch() as { tab?: string };
+  const search = Route.useSearch();
   const tab = search.tab;
   const navigate = useNavigate({ from: Route.fullPath });
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(search.q || "");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const saveSearch = useSavedSearches((s) => s.saveSearch);
+
+  useEffect(() => {
+    if (search.q !== undefined) {
+      setQ(search.q);
+    }
+  }, [search.q]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      navigate({
+        search: (prev: any) => ({ ...prev, q: q || undefined }),
+        replace: true,
+      });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [q, navigate]);
   const { data = [], isLoading } = useQuery({
     queryKey: ["builders", tab],
     queryFn: () => (tab === "matches" ? buildersService.matches() : buildersService.list()),
@@ -319,7 +345,7 @@ function BuildersPage() {
             <button
               key={t.k}
               type="button"
-              onClick={() => navigate({ search: (prev) => ({ ...prev, tab: t.k }) })}
+              onClick={() => navigate({ search: (prev: any) => ({ ...prev, tab: t.k }) })}
               className={cn(
                 "rounded px-2.5 py-1 text-[12px] font-medium transition-colors",
                 tab === t.k
@@ -343,7 +369,27 @@ function BuildersPage() {
             className="w-full rounded-md border border-border bg-surface py-[7px] pl-9 pr-3 text-[13px] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
+        <button
+          onClick={() => setSaveDialogOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-[7px] text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Bookmark size={13} />
+          Save Search
+        </button>
       </div>
+
+      <SaveSearchDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={(name) => {
+          saveSearch({
+            name,
+            type: "Developers",
+            query: q,
+            tab,
+          } as any);
+        }}
+      />
 
       <motion.div
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -377,7 +423,7 @@ function BuildersPage() {
         ) : filtered.length === 0 && tab === "matches" && !q ? (
           <div className="col-span-full">
             <BuilderRecommendationsEmptyState
-              onExplore={() => navigate({ search: (prev) => ({ ...prev, tab: "discover" }) })}
+              onExplore={() => navigate({ search: (prev: any) => ({ ...prev, tab: "discover" }) })}
             />
           </div>
         ) : filtered.length === 0 ? (

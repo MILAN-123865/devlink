@@ -23,6 +23,8 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Logo } from "./Logo";
 import { SidebarSection, type SidebarSectionProps } from "./SidebarSection";
 import { UserProfile } from "./UserProfile";
+import { useSavedSearches } from "@/stores/useSavedSearches";
+import { Trash } from "lucide-react";
 
 export const SIDEBAR_SECTIONS: SidebarSectionProps[] = [
   {
@@ -154,6 +156,51 @@ export function Sidebar() {
   // On tablet (md–xl) always force icon-only regardless of toggle state
   const isTablet = useMediaQuery("(min-width: 768px) and (max-width: 1279px)");
   const collapsed = isTablet || isCollapsed;
+  const searches = useSavedSearches((s) => s.searches);
+  const deleteSearch = useSavedSearches((s) => s.deleteSearch);
+
+  const savedSearchesSection: SidebarSectionProps | null =
+    searches.length > 0
+      ? {
+          label: "Saved Searches",
+          items: searches.map((s) => ({
+            label: s.name,
+            to:
+              s.type === "Developers"
+                ? "/builders"
+                : s.type === "Projects"
+                  ? "/projects"
+                  : s.type === "Organizations"
+                    ? "/organizations"
+                    : "/hackathons",
+            search:
+              s.type === "Projects"
+                ? (s as any).filters
+                : {
+                    q: (s as any).query,
+                    tab: s.type === "Developers" ? (s as any).tab : undefined,
+                  },
+            icon: <Bookmark size={16} strokeWidth={2} />,
+            action: (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  deleteSearch(s.id);
+                }}
+                className="text-muted-foreground hover:text-destructive p-1 rounded-sm hover:bg-destructive/10"
+                aria-label={`Delete saved search ${s.name}`}
+              >
+                <Trash size={12} />
+              </button>
+            ),
+          })),
+        }
+      : null;
+
+  const sections = savedSearchesSection
+    ? [...SIDEBAR_SECTIONS.slice(0, 2), savedSearchesSection, ...SIDEBAR_SECTIONS.slice(2)]
+    : SIDEBAR_SECTIONS;
 
   return (
     <aside
@@ -171,7 +218,7 @@ export function Sidebar() {
         className="flex-1 overflow-y-auto px-2 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         aria-label="Sidebar navigation"
       >
-        {SIDEBAR_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <SidebarSection key={section.label} {...section} forceCollapsed={collapsed} />
         ))}
       </nav>

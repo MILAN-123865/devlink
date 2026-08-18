@@ -1,5 +1,5 @@
 import { useProjectFilters } from "@/hooks/useProjectFilters";
-import { X, Check, ChevronsUpDown } from "lucide-react";
+import { X, Check, ChevronsUpDown, Bookmark } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { TypoSection, TypoCard } from "@/components/shared/Typography";
+import { useSavedSearches } from "@/stores/useSavedSearches";
+import { SaveSearchDialog } from "@/components/shared/SaveSearchDialog";
 
 const LANGUAGES = [
   "JavaScript",
@@ -75,20 +77,43 @@ export function ProjectFilters() {
   };
 
   const [techOpen, setTechOpen] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const saveSearch = useSavedSearches((s) => s.saveSearch);
 
   return (
     <div className="rounded-lg border border-border bg-card p-5 my-4 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <TypoSection>Filters</TypoSection>
-        {hasActiveFilters && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={clearFilters}
+            onClick={() => setSaveDialogOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-md text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            <X size={14} /> Clear all
+            <Bookmark size={14} /> Save Search
           </button>
-        )}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1.5 rounded-md text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={14} /> Clear all
+            </button>
+          )}
+        </div>
       </div>
+
+      <SaveSearchDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={(name) => {
+          saveSearch({
+            name,
+            type: "Projects",
+            filters,
+            query: filters.q || "",
+          } as any);
+        }}
+      />
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Language Filter */}

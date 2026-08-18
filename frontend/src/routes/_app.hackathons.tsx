@@ -2,9 +2,11 @@ import { createFileRoute, Outlet, useRouterState, Link } from "@tanstack/react-r
 import { useQuery } from "@tanstack/react-query";
 import { hackathonsService } from "@/services";
 import { Card, TagChip, Skeleton } from "@/components/shared/primitives";
-import { Trophy, Users2, Clock, Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Trophy, Users2, Clock, Plus, Search, Bookmark } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { CreateHackathonDialog } from "@/components/hackathons/CreateHackathonDialog";
+import { useSavedSearches } from "@/stores/useSavedSearches";
+import { SaveSearchDialog } from "@/components/shared/SaveSearchDialog";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/_app/hackathons")({
   }),
   validateSearch: z.object({
     create: z.boolean().optional(),
+    q: z.string().optional(),
   }),
   component: HackathonsPage,
 });
@@ -27,13 +30,16 @@ function HackathonsPage() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const [createOpen, setCreateOpen] = useState(false);
+  const [q, setQ] = useState(search.q || "");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const saveSearch = useSavedSearches((s) => s.saveSearch);
 
   useEffect(() => {
     if (search.create) {
       setCreateOpen(true);
       // Remove query param to keep the URL clean
       navigate({
-        search: (prev) => {
+        search: (prev: any) => {
           const next = { ...prev };
           delete next.create;
           return next;
@@ -41,12 +47,38 @@ function HackathonsPage() {
         replace: true,
       });
     }
-  }, [search.create]);
+  }, [search.create, navigate]);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["hackathons"],
     queryFn: hackathonsService.list,
   });
+
+  useEffect(() => {
+    if (search.q !== undefined) {
+      setQ(search.q);
+    }
+  }, [search.q]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      navigate({
+        search: (prev: any) => ({ ...prev, q: q || undefined }),
+        replace: true,
+      });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [q, navigate]);
+
+  const filteredData = useMemo(() => {
+    const query = q.toLowerCase();
+    return data.filter(
+      (h) =>
+        h.name.toLowerCase().includes(query) ||
+        h.description.toLowerCase().includes(query) ||
+        (h.theme && h.theme.toLowerCase().includes(query)),
+    );
+  }, [data, q]);
 
   if (pathname !== "/hackathons" && pathname !== "/hackathons/") {
     return <Outlet />;
@@ -70,6 +102,40 @@ function HackathonsPage() {
         </button>
         <CreateHackathonDialog open={createOpen} onOpenChange={setCreateOpen} />
       </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search hackathons..."
+            className="w-full rounded-md border border-border bg-surface py-[7px] pl-9 pr-3 text-[13px] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <button
+          onClick={() => setSaveDialogOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-[7px] text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Bookmark size={13} />
+          Save Search
+        </button>
+      </div>
+
+      <SaveSearchDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={(name) => {
+          saveSearch({
+            name,
+            type: "Hackathons",
+            query: q,
+          } as any);
+        }}
+      />
 
       {isLoading ? (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -95,7 +161,7 @@ function HackathonsPage() {
             </Card>
           ))}
         </div>
-      ) : data.length === 0 ? (
+      ) : filteredData.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
             🏆
@@ -111,7 +177,7 @@ function HackathonsPage() {
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {data.map((h) => (
+          {filteredData.map((h) => (
             <Link
               key={h.id}
               to="/hackathons/$hackathonId"

@@ -5,11 +5,15 @@ import { Card } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
 import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
+ feat/availability-scheduling
 import { OAuthAccountsSection } from "@/components/settings/OAuthAccountsSection";
 import { MFASection } from "@/features/settings/components/MFASection";
 import { UserSessionsActivity } from "@/components/settings/UserSessionsActivity";
 import { AvailabilitySettings } from "@/components/availability/AvailabilitySettings";
 
+
+import { SecurityDashboard } from "@/features/settings/components/security/SecurityDashboard";
+ main
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -28,7 +32,11 @@ import {
   Save,
   ChevronRight,
   ExternalLink,
+ feat/availability-scheduling
   Calendar,
+
+  HelpCircle,
+ main
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -64,10 +72,7 @@ export const Route = createFileRoute("/_app/settings")({
 
 function SettingsPage() {
   const [tab, setTab] = useState<TabId>("account");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
   const [savingAccount, setSavingAccount] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -115,7 +120,7 @@ function SettingsPage() {
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-all",
                   tab === t.id
-                    ? "bg-primary-soft text-primary"
+                    ? "bg-primary-soft text-primary font-semibold"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
@@ -123,6 +128,24 @@ function SettingsPage() {
                 {t.label}
               </button>
             ))}
+
+            <div className="pt-6">
+              <div className="rounded-xl border border-border/70 bg-primary/5 p-4 space-y-2.5">
+                <p className="text-xs font-semibold text-foreground">Need help?</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Visit our help center for security guides and FAQs.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs font-medium border-border hover:bg-muted justify-between h-8 px-2.5"
+                  onClick={() => toast.info("Help center guides opening...")}
+                >
+                  <span>Visit Help Center</span>
+                  <ExternalLink size={12} className="text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
           </nav>
         </aside>
 
@@ -457,6 +480,7 @@ function SettingsPage() {
               </div>
             )}
 
+ feat/availability-scheduling
             {tab === "availability" && (
               <div className="p-6 space-y-6">
                 <AvailabilitySettings />
@@ -543,6 +567,9 @@ function SettingsPage() {
                 <UserSessionsActivity />
               </div>
             )}
+
+            {tab === "security" && <SecurityDashboard userEmail="nancy@example.com" />}
+ main
 
             {tab === "billing" && (
               <div className="p-6 space-y-6">

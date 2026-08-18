@@ -18,13 +18,20 @@ def mock_settings(monkeypatch):
     monkeypatch.setattr(settings, "MAX_UPLOAD_SIZE_MB", 5)
 
 
+# A real PNG header. `b"fake image content"` used to be enough here, because
+# validation only read the client's `Content-Type`. It is not enough now: what
+# a file is gets decided by its bytes, so the fixture has to supply bytes that
+# actually are the thing they claim to be.
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+
 @pytest.fixture
 def mock_upload_file():
     file = MagicMock(spec=UploadFile)
     file.filename = "test.png"
     file.content_type = "image/png"
-    file.file = BytesIO(b"fake image content")
-    file.size = 1000
+    file.file = BytesIO(PNG_BYTES)
+    file.size = len(PNG_BYTES)
     return file
 
 
@@ -55,8 +62,12 @@ def test_storage_service_upload_success(mock_boto3, mock_settings, mock_upload_f
     mock_client.put_object.assert_called_once_with(
         Bucket="test-bucket",
         Key=result,
-        Body=b"fake image content",
+        Body=PNG_BYTES,
+        # The detected type rather than the declared one, and stored as an
+        # attachment so anything that slips through downloads instead of
+        # rendering in our origin's context.
         ContentType="image/png",
+        ContentDisposition="attachment",
     )
 
 
@@ -64,6 +75,14 @@ def test_storage_service_upload_success(mock_boto3, mock_settings, mock_upload_f
 def test_storage_service_upload_invalid_type(
     mock_boto3, mock_settings, mock_upload_file
 ):
+    """A PDF is not in the image allowlist, whatever the client declares.
+
+    This used to pass a PDF `Content-Type` over an image body; the check read
+    the header. It now works the other way round -- a real PDF body declared as
+    an image is what gets rejected, and the declared type is only used to make
+    the error message useful.
+    """
+    mock_upload_file.file = BytesIO(b"%PDF-1.7\n" + b"\x00" * 64)
     mock_upload_file.content_type = "application/pdf"
     service = CloudStorageService()
 
@@ -71,21 +90,62 @@ def test_storage_service_upload_invalid_type(
         service.upload_file(mock_upload_file)
 
     assert exc.value.status_code == 400
-    assert "not allowed" in exc.value.detail
+    assert "application/pdf" in exc.value.detail
 
 
 @patch("boto3.client")
-def test_storage_service_upload_invalid_size(
+def test_storage_service_upload_mislabelled_type_is_rejected(
     mock_boto3, mock_settings, mock_upload_file
 ):
-    mock_upload_file.size = 10 * 1024 * 1024  # 10MB, limit is 5MB
+    """The case the header-based check could not see at all."""
+    mock_upload_file.file = BytesIO(b"<!DOCTYPE html><html>hi</html>")
+    mock_upload_file.content_type = "image/png"
     service = CloudStorageService()
 
     with pytest.raises(HTTPException) as exc:
         service.upload_file(mock_upload_file)
 
     assert exc.value.status_code == 400
+
+
+@patch("boto3.client")
+def test_storage_service_upload_invalid_size(
+    mock_boto3, mock_settings, mock_upload_file
+):
+    """The body has to actually be oversized.
+
+    Setting `file.size` alone no longer rejects anything, and that is the
+    point: `size` comes from the client's `Content-Length` and is absent on a
+    chunked upload, so it cannot be the thing the limit depends on. The limit
+    is enforced against the bytes as they are read.
+    """
+    oversized = b"\x89PNG\r\n\x1a\n" + b"\x00" * (10 * 1024 * 1024)
+    mock_upload_file.file = BytesIO(oversized)
+    mock_upload_file.size = len(oversized)  # 10MB, limit is 5MB
+    service = CloudStorageService()
+
+    with pytest.raises(HTTPException) as exc:
+        service.upload_file(mock_upload_file)
+
+    assert exc.value.status_code == 413
     assert "exceeds maximum limit" in exc.value.detail
+
+
+@patch("boto3.client")
+def test_storage_service_size_limit_holds_without_content_length(
+    mock_boto3, mock_settings, mock_upload_file
+):
+    """`if file.size and file.size > limit` skipped the check when `size` was
+    `None`, and the next line read the whole body into memory anyway."""
+    oversized = b"\x89PNG\r\n\x1a\n" + b"\x00" * (10 * 1024 * 1024)
+    mock_upload_file.file = BytesIO(oversized)
+    mock_upload_file.size = None
+    service = CloudStorageService()
+
+    with pytest.raises(HTTPException) as exc:
+        service.upload_file(mock_upload_file)
+
+    assert exc.value.status_code == 413
 
 
 @patch("boto3.client")

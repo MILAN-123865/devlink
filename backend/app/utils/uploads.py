@@ -70,7 +70,15 @@ def save_resume_upload(contents: bytes, filename: str, user_id: uuid.UUID | str)
     upload_dir = Path(settings.UPLOAD_DIR) / "resumes"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_name = f"{user_id}-{uuid.uuid4().hex}.pdf"
+    # The extension has to follow the file we were actually given. This was
+    # hardcoded to `.pdf`, so every DOCX resume was stored under a name that
+    # claimed to be a PDF and would not open for whoever downloaded it.
+    # `validate_resume_upload` has already restricted this to .pdf/.docx.
+    extension = Path(filename).suffix.lower()
+    if extension not in {".pdf", ".docx"}:
+        extension = ".pdf"
+
+    safe_name = f"{user_id}-{uuid.uuid4().hex}{extension}"
     destination = upload_dir / safe_name
     destination.write_bytes(contents)
 
@@ -87,6 +95,14 @@ ALLOWED_VIDEO_MIME_TYPES: Final[set[str]] = {
     "video/webm",
     "video/quicktime",
 }
+
+#: Video introductions were sharing `MAX_UPLOAD_SIZE_MB`, which is the *image*
+#: limit -- a few megabytes. That is not a usable ceiling for even a 30-second
+#: clip, so a valid recording was rejected as "too large". Videos get their own
+#: budget, sized against `VIDEO_INTRODUCTION_MAX_SIZE_MB` when configured.
+MAX_VIDEO_SIZE_BYTES: Final[int] = (
+    getattr(settings, "VIDEO_INTRODUCTION_MAX_SIZE_MB", 50) * 1024 * 1024
+)
 
 
 def validate_video_introduction_upload(
@@ -107,14 +123,40 @@ def validate_video_introduction_upload(
     if normalized_content_type not in ALLOWED_VIDEO_MIME_TYPES:
         raise ValueError("Please upload a valid video file.")
 
-    if size_bytes > MAX_IMAGE_SIZE_BYTES:
+    if size_bytes > MAX_VIDEO_SIZE_BYTES:
         raise ValueError(
             f"Video file must be smaller than "
-            f"{settings.MAX_UPLOAD_SIZE_MB}MB."
+            f"{MAX_VIDEO_SIZE_BYTES // (1024 * 1024)}MB."
         )
 
 
 def save_video_introduction_upload(
+    contents: bytes,
+    filename: str,
+    user_id: uuid.UUID | str,
+) -> str:
+    """Store a validated video introduction and return its public URL.
+
+    Kept deliberately parallel to :func:`save_voice_introduction_upload`: the
+    two differ only in the directory they write to and the extension set their
+    validator allows. They were briefly a single tangled function after the
+    video (#978) and voice (#977) branches were merged into each other, which
+    is what took the module out of compilation.
+    """
+    scan_file_for_malware(contents, filename)
+
+    upload_dir = Path(settings.UPLOAD_DIR) / "video_introductions"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    extension = Path(filename).suffix.lower()
+    safe_name = f"{user_id}-{uuid.uuid4().hex}{extension}"
+
+    destination = upload_dir / safe_name
+    destination.write_bytes(contents)
+
+    return f"/uploads/video_introductions/{safe_name}"
+
+
 def validate_voice_introduction_upload(
     filename: str | None, content_type: str | None, size_bytes: int
 ) -> None:
@@ -145,9 +187,9 @@ def save_voice_introduction_upload(
     filename: str,
     user_id: uuid.UUID | str,
 ) -> str:
+    """Store a validated voice introduction and return its public URL."""
     scan_file_for_malware(contents, filename)
 
-    upload_dir = Path(settings.UPLOAD_DIR) / "video_introductions"
     upload_dir = Path(settings.UPLOAD_DIR) / "voice_introductions"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
@@ -157,8 +199,8 @@ def save_voice_introduction_upload(
     destination = upload_dir / safe_name
     destination.write_bytes(contents)
 
-    return f"/uploads/video_introductions/{safe_name}"
     return f"/uploads/voice_introductions/{safe_name}"
+
 
 def validate_image_upload(
     filename: str | None, content_type: str | None, size_bytes: int

@@ -6,13 +6,15 @@ import type { ReactNode } from "react";
 export interface SidebarItemProps {
   label: string;
   to: string;
+  search?: Record<string, unknown>;
   icon: ReactNode;
   badge?: number;
+  action?: ReactNode;
   /** When true, renders icon-only regardless of sidebar context state */
   forceCollapsed?: boolean;
 }
 
-export function SidebarItem({ label, to, icon, badge, forceCollapsed }: SidebarItemProps) {
+export function SidebarItem({ label, to, search, icon, badge, action, forceCollapsed }: SidebarItemProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isCollapsed, closeMobile } = useSidebar();
 
@@ -25,6 +27,7 @@ export function SidebarItem({ label, to, icon, badge, forceCollapsed }: SidebarI
       <li>
         <Link
           to={to.split("?")[0]}
+          search={search}
           onClick={closeMobile}
           title={label}
           aria-label={label}
@@ -64,11 +67,12 @@ export function SidebarItem({ label, to, icon, badge, forceCollapsed }: SidebarI
     <li title={undefined}>
       <Link
         to={to.split("?")[0]}
+        search={search}
         preload="intent"
         onClick={closeMobile}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "relative flex items-center gap-2.5 rounded-md py-1.5 pl-4 pr-3 text-[13px] font-medium outline-none",
+          "group relative flex items-center gap-2.5 rounded-md py-1.5 pl-4 pr-3 text-[13px] font-medium outline-none",
           "transition-colors duration-150",
           "focus-visible:ring-2 focus-visible:ring-primary",
           active
@@ -87,10 +91,15 @@ export function SidebarItem({ label, to, icon, badge, forceCollapsed }: SidebarI
           {icon}
         </span>
         <span className="flex-1 truncate">{label}</span>
-        {badge !== undefined && badge > 0 && (
+        {badge !== undefined && badge > 0 && !action && (
           <span className="rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground">
             {badge > 9 ? "9+" : badge}
           </span>
+        )}
+        {action && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            {action}
+          </div>
         )}
       </Link>
     </li>
