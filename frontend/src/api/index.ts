@@ -133,5 +133,7 @@ export type {
   DashboardWidgetLayout,
   DashboardLayoutResponse,
 } from "./modules/dashboardLayout";
+export type { PlatformSocialProofResponse } from "./modules/analytics";
+
 
 
