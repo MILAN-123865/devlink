@@ -314,3 +314,28 @@ class ProfileCompletionResponse(BaseModel):
         default=None,
         description="Badge awarded for 100% profile completion",
     )
+
+
+# ==========================================================
+# Dashboard Layout Customization (#754)
+# ==========================================================
+
+
+class DashboardWidgetLayout(BaseModel):
+    id: str = Field(..., description="Unique widget identifier")
+    order: int = Field(default=0, description="Display order index")
+    pinned: bool = Field(default=False, description="Whether the widget is pinned to top")
+    visible: bool = Field(default=True, description="Whether the widget is visible")
+    column: int = Field(default=1, description="Grid column index (1 for main, 2 for sidebar)")
+
+
+class DashboardLayoutUpdate(BaseModel):
+    widgets: list[DashboardWidgetLayout] = Field(
+        default_factory=list,
+        description="List of configured dashboard widgets and layouts",
+    )
+
+
+class DashboardLayoutResponse(BaseModel):
+    widgets: list[DashboardWidgetLayout]
+    is_customized: bool = True

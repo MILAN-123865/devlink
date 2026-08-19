@@ -270,6 +270,12 @@ class User(Base):
         },
     )
 
+    dashboard_layout: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+        default=None,
+    )
+
     def get_privacy_settings(self) -> dict:
         defaults = {
             "email": "private",
