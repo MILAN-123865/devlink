@@ -122,3 +122,10 @@ export type {
   ProjectTemplateListResponse,
   ProjectTemplateCreateInput,
 } from "./modules/projectTemplates";
+export { skillsApi } from "./modules/skills";
+export type {
+  SkillItem,
+  SkillMatrixResponse,
+  SkillSearchResult,
+} from "./modules/skills";
+

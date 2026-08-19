@@ -43,6 +43,7 @@ import { CollaborationStatusBadge } from "@/features/collaboration/components/Co
 import { CollaborationStatusPicker } from "@/features/collaboration/components/CollaborationStatusPicker";
 import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
+import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -187,6 +188,7 @@ function ProfilePage() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
 
   // Profile summary state
   const [summary, setSummary] = useState<string | null>(null);
@@ -657,7 +659,11 @@ function ProfilePage() {
 
       <div className="grid gap-4 lg:grid-cols-3 items-start">
         <div className="flex flex-col gap-4">
-          <SkillsCard skills={b.profileSkills ?? []} />
+          <SkillsCard
+            skills={b.profileSkills ?? []}
+            isOwnProfile={me}
+            onManageSkills={me ? () => setIsManageSkillsOpen(true) : undefined}
+          />
           <ExperienceCard
             role={b.role}
             company={b.company}
@@ -840,6 +846,15 @@ function ProfilePage() {
               navigate({ to: "/profile/$username", params: { username: updated.username } });
             }
           }}
+        />
+      )}
+
+      {me && (
+        <ManageSkillsModal
+          open={isManageSkillsOpen}
+          onOpenChange={setIsManageSkillsOpen}
+          initialSkills={b.profileSkills}
+          username={b.handle}
         />
       )}
     </div>
