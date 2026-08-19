@@ -23,6 +23,7 @@ export const usersApi = {
   list: (query?: { page?: number; limit?: number; q?: string }) =>
     api.get<unknown[]>("/api/users", { query }),
   get: (id: string) => api.get<unknown>(`/api/users/${id}`),
+  getByUsername: (username: string) => api.get<any>(`/api/users/by-username/${username}`),
   update: (id: string, body: Record<string, unknown>) => api.put<unknown>(`/api/users/${id}`, body),
   updateProfile: (body: UserProfileUpdateData) => api.put<unknown>("/api/users/me", body),
   remove: (id: string) => api.delete<void>(`/api/users/${id}`),
