@@ -128,4 +128,11 @@ export type {
   SkillMatrixResponse,
   SkillSearchResult,
 } from "./modules/skills";
+export { featureAnnouncementsApi } from "./modules/featureAnnouncements";
+export type {
+  FeatureAnnouncement,
+  FeatureAnnouncementListResponse,
+  CreateAnnouncementInput,
+  AnnouncementCategory,
+} from "./modules/featureAnnouncements";
 
