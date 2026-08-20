@@ -134,6 +134,11 @@ export type {
   DashboardLayoutResponse,
 } from "./modules/dashboardLayout";
 export type { PlatformSocialProofResponse } from "./modules/analytics";
-
-
+export { featureAnnouncementsApi } from "./modules/featureAnnouncements";
+export type {
+  FeatureAnnouncement,
+  FeatureAnnouncementListResponse,
+  CreateAnnouncementInput,
+  AnnouncementCategory,
+} from "./modules/featureAnnouncements";
 
