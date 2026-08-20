@@ -23,7 +23,9 @@ import {
   fallbackTechStack,
   searchApi,
   issuesApi,
+  featureAnnouncementsApi,
 } from "@/api";
+
 import type {
   BookmarkCollection,
   BookmarkCollectionWithBookmarks,
@@ -257,6 +259,16 @@ export const flaresService = {
     }, undefined),
 };
 
+export const featureAnnouncementsService = {
+  list: (params?: Parameters<typeof featureAnnouncementsApi.list>[0]) =>
+    featureAnnouncementsApi.list(params),
+  get: (id: string) => featureAnnouncementsApi.get(id),
+  markAsRead: (id: string) => featureAnnouncementsApi.markAsRead(id),
+  markAllAsRead: () => featureAnnouncementsApi.markAllAsRead(),
+  create: (body: Parameters<typeof featureAnnouncementsApi.create>[0]) =>
+    featureAnnouncementsApi.create(body),
+};
+
 export const messagesService = {
   conversations: () => withFallback(() => messagesApi.conversations(), seed.conversations),
   thread: async (id: string) => {
@@ -282,6 +294,13 @@ export const messagesService = {
           attachment_name?: string;
           attachment_size?: number;
           mime_type?: string;
+          is_edited?: boolean;
+          is_deleted?: boolean;
+          is_sent?: boolean;
+          is_pinned?: boolean;
+          scheduled_for?: string;
+          read_at?: string;
+          pinned_at?: string;
         }): seed.Message => ({
           id: m.id,
           from: m.sender_id === currentUser?.id ? "me" : (m.sender_id ?? "me"),
@@ -297,10 +316,17 @@ export const messagesService = {
           attachment_name: m.attachment_name,
           attachment_size: m.attachment_size,
           mime_type: m.mime_type,
-        }));
-      },
-      seed.messages[id] ?? [],
-    );
+          sender_id: m.sender_id,
+          is_edited: m.is_edited,
+          is_deleted: m.is_deleted,
+          is_sent: m.is_sent,
+          is_pinned: m.is_pinned,
+          scheduled_for: m.scheduled_for,
+          read_at: m.read_at,
+          pinned_at: m.pinned_at,
+        }),
+      );
+    }, seed.messages[id] ?? []);
   },
   send: (
     conversationId: string,
@@ -312,6 +338,7 @@ export const messagesService = {
       mime_type: string;
       type: string;
     },
+    scheduledFor?: string | null,
   ) =>
     withFallback(
       () =>
@@ -323,6 +350,7 @@ export const messagesService = {
           attachment_name: attachment?.name,
           attachment_size: attachment?.size,
           mime_type: attachment?.mime_type,
+          scheduled_for: scheduledFor ?? null,
         }),
       {
         id: `msg-${Date.now()}`,
@@ -334,8 +362,27 @@ export const messagesService = {
         attachment_name: attachment?.name,
         attachment_size: attachment?.size,
         mime_type: attachment?.mime_type,
+        is_sent: true,
       },
     ),
+  update: (messageId: string, content: string) =>
+    withFallback(() => messagesApi.update(messageId, { content, is_edited: true }), {
+      id: messageId,
+      text: content,
+      is_edited: true,
+    } as unknown as seed.Message),
+  remove: (messageId: string) =>
+    withFallback(() => messagesApi.remove(messageId), {
+      id: messageId,
+      is_deleted: true,
+    } as unknown as seed.Message),
+  pin: (messageId: string) => withFallback(() => messagesApi.pin(messageId), null),
+  unpin: (messageId: string) => withFallback(() => messagesApi.unpin(messageId), null),
+  pinned: (conversationId: string) => withFallback(() => messagesApi.pinned(conversationId), []),
+  scheduled: () => withFallback(() => messagesApi.scheduled(), []),
+  cancelScheduled: (messageId: string) =>
+    withFallback(() => messagesApi.cancelScheduled(messageId), null),
+  search: (q: string) => withFallback(() => messagesApi.search(q), []),
 };
 
 export const issuesService = {

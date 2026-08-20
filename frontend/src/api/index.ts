@@ -133,5 +133,11 @@ export type {
   DashboardWidgetLayout,
   DashboardLayoutResponse,
 } from "./modules/dashboardLayout";
-
+export { featureAnnouncementsApi } from "./modules/featureAnnouncements";
+export type {
+  FeatureAnnouncement,
+  FeatureAnnouncementListResponse,
+  CreateAnnouncementInput,
+  AnnouncementCategory,
+} from "./modules/featureAnnouncements";
 
