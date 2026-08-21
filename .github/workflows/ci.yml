@@ -1,13 +1,41 @@
 name: CI
 
+# This file used to be four lines of `runs-on` and a checkout. It reported
+# success on every pull request and asserted nothing, alongside three others
+# doing exactly the same thing under the names Lint, Type Check and Security
+# Scan (#1248).
+#
+# A missing check prompts someone to look. A green one that checks nothing
+# tells them not to, and four of them together read as "this branch builds,
+# lints, type checks and has been scanned" -- none of which had been
+# established.
+#
+# The other three are gone and Type Check is now real. This one keeps its name
+# and gets a job: making sure no workflow can go back to being a green tick
+# that asserts nothing.
+
 on:
   pull_request:
   push:
     branches: [main]
 
 jobs:
-  ci:
+  workflows:
+    name: Workflow definitions
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # PyYAML is present on the hosted runners, but not contractually, and a
+      # workflow that only works by luck is the theme of this whole change.
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Every workflow must actually run something
+        run: python3 .github/scripts/check_workflows.py
