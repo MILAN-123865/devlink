@@ -4,8 +4,15 @@ Unit tests for `.github/scripts/check_workflows.py`.
 The script runs against the real `.github/workflows/` on every pull request,
 which is the check that matters. These cover the judgements it makes, which
 that run cannot: that it says yes to a workflow with a real step and no to one
-without, and that the scaffolding list does not accidentally swallow something
-substantive.
+without, that the scaffolding list does not accidentally swallow something
+substantive, and that every required status-check context still has a job
+producing it.
+
+That last one is not hypothetical. Deleting the four hollow workflows was the
+obvious cleanup and would have been an outage: `lint`, `security`, `ci` and
+`typecheck` are required contexts on `main`, and a required context that never
+reports is not a failing check -- it is a pull request that can never merge,
+for everybody, until an admin edits the ruleset.
 """
 
 from __future__ import annotations
@@ -173,6 +180,119 @@ def test_every_workflow_in_this_repository_passes():
         assert check_workflows.main() == 0
     finally:
         os.chdir(cwd)
+
+
+# ---------------------------------------------------------------------------
+# Required status-check contexts
+# ---------------------------------------------------------------------------
+
+
+def test_every_required_context_has_a_job_producing_it():
+    """
+    A job's context is its `name:`, or its id when it has none. Rename either
+    and the context stops reporting.
+    """
+    import os
+
+    cwd = os.getcwd()
+    os.chdir(REPO_ROOT)
+    try:
+        assert check_workflows.main() == 0
+    finally:
+        os.chdir(cwd)
+
+
+def test_the_required_contexts_are_the_ones_branch_protection_asks_for():
+    """
+    Pinned literally. The list in the script is mirrored from
+    `gh api repos/nensii21/devlink/rules/branches/main` because a fork running
+    this in a pull request has no token that can read repository rules.
+
+    If branch protection changes, this test is the thing that has to be edited
+    on purpose rather than the script drifting silently.
+    """
+    assert check_workflows.REQUIRED_CONTEXTS == {
+        "backend",
+        "check-star",
+        "ci",
+        "frontend",
+        "lint",
+        "security",
+        "typecheck",
+    }
+
+
+@pytest.mark.parametrize("context", sorted(check_workflows.REQUIRED_CONTEXTS))
+def test_a_job_exists_for_each_required_context(context):
+    """
+    Same ground as the sweep above, one context at a time, so a failure names
+    the check that stopped reporting instead of listing all seven.
+    """
+    produced = set()
+
+    for path in sorted((REPO_ROOT / ".github" / "workflows").glob("*.y*ml")):
+        raw = path.read_text()
+        if not raw.strip():
+            continue
+        document = yaml.safe_load(raw)
+        for job_id, job in (document.get("jobs") or {}).items():
+            if isinstance(job, dict):
+                produced.add(job.get("name") or job_id)
+
+    assert context in produced, (
+        f"no job produces the required status check {context!r} -- branch "
+        "protection will wait for it forever"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The known-hollow allowlist
+# ---------------------------------------------------------------------------
+
+
+def test_known_hollow_entries_still_exist():
+    """
+    Stops the allowlist outliving the files it excuses.
+    """
+    workflows = REPO_ROOT / ".github" / "workflows"
+    missing = [
+        name for name in check_workflows.KNOWN_HOLLOW if not (workflows / name).exists()
+    ]
+
+    assert missing == [], (
+        f"KNOWN_HOLLOW names workflows that no longer exist: {missing}"
+    )
+
+
+def test_known_hollow_entries_are_actually_still_hollow():
+    """
+    The other direction: once `lint.yml` gets a real step it should come off
+    the list, not sit there quietly excusing a workflow that no longer needs
+    excusing. A skip rather than a failure -- somebody fixing it is the good
+    outcome and should not turn CI red.
+    """
+    workflows = REPO_ROOT / ".github" / "workflows"
+    fixed = []
+
+    for name in check_workflows.KNOWN_HOLLOW:
+        document = yaml.safe_load((workflows / name).read_text())
+        jobs = (document or {}).get("jobs") or {}
+        if all(
+            check_workflows.substantive_steps(job) > 0
+            for job in jobs.values()
+            if isinstance(job, dict)
+        ):
+            fixed.append(name)
+
+    if fixed:
+        pytest.skip(
+            f"KNOWN_HOLLOW entries that now do real work: {fixed} -- remove them."
+        )
+
+
+def test_each_known_hollow_entry_says_why():
+    for name, reason in check_workflows.KNOWN_HOLLOW.items():
+        assert reason.strip(), f"{name} is allowlisted with no reason given"
 
 
 def test_no_workflow_file_is_empty():

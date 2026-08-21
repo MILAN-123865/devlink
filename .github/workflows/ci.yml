@@ -10,9 +10,15 @@ name: CI
 # lints, type checks and has been scanned" -- none of which had been
 # established.
 #
-# The other three are gone and Type Check is now real. This one keeps its name
-# and gets a job: making sure no workflow can go back to being a green tick
-# that asserts nothing.
+# Type Check is real now. Lint and Security Scan are not yet, and are also
+# required status checks, so deleting them would block every pull request in
+# the repository rather than tidy anything up -- they are tracked in
+# KNOWN_HOLLOW instead.
+#
+# This one keeps its name and gets the job of making sure none of that can
+# quietly get worse: no workflow may go back to being a green tick that
+# asserts nothing, and no job may be renamed out from under a required status
+# check.
 
 on:
   pull_request:
@@ -20,8 +26,9 @@ on:
     branches: [main]
 
 jobs:
-  workflows:
-    name: Workflow definitions
+  # `ci` is a required status-check context on `main`; see the note in
+  # typecheck.yml. The job keeps its id and gets real work to do.
+  ci:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

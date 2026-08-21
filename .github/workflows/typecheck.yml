@@ -15,8 +15,11 @@ on:
     branches: [main]
 
 jobs:
-  frontend:
-    name: Frontend
+  # The job id is the status-check context, and `typecheck` is a required one
+  # on `main`. Renaming this job silently drops the requirement -- the context
+  # simply stops reporting and every pull request blocks on a check that will
+  # never arrive. Leave the id alone.
+  typecheck:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

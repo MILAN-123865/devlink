@@ -22,8 +22,17 @@ Two shapes are refused outright:
   reports as a broken workflow rather than as no workflow);
 * a workflow whose jobs are all scaffolding.
 
+Two are still hollow and cannot simply be deleted -- see `KNOWN_HOLLOW`.
+
+The other half of this script is `REQUIRED_CONTEXTS`. A job's status-check
+context is its `name:`, or its id when it has none, and `main` requires seven
+of them by name. Rename a job and its context stops reporting; because a
+missing context is not a failing one, every pull request then waits forever on
+a check that will never arrive. That is a repository-wide outage caused by a
+one-word edit, so it is worth a test.
+
 Deliberately not clever. It does not try to judge whether a step is a *good*
-check, only whether one exists.
+check, only whether one exists and still answers to the name `main` expects.
 """
 
 from __future__ import annotations
@@ -34,6 +43,44 @@ from pathlib import Path
 import yaml
 
 WORKFLOWS = Path(".github/workflows")
+
+#: Status-check contexts that branch protection on `main` requires.
+#:
+#: Mirrored here rather than read from the API because the check has to work on
+#: a fork, in a pull request, without a token that can see repository rules.
+#: Kept in sync by hand; `gh api repos/<owner>/<repo>/rules/branches/main` is
+#: the source of truth.
+#:
+#: The reason this list exists at all: four of these seven belonged to
+#: workflows that checked nothing, and the obvious cleanup -- delete them --
+#: would have removed the contexts along with the files. A required context
+#: that never reports is not a failing check, it is a pull request that can
+#: never merge, for everybody, until an admin edits the ruleset.
+REQUIRED_CONTEXTS = frozenset(
+    {
+        "backend",
+        "check-star",
+        "ci",
+        "frontend",
+        "lint",
+        "security",
+        "typecheck",
+    }
+)
+
+#: Workflows that still check nothing, and why they are not deleted.
+#:
+#: Both are required contexts. Deleting either blocks every pull request in the
+#: repository, so they stay until they have real content -- which for `lint`
+#: means deciding what to do about 3354 pre-existing `ruff` findings and 672
+#: `eslint` ones, and for `security` means #1244's dependency auditing landing
+#: first. Neither is a decision that belongs in the same change as this one.
+#:
+#: An entry here is a debt with a name attached, not a permanent exemption.
+KNOWN_HOLLOW = {
+    "lint.yml": "required status check; needs a lint baseline decision (#1248)",
+    "security.yml": "required status check; superseded by #1244's dependency-security.yml",
+}
 
 #: Actions that set a job up rather than check anything. Matched on the part
 #: before the `@`, so version bumps do not need edits here.
@@ -83,6 +130,7 @@ def main() -> int:
         return 1
 
     problems: list[str] = []
+    contexts: set[str] = set()
     checked = 0
 
     for path in sorted(WORKFLOWS.glob("*.y*ml")):
@@ -110,6 +158,13 @@ def main() -> int:
             problems.append(f"{path} defines no jobs.")
             continue
 
+        for name, job in jobs.items():
+            if isinstance(job, dict):
+                contexts.add(job.get("name") or name)
+
+        if path.name in KNOWN_HOLLOW:
+            continue
+
         checked += 1
 
         hollow = [
@@ -125,13 +180,28 @@ def main() -> int:
                 "real step, or delete the file."
             )
 
+    missing = REQUIRED_CONTEXTS - contexts
+    if missing:
+        problems.append(
+            "no job produces the required status check(s) "
+            f"{', '.join(sorted(missing))}. A job's context is its `name:`, or "
+            "its id when it has none -- renaming or deleting one removes the "
+            "context, and branch protection then waits forever on a check that "
+            "never arrives. Restore the name, or have an admin update the "
+            "ruleset first."
+        )
+
     if problems:
         print("::error::One or more workflows do not check anything.")
         for problem in problems:
             print(f"  - {problem}")
         return 1
 
+    known = ", ".join(sorted(KNOWN_HOLLOW))
     print(f"{checked} workflows checked; each runs at least one real step.")
+    print(f"All {len(REQUIRED_CONTEXTS)} required status checks are produced.")
+    if KNOWN_HOLLOW:
+        print(f"Still hollow, tracked in KNOWN_HOLLOW: {known}")
     return 0
 
 
