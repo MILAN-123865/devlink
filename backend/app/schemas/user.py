@@ -61,6 +61,7 @@ class PrivacySettings(BaseModel):
     resume: PrivacyVisibility = PrivacyVisibility.PUBLIC
     social_links: PrivacyVisibility = PrivacyVisibility.PUBLIC
     availability: PrivacyVisibility = PrivacyVisibility.PUBLIC
+    activity: PrivacyVisibility = PrivacyVisibility.PUBLIC
 
 
 class PrivacySettingsUpdate(BaseModel):
@@ -69,6 +70,7 @@ class PrivacySettingsUpdate(BaseModel):
     resume: PrivacyVisibility | None = None
     social_links: PrivacyVisibility | None = None
     availability: PrivacyVisibility | None = None
+    activity: PrivacyVisibility | None = None
 
 
 # ==========================================================
@@ -93,7 +95,7 @@ class UserBase(BaseModel):
 
     website: ValidURL | None = None
     resume_url: ValidURL | None = None
-      voice_introduction_url: ValidURL | None = None
+    voice_introduction_url: ValidURL | None = None
     portfolio_url: ValidURL | None = None
     github_url: ValidURL | None = None
     linkedin_url: ValidURL | None = None
@@ -160,7 +162,7 @@ class UserUpdate(BaseModel):
 
     website: ValidURL | None = None
     resume_url: ValidURL | None = None
-      voice_introduction_url: ValidURL | None = None
+    voice_introduction_url: ValidURL | None = None
     portfolio_url: ValidURL | None = None
     github_url: ValidURL | None = None
     linkedin_url: ValidURL | None = None
@@ -177,6 +179,7 @@ class UserUpdate(BaseModel):
     is_private: bool | None = None
     privacy_settings: PrivacySettingsUpdate | None = None
     availability: list[AvailabilitySlot] | None = None
+    version: int | None = None
     collaboration_status: CollaborationStatus | None = None
 
     model_config = ConfigDict(
@@ -197,12 +200,20 @@ class UserUpdate(BaseModel):
 # Public User Response
 # ==========================================================
 
+
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+
+    is_active: bool
+    is_verified: bool
+    premium: bool = False
+    is_superuser: bool
+    version: int = 1
     video_introduction_url: ValidURL | None = None
     video_introduction_thumbnail_url: ValidURL | None = None
+
 
 # ==========================================================
 # Resume Parse Response

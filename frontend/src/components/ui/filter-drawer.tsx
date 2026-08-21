@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TypoCard } from "@/components/shared/Typography";
-import { EmptySearchState } from "@/components/shared/EmptySearchState";
 
 export interface FilterOption {
   label: string;
@@ -66,7 +65,7 @@ function asNumber(value: FilterValue, fallback: number): number {
 export interface FilterSection {
   id: string;
   title: string;
-  type?: "multi" | "single" | "select" | "range" | "search";
+  type?: "multi" | "multi-select" | "single" | "select" | "range" | "search" | "chip";
   options?: FilterOption[];
   placeholder?: string;
   min?: number;
@@ -134,7 +133,7 @@ export function FilterDrawer({
   }, [open, onOpenChange]);
 
   // Track search queries per section for pills display
-  const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(
+  const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(() =>
     Object.fromEntries(sections.map((s) => [s.id, ""])),
   );
 
@@ -187,9 +186,12 @@ export function FilterDrawer({
     label: string,
     isSelected: boolean,
     hasSearchQuery: boolean,
-    isMulti: boolean = true,
+
   ) => {
-    const isSearchMode = sections.find((s) => s.id === sectionId)?.type === "search";
+    const section = sections.find((s) => s.id === sectionId);
+    const isSearchMode = section?.type === "search";
+    const isMulti =
+      section?.type === "multi" || section?.type === "multi-select" || section?.type === "chip";
 
     return (
       <button
@@ -225,7 +227,7 @@ export function FilterDrawer({
 
   // Render search input with pill
   const renderSearchInput = (section: FilterSection) => {
-    const hasQuery = searchQueries[section.id] && searchQueries[section.id].trim();
+    const hasQuery = Boolean(searchQueries[section.id] && searchQueries[section.id].trim());
 
     return (
       <div className="relative mt-2 flex items-center">
@@ -316,7 +318,7 @@ export function FilterDrawer({
     }
 
     // Default multi or single - render chips/buttons
-    const isMulti = type === "multi";
+    const isMulti = type === "multi" || type === "multi-select" || type === "chip";
     const selectedList = asList(draftValues[section.id]);
     const selectedText = asText(draftValues[section.id]);
 
@@ -336,7 +338,7 @@ export function FilterDrawer({
             option.label,
             isSelected,
             sectionSearchQuery !== "",
-            isMulti,
+
           );
         })}
       </div>
@@ -395,6 +397,11 @@ export function FilterDrawer({
     return hasSelected || hasAnySearchQuery;
   }, [sections, draftValues, hasAnySearchQuery]);
 
+  if (!hasActiveFilters && !open) {
+    // Show empty state when no filters are active and drawer is closed
+    return null;
+  }
+
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -435,10 +442,6 @@ export function FilterDrawer({
     );
   }
 
-  if (!hasActiveFilters && !open) {
-    // Show empty state when no filters are active and drawer is closed
-    return null;
-  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

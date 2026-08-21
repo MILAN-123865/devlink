@@ -10,6 +10,7 @@ from app.core.cache import cached
 from app.models.activity import ActivityType
 from app.models.project import Project
 from app.schemas.project import (
+    ProjectCloneRequest,
     ProjectCreate,
     ProjectDraftCreate,
     ProjectDraftUpdate,
@@ -18,6 +19,7 @@ from app.schemas.project import (
     SimilarProjectWarning,
 )
 from app.services.activity_service import ActivityService
+from app.utils.validators import slugify
 
 
 class ProjectService:
@@ -79,6 +81,7 @@ class ProjectService:
             hiring=project.hiring,
             scheduled_publish_at=project.scheduled_publish_at,
             is_published=(project.scheduled_publish_at is None),
+            version=1,
         )
 
         db.add(db_project)
@@ -258,9 +261,21 @@ class ProjectService:
 
         data = project.model_dump(exclude_unset=True)
 
+        from fastapi import HTTPException, status
         from datetime import datetime, timezone
         from app.models.project import ProjectStatus
         from app.services.project_status_service import ProjectStatusService
+
+        # Optimistic locking check
+        if "version" in data and data["version"] is not None:
+            expected_version = data.pop("version")
+            if db_project.version != expected_version:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Version conflict: The project has been updated by another user. Please refresh and try again.",
+                )
+        else:
+            data.pop("version", None)
 
         current_status = getattr(db_project, "status", None) or (
             ProjectStatus.ARCHIVED
@@ -302,6 +317,7 @@ class ProjectService:
         for key, value in data.items():
             setattr(db_project, key, value)
 
+        db_project.version = (db_project.version or 1) + 1
         db.flush()
         db.refresh(db_project)
 
@@ -687,3 +703,104 @@ class ProjectService:
         )
 
         return db_project
+
+    @staticmethod
+    def clone_project(
+        db: Session,
+        source_project: Project,
+        user: Any,
+        clone_data: ProjectCloneRequest | None = None,
+    ) -> Project:
+        from app.models.project_member import MemberRole, ProjectMember
+        from app.models.project import ProjectStatus
+
+        clone_data = clone_data or ProjectCloneRequest()
+
+        new_title = clone_data.title or f"{source_project.title} (Copy)"
+        new_tagline = clone_data.tagline or source_project.tagline
+        new_description = clone_data.description or source_project.description
+        new_visibility = clone_data.visibility or source_project.visibility
+
+        base_slug = slugify(new_title) or "cloned-project"
+        unique_slug = base_slug
+        counter = 1
+        while ProjectService.get_by_slug(db, unique_slug) is not None:
+            unique_slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        new_project = Project(
+            owner_id=user.id,
+            title=new_title,
+            slug=unique_slug,
+            tagline=new_tagline,
+            description=new_description,
+            stage=source_project.stage,
+            visibility=new_visibility,
+            status=ProjectStatus.RECRUITING,
+            tech_stack=source_project.tech_stack,
+            requirements=source_project.requirements,
+            language=source_project.language,
+            experience=source_project.experience,
+            is_remote=source_project.is_remote,
+            is_paid=source_project.is_paid,
+            is_open_source=source_project.is_open_source,
+            tags=source_project.tags if clone_data.include_tags else [],
+            repository_url=source_project.repository_url,
+            website_url=source_project.website_url,
+            demo_url=source_project.demo_url,
+            team_size=1,
+            max_team_size=source_project.max_team_size,
+            hiring=source_project.hiring,
+            logo_url=source_project.logo_url,
+            banner_url=source_project.banner_url,
+            stars=0,
+            views=0,
+        )
+
+        db.add(new_project)
+        db.flush()
+
+        owner_member = ProjectMember(
+            project_id=new_project.id,
+            user_id=user.id,
+            role=MemberRole.OWNER,
+        )
+        db.add(owner_member)
+
+        if clone_data.include_milestones:
+            try:
+                from app.models.milestone import Milestone
+                source_milestones = (
+                    db.query(Milestone)
+                    .filter(Milestone.project_id == source_project.id)
+                    .all()
+                )
+                for m in source_milestones:
+                    cloned_milestone = Milestone(
+                        project_id=new_project.id,
+                        title=m.title,
+                        description=m.description,
+                        target_date=getattr(m, "target_date", None),
+                    )
+                    db.add(cloned_milestone)
+            except Exception:
+                pass
+
+        db.flush()
+        db.commit()
+        db.refresh(new_project)
+
+        ActivityService.record_activity(
+            db=db,
+            actor_id=user.id,
+            activity_type=ActivityType.PROJECT_CREATED,
+            title="Cloned project",
+            description=new_project.title,
+            target_id=new_project.id,
+            target_type="project",
+            icon="copy",
+            color="primary",
+        )
+
+        return new_project
+

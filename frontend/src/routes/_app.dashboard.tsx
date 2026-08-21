@@ -7,6 +7,7 @@ import {
   QuickActions,
   RecentActivity,
   Upcoming,
+  CompactMessagingWidget,
   NotificationsWidget,
   UpcomingEventsWidget,
   UpgradePlanCTA,
@@ -49,6 +50,7 @@ function Dashboard() {
 
         {/* Right Sidebar - 3 cols */}
         <div className="lg:col-span-3 flex flex-col gap-6">
+          <CompactMessagingWidget />
           <NotificationsWidget />
           <UpcomingEventsWidget />
           <UpgradePlanCTA />

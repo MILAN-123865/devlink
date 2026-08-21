@@ -37,6 +37,7 @@ from app.routers import (
     project_dashboards,
     project_releases,
     projects,
+    permissions,
     recommendations,
     repositories,
     repository_quality,
@@ -49,6 +50,7 @@ from app.routers import (
     users,
     webhooks,
     websockets,
+    feature_announcements,
 )
 
 api_v1_router = APIRouter(prefix="/api/v1")
@@ -73,6 +75,9 @@ api_v1_router.include_router(auth.router, prefix="/auth", tags=["Authentication"
 api_v1_router.include_router(mfa.router)
 api_v1_router.include_router(oauth_linking.router)
 api_v1_router.include_router(users.router, prefix="/users", tags=["Users"])
+api_v1_router.include_router(
+    permissions.router, prefix="/users", tags=["Permissions"]
+)
 api_v1_router.include_router(blocks.router, prefix="/blocks", tags=["User Blocks"])
 api_v1_router.include_router(export.router, prefix="/users", tags=["Export"])
 api_v1_router.include_router(pinned_projects.router)
@@ -147,3 +152,5 @@ api_v1_router.include_router(security_events.router)
 api_v1_router.include_router(
     hackathons.router, prefix="/hackathons", tags=["Hackathons"]
 )
+api_v1_router.include_router(feature_announcements.router)
+

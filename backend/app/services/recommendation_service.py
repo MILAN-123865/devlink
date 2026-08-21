@@ -14,9 +14,22 @@ from app.models.project_skill import ProjectSkill
 from app.models.user_skill import UserSkill
 
 
-class RecommendationService:
+class ProjectAffinityRecommendations:
     """
     Business logic for generating personalized project recommendations.
+
+    This class used to be called ``RecommendationService``. So is the builder
+    service further down this same module -- and because both ``class``
+    statements bind the same name in the same namespace, the later one simply
+    replaced this one, taking ``get_recommended_projects`` with it.
+    ``app/routers/recommendations.py`` still calls that method, so
+    ``GET /api/v1/recommendations/projects`` raised ``AttributeError`` and
+    answered 500.
+
+    The two are genuinely different services with different scoring models, so
+    they keep separate classes rather than being folded together.
+    ``RecommendationService`` inherits from this one, which leaves every
+    existing call site working unchanged.
 
     Scoring factors and default weights:
       - Skill Match     (40%): overlap between user's skills and project's skills
@@ -794,11 +807,16 @@ class WeightedProjectScoringStrategy(ProjectScoringStrategy):
 # =====================================================================
 
 
-class RecommendationService:
+class RecommendationService(ProjectAffinityRecommendations):
     """
     Business logic for builder recommendations.
 
-    Public entry point: :meth:`recommend_builders`.
+    Public entry points: :meth:`recommend_builders` and
+    :meth:`recommend_projects`.
+
+    Inherits :meth:`~ProjectAffinityRecommendations.get_recommended_projects`,
+    which routers have called since before this class existed. See that class
+    for why the two are related this way.
     """
 
     # Cache TTL for recommendation result sets (10 minutes).

@@ -6,6 +6,7 @@ import { api } from "@/api";
 import { ProjectDashboard } from "@/features/projects/components/ProjectDashboard";
 import { CollaborativeWorkspace } from "@/components/projects/CollaborativeWorkspace";
 import { ProjectMembersList } from "@/features/projects/components/ProjectMembersList";
+import { CloneProjectDialog } from "@/components/projects/CloneProjectDialog";
 import {
   ArrowLeft,
   Star,
@@ -101,6 +102,7 @@ function ProjectDetail() {
   const currentUserRole = isOwner ? "owner" : memberObj?.role || "";
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
   const { data: myApps } = useQuery({
     queryKey: ["myApplications"],
     queryFn: getMyApplications,
@@ -280,6 +282,16 @@ function ProjectDetail() {
             ) : null}
 
             <ShareProjectButton projectTitle={p.name} projectDescription={p.description} />
+
+            <button
+              type="button"
+              onClick={() => setIsCloneDialogOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-medium text-foreground transition-colors hover:bg-muted"
+              aria-label="Clone project template"
+            >
+              <Copy size={14} />
+              Clone
+            </button>
 
             <BookmarkToggleButton projectId={p.id} />
 
@@ -478,6 +490,32 @@ function ProjectDetail() {
         onClose={() => setIsApplyModalOpen(false)}
         projectId={projectId}
       />
+
+      {p && (
+        <CloneProjectDialog
+          project={{
+            id: p.id,
+            title: p.name,
+            name: p.name,
+            tagline: p.description,
+            description: p.description,
+            stage: "idea",
+            stars: p.stars,
+            views: p.views,
+            forks: p.forks,
+            members: p.members,
+            icon: p.icon,
+            stack: p.stack,
+            ownerId: p.ownerId,
+            tags: p.stack,
+            owner: p.owner,
+            progress: 0,
+            status: "recruiting",
+          }}
+          open={isCloneDialogOpen}
+          onOpenChange={setIsCloneDialogOpen}
+        />
+      )}
     </div>
   );
 }

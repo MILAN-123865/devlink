@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/shared/primitives";
+import { Card, EmptyState } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import {
   Dialog,
@@ -199,7 +199,12 @@ function LeaderboardPage() {
                 ))}
               </div>
             ) : (
-              <TypoCaption as="p">No reputation logs recorded yet.</TypoCaption>
+              <EmptyState
+                icon={Award}
+                title="Your reputation journey begins here"
+                desc="Complete projects and help fellow builders to earn your first points."
+                className="rounded-xl border border-dashed border-primary/20 bg-primary/5 py-7"
+              />
             )}
           </div>
         </Card>

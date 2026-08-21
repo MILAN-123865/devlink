@@ -158,6 +158,12 @@ class Project(Base):
         index=True,
     )
 
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )
+
     tags: Mapped[list | None] = mapped_column(
         JSON,
         nullable=True,

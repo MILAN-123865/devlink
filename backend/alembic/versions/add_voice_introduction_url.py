@@ -1,4 +1,4 @@
-﻿"""add voice introduction url to users
+"""add voice introduction url to users
 
 Revision ID: voice_intro_url_001
 Revises: ea6d6738e0ae

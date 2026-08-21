@@ -19,9 +19,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.core.cache import cache_manager, cached
-from app.dependencies import get_current_user, get_database
+from app.dependencies import get_current_user, get_database, get_optional_current_user
 from app.middleware.rate_limit import SEARCH_LIMIT, limiter
 from app.models.user import User
+from app.services.block_service import BlockService
 from app.schemas.user import (
     CollaborationStatus,
     CurrentUser,
@@ -43,9 +44,11 @@ from app.services.user_service import UserService
 from app.utils.uploads import (
     save_image_upload,
     save_resume_upload,
+    save_video_introduction_upload,
     save_voice_introduction_upload,
     validate_image_upload,
     validate_resume_upload,
+    validate_video_introduction_upload,
     validate_voice_introduction_upload,
 )
 from app.utils.validators import validate_username
@@ -208,10 +211,6 @@ def get_user_profile_completion(
     return UserService.get_profile_completion(db, user)
 
 
-from app.dependencies import get_current_user, get_database, get_optional_current_user
-from app.services.block_service import BlockService
-
-
 @router.get(
     "/{user_id}",
     response_model=UserResponse,
@@ -354,7 +353,10 @@ def get_collaboration_status(
     Get the current user's live collaboration presence status
     (coding, reviewing_pr, in_meeting, looking_for_project, available).
     """
-    return {"user_id": str(current_user.id), "status": current_user.collaboration_status}
+    return {
+        "user_id": str(current_user.id),
+        "status": current_user.collaboration_status,
+    }
 
 
 @router.put(
@@ -364,7 +366,8 @@ def get_collaboration_status(
 )
 def set_collaboration_status(
     status_val: CollaborationStatus = Query(
-        ..., description="One of: coding, reviewing_pr, in_meeting, looking_for_project, available"
+        ...,
+        description="One of: coding, reviewing_pr, in_meeting, looking_for_project, available",
     ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database),
@@ -488,6 +491,7 @@ async def upload_avatar(
     cache_manager.delete_pattern(f"user:*{current_user.id}*")
     return result
 
+
 @router.post(
     "/me/voice-introduction",
     response_model=UserResponse,
@@ -501,6 +505,34 @@ async def upload_voice_introduction(
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
+
+    contents = await file.read()
+
+    try:
+        validate_voice_introduction_upload(
+            file.filename,
+            file.content_type,
+            len(contents),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    voice_url = save_voice_introduction_upload(
+        contents,
+        file.filename,
+        current_user.id,
+    )
+
+    full_voice_url = str(request.base_url).rstrip("/") + voice_url
+
+    result = UserService.update_voice_introduction_url(
+        db,
+        current_user,
+        full_voice_url,
+    )
+    cache_manager.delete_pattern(f"user:*{current_user.id}*")
+    return result
+
 
 @router.post(
     "/me/video-introduction",
@@ -520,10 +552,6 @@ async def upload_video_introduction(
 
     try:
         validate_video_introduction_upload(
-    contents = await file.read()
-
-    try:
-        validate_voice_introduction_upload(
             file.filename,
             file.content_type,
             len(contents),
@@ -532,7 +560,6 @@ async def upload_video_introduction(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     video_url = save_video_introduction_upload(
-    voice_url = save_voice_introduction_upload(
         contents,
         file.filename,
         current_user.id,
@@ -540,17 +567,14 @@ async def upload_video_introduction(
 
     full_video_url = str(request.base_url).rstrip("/") + video_url
 
-    return UserService.update_video_introduction_url(
+    result = UserService.update_video_introduction_url(
         db,
         current_user,
         full_video_url,
-    full_voice_url = str(request.base_url).rstrip("/") + voice_url
-
-    return UserService.update_voice_introduction_url(
-        db,
-        current_user,
-        full_voice_url,
     )
+    cache_manager.delete_pattern(f"user:*{current_user.id}*")
+    return result
+
 
 @router.delete(
     "/me",
@@ -688,10 +712,7 @@ def verify_user(
     db: Session = Depends(get_database),
 ):
 
-    user = UserService.get_user(
-        db,
-        user_id,
-    )
+    user = UserService.get_user(db, user_id)
 
     if user is None:
         raise HTTPException(
