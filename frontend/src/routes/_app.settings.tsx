@@ -794,13 +794,8 @@ function SettingsPage() {
             {tab === "privacy" && (
               <div className="p-6 space-y-6">
                 <div>
-<<<<<<< HEAD
-                  <TypoHeading as="h2">Security</TypoHeading>
-                  <TypoCaption as="p">Manage your password and account security</TypoCaption>
-=======
                   <TypoHeading as="h2">Privacy Settings</TypoHeading>
                   <TypoCaption as="p">Control who can view your profile and activities</TypoCaption>
->>>>>>> upstream/main
                 </div>
 
                 {loadingPrivacy ? (

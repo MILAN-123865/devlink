@@ -1,17 +1,5 @@
-<<<<<<< HEAD
-import { Card } from "@/components/shared/primitives";
-import {
-  Folder,
-  Users2,
-  MessageSquare,
-  Sparkles,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-=======
 import { StatCard } from "@/components/ui/stat-card";
 import { Folder, Users2, MessageSquare, Sparkles } from "lucide-react";
->>>>>>> upstream/main
 import { motion } from "framer-motion";
 
 const statsData = [
