@@ -37,14 +37,12 @@ function storageEventFromAnotherTab(
     window.localStorage.setItem(key, newValue);
   }
 
-  window.dispatchEvent(
-    new StorageEvent("storage", {
-      key,
-      newValue,
-      oldValue,
-      storageArea: window.localStorage,
-    }),
-  );
+  const evt = new Event("storage") as any;
+  evt.key = key;
+  evt.newValue = newValue;
+  evt.oldValue = oldValue;
+  evt.storageArea = window.localStorage;
+  window.dispatchEvent(evt);
 }
 
 beforeEach(async () => {

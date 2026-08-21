@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     func,
@@ -233,6 +234,12 @@ class User(Base):
         nullable=False,
     )
 
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )
+
     collaboration_status: Mapped[str | None] = mapped_column(
         String(40),
         nullable=True,
@@ -255,6 +262,7 @@ class User(Base):
             "resume": "public",
             "social_links": "public",
             "availability": "public",
+            "activity": "public",
         },
     )
 
@@ -265,6 +273,7 @@ class User(Base):
             "resume": "public",
             "social_links": "public",
             "availability": "public",
+            "activity": "public",
         }
         if not self.privacy_settings:
             return defaults

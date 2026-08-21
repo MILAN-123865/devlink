@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link, useNavigate } from "@tanstack/react-router";
-import { Card, TagChip, Avatar, Skeleton } from "@/components/shared/primitives";
+import { Card, EmptyState, Skeleton } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
 import { builders, currentUser, projects, type Builder, type UserRole } from "@/mocks/seed";
@@ -21,6 +21,9 @@ import {
   BadgeCheck,
   Camera,
   TrendingUp,
+  Award,
+  FolderKanban,
+  Users,
 } from "lucide-react";
 import { copyText } from "@/lib/clipboard";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
@@ -153,6 +156,18 @@ function ProfilePage() {
   if (!b) throw notFound();
 
   const { data: followStatus } = useFollowStatus(b.id);
+  const followerCount = followStatus?.follower_count ?? b.followers ?? 0;
+  const profileProjects = projects.filter(
+    (project) => project.owner === b.name || project.owner === b.handle || project.owner_id === b.id || project.ownerId === b.id,
+  );
+  const profileAction = (
+    <Link
+      to="/settings"
+      className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+    >
+      Update profile
+    </Link>
+  );
 
   // Live collaboration presence status.
   const {
@@ -355,7 +370,7 @@ function ProfilePage() {
               <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-muted-foreground">
                 <div>
                   <span className="font-semibold">
-                    {followStatus?.follower_count ?? b.followers ?? 0}
+                    {followerCount}
                   </span>
                   <TypoCaption>Followers</TypoCaption>
                 </div>
@@ -558,14 +573,19 @@ function ProfilePage() {
               ))}
             </div>
           </Card> */}
-          <SkillsCard skills={b.profileSkills ?? []} />
-          <ExperienceCard role={b.role} company={b.company} experienceLevel={b.experienceLevel} />
+          <SkillsCard skills={b.profileSkills ?? []} emptyAction={me ? profileAction : undefined} />
+          <ExperienceCard
+            role={b.role}
+            company={b.company}
+            experienceLevel={b.experienceLevel}
+            emptyAction={me ? profileAction : undefined}
+          />
 
           <PinnedProjectsCard username={b.handle} isOwnProfile={me} />
 
-          {b.badges && b.badges.length > 0 && (
-            <Card className="p-4">
-              <p className="text-[13px] font-semibold text-foreground">Badges</p>
+          <Card className="p-4">
+            <p className="text-[13px] font-semibold text-foreground">Achievements</p>
+            {b.badges && b.badges.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {b.badges.map((badge) => (
                   <span
@@ -576,15 +596,66 @@ function ProfilePage() {
                   </span>
                 ))}
               </div>
+            ) : (
+              <EmptyState
+                icon={Award}
+                title="Achievements await"
+                desc="Complete projects and contribute to the community to earn badges."
+                action={
+                  me ? (
+                    <Link to="/projects" className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90">
+                      Explore projects
+                    </Link>
+                  ) : undefined
+                }
+                className="py-8"
+              />
+            )}
+          </Card>
+
+          {followerCount === 0 ? (
+            <Card className="p-4">
+              <p className="text-[13px] font-semibold text-foreground">Followers</p>
+              <EmptyState
+                icon={Users}
+                title="Build your network"
+                desc="Share your profile and collaborate with other builders to grow your audience."
+                action={
+                  me ? (
+                    <Link to="/builders" className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90">
+                      Find builders
+                    </Link>
+                  ) : undefined
+                }
+                className="py-8"
+              />
             </Card>
-          )}
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card className="p-4">
             <p className="text-[13px] font-semibold text-foreground">Projects</p>
-            <ul className="mt-3 divide-y divide-border">
-              {projects.slice(0, 4).map((p) => (
+            {profileProjects.length === 0 ? (
+              <EmptyState
+                icon={FolderKanban}
+                title="No projects yet"
+                desc="Projects are a great way to show what you're building and invite collaborators in."
+                action={
+                  me ? (
+                    <Link
+                      to="/projects"
+                      className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      Create a project
+                    </Link>
+                  ) : undefined
+                }
+                className="py-10"
+              />
+            ) : (
+              <ul className="mt-3 divide-y divide-border">
+                {profileProjects.slice(0, 4).map((p) => (
                 <li key={p.id} className="py-2">
                   <Link
                     to="/projects/$projectId"
@@ -607,8 +678,9 @@ function ProfilePage() {
                     </div>
                   </Link>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+            )}
           </Card>
 
           {(() => {
@@ -632,7 +704,7 @@ function ProfilePage() {
             }
             return <ContributionHeatmap username={b.handle} className="mt-4" />;
           })()}
-          <ActivityTimeline userId={b.id} />
+          <ActivityTimeline userId={b.id} emptyAction={me ? profileAction : undefined} />
         </div>
       </div>
       {!me && (

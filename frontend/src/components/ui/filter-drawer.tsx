@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TypoCard } from "@/components/shared/Typography";
-import { EmptySearchState } from "@/components/shared/EmptySearchState";
 
 export interface FilterOption {
   label: string;
@@ -134,7 +133,7 @@ export function FilterDrawer({
   }, [open, onOpenChange]);
 
   // Track search queries per section for pills display
-  const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(
+  const [searchQueries, setSearchQueries] = React.useState<Record<string, string>>(() =>
     Object.fromEntries(sections.map((s) => [s.id, ""])),
   );
 
@@ -186,10 +185,6 @@ export function FilterDrawer({
     label: string,
     isSelected: boolean,
     hasSearchQuery: boolean,
- feat/availability-scheduling
-    isMulti: boolean = true,
-
- main
   ) => {
     const section = sections.find((s) => s.id === sectionId);
     const isSearchMode = section?.type === "search";
@@ -230,7 +225,7 @@ export function FilterDrawer({
 
   // Render search input with pill
   const renderSearchInput = (section: FilterSection) => {
-    const hasQuery = searchQueries[section.id] && searchQueries[section.id].trim();
+    const hasQuery = Boolean(searchQueries[section.id] && searchQueries[section.id].trim());
 
     return (
       <div className="relative mt-2 flex items-center">
@@ -341,10 +336,6 @@ export function FilterDrawer({
             option.label,
             isSelected,
             sectionSearchQuery !== "",
- feat/availability-scheduling
-            isMulti,
-
- main
           );
         })}
       </div>
@@ -401,7 +392,12 @@ export function FilterDrawer({
       return selectedList.length > 0;
     });
     return hasSelected || hasAnySearchQuery;
-  }, [sections, draftValues, searchQueries, hasAnySearchQuery]);
+  }, [sections, draftValues, hasAnySearchQuery]);
+
+  if (!hasActiveFilters && !open) {
+    // Show empty state when no filters are active and drawer is closed
+    return null;
+  }
 
   if (isMobile) {
     return (
@@ -443,10 +439,6 @@ export function FilterDrawer({
     );
   }
 
-  if (!hasActiveFilters && !open) {
-    // Show empty state when no filters are active and drawer is closed
-    return null;
-  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

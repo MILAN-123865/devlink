@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { activitiesService } from "@/services";
-import { Card, Skeleton } from "@/components/shared/primitives";
+import { Card, EmptyState, Skeleton } from "@/components/shared/primitives";
 import { formatDistanceToNow } from "date-fns";
 import {
   UserPlus,
@@ -13,9 +13,12 @@ import {
   Github,
 } from "lucide-react";
 import type { BackendActivity } from "@/services";
+import { TypoCaption } from "@/components/shared/Typography";
+import type { ReactNode } from "react";
 
 interface ActivityTimelineProps {
   userId: string;
+  emptyAction?: ReactNode;
 }
 
 function getActivityIcon(type: string) {
@@ -42,12 +45,8 @@ function getActivityIcon(type: string) {
   }
 }
 
-export function ActivityTimeline({ userId }: ActivityTimelineProps) {
-  const {
-    data: activities,
-    isLoading,
-    isError,
-  } = useQuery({
+export function ActivityTimeline({ userId, emptyAction }: ActivityTimelineProps) {
+  const { data: activities, isLoading, isError } = useQuery({
     queryKey: ["user-activities", userId],
     queryFn: () => activitiesService.user(userId),
   });
@@ -73,7 +72,13 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
       {isError && <p className="text-[13px] text-destructive">Failed to load recent activity.</p>}
 
       {!isLoading && !isError && activities?.length === 0 && (
-        <p className="text-[13px] text-muted-foreground">No recent activity to show.</p>
+        <EmptyState
+          icon={Clock}
+          title="No activity yet"
+          desc="Projects, profile updates, and community contributions will appear here."
+          action={emptyAction}
+          className="py-8"
+        />
       )}
 
       {!isLoading && !isError && activities && activities.length > 0 && (
@@ -85,9 +90,7 @@ export function ActivityTimeline({ userId }: ActivityTimelineProps) {
               </span>
               <div className="flex flex-col">
                 <p className="text-[13px] font-medium text-foreground">{activity.title}</p>
-                {activity.description && (
-                  <p className="text-[12px] text-muted-foreground mt-0.5">{activity.description}</p>
-                )}
+                {activity.description && <TypoCaption as="p">{activity.description}</TypoCaption>}
                 <time className="text-[11px] text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                 </time>

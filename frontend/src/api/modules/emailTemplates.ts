@@ -119,7 +119,7 @@ export const renderEmailTemplate = async (
     return {
       template_type: templateType,
       subject: `${tpl.name} for ${user_name}`,
-      html_content: `<!DOCTYPE html><html><body style="background-color:#0f172a;color:#f8fafc;font-family:sans-serif;padding:24px;"><div style="max-width:600px;margin:0 auto;background-color:#1e293b;border-radius:12px;padding:32px;border:1px solid #334155;"><h1 style="color:#6366f1;">DevLink</h1><h2>${tpl.name}</h2><p>Hello ${user_name}, ${tpl.description}</p><a href="#" style="display:inline-block;background-color:#6366f1;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">Take Action</a></div></body></html>`,
+      html_content: `<!DOCTYPE html><html><body style="background-color:#0f172a;color:#f8fafc;font-family:sans-serif;padding:24px;"><div style="max-width:600px;margin:0 auto;background-color:#1e293b;border-radius:12px;padding:32px;border:1px solid #334155;"><h1 style="color:#06b6d4;">DevLink</h1><h2 style="color:#ffffff;">${tpl.name}</h2><p style="color:#cbd5e1;">Hello ${user_name}, ${tpl.description}</p><a href="#" style="display:inline-block;background-color:#06b6d4;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">Take Action</a></div></body></html>`,
       text_content: `${tpl.name}\n\nHello ${user_name},\n${tpl.description}\n\nVisit DevLink: https://devlink.app`,
     };
   }

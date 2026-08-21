@@ -7,6 +7,8 @@ import { ProfileCompletionChecklist } from "@/components/profile/ProfileCompleti
 import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
 
+import { KeyboardShortcutProvider } from "@/context/KeyboardShortcutContext";
+
 const mockUserProfile = {
   avatar: "",
   bio: "Frontend Developer interested in React & Open Source.",
@@ -18,13 +20,15 @@ const mockUserProfile = {
 
 function AppLayoutWithProfileChecklist() {
   return (
-    <div className="space-y-0">
-      <EmailVerificationBanner isVerified={false} userEmail="builder@devlink.io" />
-      <ProfileCompletionChecklist userProfile={mockUserProfile} />
-      <SidebarProvider>
-        <DashboardLayout />
-      </SidebarProvider>
-    </div>
+    <KeyboardShortcutProvider>
+      <div className="space-y-0">
+        <EmailVerificationBanner isVerified={false} userEmail="builder@devlink.io" />
+        <ProfileCompletionChecklist userProfile={mockUserProfile} />
+        <SidebarProvider>
+          <DashboardLayout />
+        </SidebarProvider>
+      </div>
+    </KeyboardShortcutProvider>
   );
 }
 

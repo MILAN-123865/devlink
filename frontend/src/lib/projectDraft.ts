@@ -1,4 +1,3 @@
- feat/availability-scheduling
 
 /**
  * Local persistence for an in-progress project draft.
@@ -36,7 +35,6 @@
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
- main
 export type ProjectDraftFormData = any;
 
 /** The `localStorage` key holding the draft envelope. */

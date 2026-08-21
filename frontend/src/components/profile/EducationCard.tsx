@@ -1,4 +1,4 @@
-import { Card } from "@/components/shared/primitives";
+import { Card, EmptyState } from "@/components/shared/primitives";
 import { GraduationCap } from "lucide-react";
 
 export interface EducationEntry {
@@ -25,7 +25,12 @@ export function EducationCard({ education = [] }: EducationCardProps) {
       </div>
 
       {education.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">No education added yet.</p>
+        <EmptyState
+          icon={GraduationCap}
+          title="Add your learning journey"
+          desc="Share the education and training that shaped your path."
+          className="rounded-xl border border-dashed border-primary/20 bg-primary/5 py-8"
+        />
       ) : (
         <div className="mt-4 space-y-3">
           {education.map((entry) => (

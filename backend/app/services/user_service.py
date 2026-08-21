@@ -110,6 +110,19 @@ class UserService:
 
         data = user.model_dump(exclude_unset=True, mode="json")
 
+        from fastapi import HTTPException, status
+
+        # Optimistic locking check
+        if "version" in data and data["version"] is not None:
+            expected_version = data.pop("version")
+            if db_user.version != expected_version:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Version conflict: The profile has been updated by another request. Please refresh and try again.",
+                )
+        else:
+            data.pop("version", None)
+
         if "privacy_settings" in data:
             privacy_data = data.pop("privacy_settings")
             if privacy_data:
@@ -120,6 +133,7 @@ class UserService:
                 db_user.privacy_settings = current_settings
         for key, value in data.items():
             setattr(db_user, key, value)
+        db_user.version = (db_user.version or 1) + 1
         db.flush()
         db.refresh(db_user)
 
