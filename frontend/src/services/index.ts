@@ -40,14 +40,24 @@ import type { Hackathon, Flare, Message } from "@/mocks/seed";
 const delay = 120;
 const mock = <T>(v: T): Promise<T> => new Promise((r) => setTimeout(() => r(v), delay));
 
-// Wrap a real API call so a network/backend failure silently degrades to the
-// provided fallback. Keeps every page usable if the backend is unreachable.
+// Wrap a real API call so a network/backend failure degrades to the provided
+// fallback. Keeps every page usable if the backend is unreachable.
+//
+// Only ever pass an *empty* fallback -- `[]`, `null`, a zeroed summary. The
+// caller cannot tell a fallback from a real answer, so anything with content
+// in it becomes indistinguishable from data the user actually has (#1249).
+//
+// The warning is unconditional. It used to be `import.meta.env.DEV` only,
+// which meant that in production a swallowed failure produced no signal from
+// either side: no error state on the page and nothing in the console. That is
+// a large part of why eleven routers could 404 on the legacy /api surface
+// (#1246) without anybody noticing.
 async function withFallback<T>(call: () => Promise<T>, fallback: T): Promise<T> {
   if (!isBackendConfigured()) return mock(fallback);
   try {
     return await call();
   } catch (err) {
-    if (import.meta.env.DEV) console.warn("[services] API call failed, using fallback:", err);
+    console.warn("[services] API call failed, using fallback:", err);
     return fallback;
   }
 }
@@ -682,8 +692,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.list();
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -702,8 +711,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.get(id);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -733,8 +741,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.create(name);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -764,8 +771,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.rename(id, name);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -798,8 +804,7 @@ export const collectionsService = {
         await collectionsApi.delete(id);
         return;
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -824,8 +829,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.addBookmark(collectionId, bookmarkId);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -859,8 +863,7 @@ export const collectionsService = {
         await collectionsApi.removeBookmark(collectionId, bookmarkId);
         return;
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -883,8 +886,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.getBookmarkCollections(bookmarkId);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
