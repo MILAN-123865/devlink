@@ -18,6 +18,7 @@ import {
   hackathonsApi,
   analyticsApi,
   authApi,
+  usersApi,
   collectionsApi,
   recommendationsApi,
   fallbackTechStack,
@@ -186,6 +187,36 @@ export const dashboardService = {
         ((await analyticsApi.dashboard()).quickActions as unknown as typeof seed.quickActions) ??
         seed.quickActions,
       seed.quickActions,
+    ),
+};
+
+export const usersService = {
+  getMe: () =>
+    withFallback(
+      () => usersApi.getMe(),
+      null
+    ),
+  getPrivacySettings: () =>
+    withFallback(
+      () => usersApi.getPrivacySettings(),
+      {
+        email: "private",
+        github: "public",
+        resume: "public",
+        social_links: "public",
+        availability: "public",
+        activity: "public",
+      }
+    ),
+  updatePrivacySettings: (body: Record<string, any>) =>
+    withFallback(
+      () => usersApi.updatePrivacySettings(body),
+      {}
+    ),
+  updateMe: (body: Record<string, any>) =>
+    withFallback(
+      () => usersApi.updateMe(body),
+      {}
     ),
 };
 

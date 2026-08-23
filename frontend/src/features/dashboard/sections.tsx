@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, SectionHeader, Avatar } from "@/components/shared/primitives";
+import { projectsApi } from "@/api/modules/projects";
+import { Card, EmptyState, SectionHeader, Avatar } from "@/components/shared/primitives";
 import {
   Plus,
   Flame,
@@ -26,48 +27,7 @@ import type { Project } from "@/mocks/seed";
 
 // 1. Current Projects
 export function CurrentProjects() {
-  const projectsList = [
-    {
-      id: "p1",
-      name: "DevLink Platform",
-      status: "In Progress",
-      progress: 80,
-      dueText: "Due in 5 days",
-      iconText: "D",
-      iconBg: "bg-blue-500/10 text-blue-500 border border-blue-500/20",
-      avatars: [
-        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Alex",
-        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Sarah",
-      ],
-      extraAvatars: 3,
-    },
-    {
-      id: "p2",
-      name: "AI Matching Engine",
-      status: "In Progress",
-      progress: 60,
-      dueText: "Due in 12 days",
-      iconText: "A",
-      iconBg: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
-      avatars: [
-        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Priya",
-        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=John",
-      ],
-      extraAvatars: 2,
-    },
-    {
-      id: "p3",
-      name: "Mobile App",
-      status: "Planning",
-      progress: 25,
-      dueText: "Due in 18 days",
-      iconText: "M",
-      iconBg: "bg-violet-500/10 text-violet-500 border border-violet-500/20",
-      avatars: ["https://api.dicebear.com/9.x/notionists-neutral/svg?seed=David"],
-      extraAvatars: 1,
-    },
-  ];
-  const { data: projects = [], isLoading } = useQuery({
+  const { data: projects = [], isLoading, error } = useQuery({
     queryKey: ["dashboardCurrentProjects"],
     queryFn: () => projectsService.list(),
   });
@@ -89,6 +49,11 @@ export function CurrentProjects() {
       stack: ["React", "FastAPI", "TailwindCSS"],
       owner: "Alex",
       views: 120,
+      avatars: [
+        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Alex",
+        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Sarah",
+      ],
+      extraAvatars: 3,
     },
     {
       id: "p2",
@@ -106,6 +71,11 @@ export function CurrentProjects() {
       stack: ["Python", "PyTorch", "Redis"],
       owner: "Priya",
       views: 85,
+      avatars: [
+        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=Priya",
+        "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=John",
+      ],
+      extraAvatars: 2,
     },
     {
       id: "p3",
@@ -123,10 +93,12 @@ export function CurrentProjects() {
       stack: ["React Native", "TypeScript", "Expo"],
       owner: "David",
       views: 54,
+      avatars: ["https://api.dicebear.com/9.x/notionists-neutral/svg?seed=David"],
+      extraAvatars: 1,
     },
   ];
 
-  const displayProjects: Project[] = projects.length > 0 ? projects.slice(0, 3) : fallbackProjects;
+  const displayProjects: any[] = projects.length > 0 ? projects.slice(0, 3) : fallbackProjects;
 
   return (
     <Card className="border-border/60 rounded-2xl bg-card shadow-xs flex flex-col h-full">
@@ -142,7 +114,7 @@ export function CurrentProjects() {
                 <div className="h-2 w-full bg-muted rounded-full" />
               </div>
             ))
-          : displayProjects.map((p: Project) => {
+          : displayProjects.map((p) => {
               const progressVal = p.progress ?? 0;
               const statusMap: Record<string, string> = {
                 recruiting: "bg-primary/10 text-primary border-primary/20",
@@ -151,6 +123,8 @@ export function CurrentProjects() {
                 archived: "bg-muted text-muted-foreground border-border",
               };
               const statusBadge = statusMap[p.status] || statusMap["in-progress"];
+              const avatars = p.avatars || [];
+              const extraAvatars = p.extraAvatars || 0;
 
               return (
                 <div
@@ -182,7 +156,7 @@ export function CurrentProjects() {
                         statusBadge,
                       )}
                     >
-                      {p.status.replace("-", " ")}
+                      {(p.status || "Active").replace("-", " ")}
                     </span>
                   </div>
 
@@ -200,16 +174,33 @@ export function CurrentProjects() {
                     </div>
                   </div>
 
-                  {/* Actionable info row: Team size & Deadline */}
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                  {/* Actionable info row: Team size & Deadline & Avatars */}
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40 animate-fade-in">
                     <span className="inline-flex items-center gap-1 font-medium text-foreground">
                       <Users2 size={12} className="text-primary" /> {p.members || 1} builders
                     </span>
+
+                    {/* Avatar stack */}
+                    <div className="flex -space-x-1.5 items-center shrink-0">
+                      {avatars.map((av: string, idx: number) => (
+                        <Avatar
+                          key={idx}
+                          src={av}
+                          alt="Team"
+                          size={24}
+                          className="border border-card ring-1 ring-border/20"
+                        />
+                      ))}
+                      {extraAvatars > 0 && (
+                        <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted border border-card text-[9px] font-semibold text-muted-foreground ring-1 ring-border/20">
+                          +{extraAvatars}
+                        </div>
+                      )}
+                    </div>
+
                     <span className="inline-flex items-center gap-1 text-muted-foreground">
                       <Calendar size={12} />{" "}
-                      {"deadlineText" in p && typeof p.deadlineText === "string"
-                        ? p.deadlineText
-                        : "Due in 10 days"}
+                      {p.deadlineText || "Due in 10 days"}
                     </span>
                   </div>
                 </div>
