@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-with-registry: 'https://npmjs.org'
+          node-version: 20
           cache: 'npm'
       - name: Validate Lockfile Integrity
         # Acceptance Criteria: Enforce lockfile synchronization to prevent dependency confusion attacks
@@ -33,9 +33,17 @@ jobs:
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci --ignore-scripts
       - name: Generate CycloneDX SBOM File
         # Acceptance Criteria: Auto-generates standard SPDX/CycloneDX bill-of-materials on release paths
         run: |
+          mkdir -p public
           npx @cyclonedx/cyclonedx-npm --output-file public/sbom.json --output-format JSON
       - name: Upload SBOM Artifact Bundle
         uses: actions/upload-artifact@v4
