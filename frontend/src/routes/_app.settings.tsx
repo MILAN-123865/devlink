@@ -6,6 +6,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
 import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
 import { SecurityDashboard } from "@/features/settings/components/security/SecurityDashboard";
+import { BillingDashboard } from "@/features/settings/components/BillingDashboard";
+import { ConnectedAccountsCard } from "@/features/settings/components/security/ConnectedAccountsCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -166,6 +168,26 @@ export function UserSettingsPage() {
       last_name: lastName,
     }));
     setSaveStatus("unsaved");
+  };
+
+  const handleCreateToken = () => {
+    if (!newTokenName.trim()) return;
+    const newToken = {
+      id: `tok_${Date.now()}`,
+      name: newTokenName.trim(),
+      prefix: `dlk_live_${Math.random().toString(36).substring(2, 6)}...`,
+      created: "Just now",
+      lastUsed: "Never",
+    };
+    setApiTokens((prev) => [newToken, ...prev]);
+    setNewTokenName("");
+    setIsCreatingToken(false);
+    toast.success("Personal API token created successfully");
+  };
+
+  const handleDeleteToken = (id: string) => {
+    setApiTokens((prev) => prev.filter((t) => t.id !== id));
+    toast.success("API token revoked");
   };
 
   const inp =
