@@ -6,7 +6,6 @@ export const usersApi = {
   get: (id: string) => api.get<unknown>(`/api/users/${id}`),
   update: (id: string, body: Record<string, unknown>) => api.put<unknown>(`/api/users/${id}`, body),
   updateMe: (body: Record<string, unknown>) => api.put<unknown>("/api/users/me", body),
-  getMe: () => api.get<any>("/api/users/me"),
   getPrivacySettings: () => api.get<any>("/api/users/me/privacy"),
   updatePrivacySettings: (body: Record<string, any>) => api.put<unknown>("/api/users/me/privacy", body),
   remove: (id: string) => api.delete<void>(`/api/users/${id}`),
