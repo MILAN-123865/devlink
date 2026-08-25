@@ -66,8 +66,12 @@ export function RegisterDialog({
             htmlFor="motivation"
             className="mb-1.5 block text-[13px] font-medium text-foreground"
           >
+ feat/organization-roles-987-v2
+            What are you hoping to build? <TypoCaption>(optional)</TypoCaption>
+
             What are you hoping to build?{" "}
             <span className="font-normal text-muted-foreground">(optional)</span>
+ main
           </label>
           <textarea
             id="motivation"

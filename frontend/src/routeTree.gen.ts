@@ -70,9 +70,12 @@ import { Route as AppProjectsProjectIdActivityRouteImport } from './routes/_app.
 import { Route as AppProjectsProjectIdCollaborationMetricsRouteImport } from './routes/_app.projects.$projectId.collaboration-metrics'
 import { Route as AppProjectsProjectIdIssuesRouteImport } from './routes/_app.projects.$projectId.issues'
 
+ feat/organization-roles-987-v2
+
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+ main
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -687,11 +690,14 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+ feat/organization-roles-987-v2
+
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+ main
     '/verify-email': {
       id: '/verify-email'
       path: '/verify-email'
