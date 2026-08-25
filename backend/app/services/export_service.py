@@ -49,6 +49,7 @@ class ExportService:
         organizations = ExportService._get_organizations(db, user.id)
         activities = ExportService._get_activities(db, user.id)
         notifications = ExportService._get_notifications(db, user.id)
+        builder_flares = ExportService._get_builder_flares(db, user.id)
         return UserExportData(
             exported_at=now,
             profile=profile,
@@ -64,7 +65,6 @@ class ExportService:
             notifications=notifications,
             builder_flares=builder_flares,
         )
-
 
     @staticmethod
     def export_portfolio_markdown(db: Session, user: User) -> str:
@@ -98,7 +98,11 @@ class ExportService:
             md.append("## Skills & Expertise")
             for skill in data.skills:
                 level_str = f" ({skill.level})" if skill.level else ""
-                exp_str = f" - {skill.years_of_experience} yrs" if skill.years_of_experience else ""
+                exp_str = (
+                    f" - {skill.years_of_experience} yrs"
+                    if skill.years_of_experience
+                    else ""
+                )
                 md.append(f"- **{skill.name}**{level_str}{exp_str}")
             md.append("")
 
@@ -139,7 +143,7 @@ class ExportService:
 <html>
 <head>
 <meta charset="utf-8">
-<title>{p.get('first_name', '')} {p.get('last_name', '')} - Portfolio</title>
+<title>{p.get("first_name", "")} {p.get("last_name", "")} - Portfolio</title>
 <style>
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; padding: 40px; max-width: 800px; margin: 0 auto; }}
   h1 {{ color: #111827; margin-bottom: 4px; }}
@@ -149,9 +153,9 @@ class ExportService:
 </style>
 </head>
 <body>
-  <h1>{p.get('first_name', '')} {p.get('last_name', '')}</h1>
-  <div class="headline">{p.get('headline') or ''}</div>
-  <p>{p.get('bio') or ''}</p>
+  <h1>{p.get("first_name", "")} {p.get("last_name", "")}</h1>
+  <div class="headline">{p.get("headline") or ""}</div>
+  <p>{p.get("bio") or ""}</p>
 
   <div class="section">
     <h2>Skills</h2>

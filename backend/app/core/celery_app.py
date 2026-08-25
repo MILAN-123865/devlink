@@ -8,7 +8,11 @@ celery_app = Celery(
     "devlink",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.notification_tasks"],
+    include=[
+        "app.tasks.notification_tasks",
+        "app.tasks.email_tasks",
+        "app.tasks.digest_tasks",
+    ],
 )
 
 celery_app.conf.update(
@@ -18,12 +22,19 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
-    task_time_limit=60,
-    task_soft_time_limit=45,
+    task_time_limit=300,
+    task_soft_time_limit=240,
     task_always_eager=settings.CELERY_TASK_ALWAYS_EAGER,
+    
+    # Reliability & Execution Controls
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    worker_prefetch_multiplier=1,
+    result_expires=86400,
 )
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Register Celery signals for job monitoring
@@ -35,20 +46,21 @@ from celery.signals import (
     task_retry,
 )
 
+
 @before_task_publish.connect
 def on_task_publish(sender=None, headers=None, body=None, **kwargs):
     from app.database.session import SessionLocal
     from app.models.background_job import BackgroundJob, JobStatus
-    
+
     info = headers or {}
     task_id = info.get("id")
     task_name = info.get("task") or sender
     if not task_id:
         return
-        
+
     args, kwargs_dict, embed = body or ((), {}, {})
     payload = {"args": list(args), "kwargs": kwargs_dict}
-        
+
     db = SessionLocal()
     try:
         job = db.get(BackgroundJob, task_id)
@@ -74,7 +86,7 @@ def on_task_prerun(task_id, task, args, kwargs, **kwargs_extra):
     from app.database.session import SessionLocal
     from app.models.background_job import BackgroundJob, JobStatus
     from datetime import datetime, timezone
-    
+
     db = SessionLocal()
     try:
         job = db.get(BackgroundJob, task_id)
@@ -89,7 +101,7 @@ def on_task_prerun(task_id, task, args, kwargs, **kwargs_extra):
             db.add(job)
         else:
             job.payload = payload
-            
+
         job.status = JobStatus.RUNNING
         job.started_at = datetime.now(timezone.utc)
         job.worker = task.request.hostname or "unknown"
@@ -102,17 +114,16 @@ def on_task_prerun(task_id, task, args, kwargs, **kwargs_extra):
         db.close()
 
 
-
 @task_success.connect
 def on_task_success(sender, result, **kwargs):
     from app.database.session import SessionLocal
     from app.models.background_job import BackgroundJob, JobStatus
     from datetime import datetime, timezone
-    
+
     task_id = sender.request.id
     if not task_id:
         return
-        
+
     db = SessionLocal()
     try:
         job = db.get(BackgroundJob, task_id)
@@ -141,10 +152,10 @@ def on_task_failure(task_id, exception, traceback, sender, **kwargs):
     from app.database.session import SessionLocal
     from app.models.background_job import BackgroundJob, JobStatus
     from datetime import datetime, timezone
-    
+
     if not task_id:
         return
-        
+
     db = SessionLocal()
     try:
         job = db.get(BackgroundJob, task_id)
@@ -168,15 +179,14 @@ def on_task_failure(task_id, exception, traceback, sender, **kwargs):
         db.close()
 
 
-
 @task_retry.connect
 def on_task_retry(uuid, exception, traceback, sender, **kwargs):
     from app.database.session import SessionLocal
     from app.models.background_job import BackgroundJob, JobStatus
-    
+
     if not uuid:
         return
-        
+
     db = SessionLocal()
     try:
         job = db.get(BackgroundJob, uuid)
@@ -190,4 +200,3 @@ def on_task_retry(uuid, exception, traceback, sender, **kwargs):
         logger.error(f"Error on task retry signal: {e}")
     finally:
         db.close()
-

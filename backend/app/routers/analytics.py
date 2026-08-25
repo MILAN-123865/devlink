@@ -7,9 +7,16 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.dependencies import get_current_admin, get_current_user, get_optional_current_user
+from app.dependencies import (
+    get_current_admin,
+    get_current_user,
+    get_optional_current_user,
+)
 from app.models.user import User
-from app.schemas.analytics import PlatformAnalyticsResponse
+from app.schemas.analytics import (
+    PlatformAnalyticsResponse,
+    PlatformSocialProofResponse,
+)
 from app.schemas.community_stats import CommunityStatsResponse
 from app.services.analytics_service import AnalyticsService
 from app.services.community_stats_service import CommunityStatsService
@@ -78,6 +85,26 @@ def get_analytics_overview(
 
 
 @router.get(
+    "/social-proof",
+    response_model=PlatformSocialProofResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Public Social Proof & Platform Growth Stats (#761)",
+    description="Returns platform adoption numbers for the landing page social proof counters: developers, projects, teams, organizations, and hackathons.",
+)
+@router.get(
+    "/social-proof/",
+    response_model=PlatformSocialProofResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+def get_social_proof(
+    db: Annotated[Session, Depends(get_db)],
+) -> PlatformSocialProofResponse:
+    return AnalyticsService.get_social_proof(db=db)
+
+
+
+@router.get(
     "/community/stats",
     response_model=CommunityStatsResponse,
     status_code=status.HTTP_200_OK,
@@ -94,10 +121,15 @@ def get_community_stats(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(get_current_admin)],
     days: int = Query(
-        default=30, ge=1, le=365, description="Timeframe in days for trending technologies"
+        default=30,
+        ge=1,
+        le=365,
+        description="Timeframe in days for trending technologies",
     ),
 ) -> CommunityStatsResponse:
     return CommunityStatsService.get_community_stats(db=db, days=days)
+
+
 # ==========================================================
 # API Request Analytics
 # ==========================================================
@@ -169,7 +201,7 @@ def get_my_profile_analytics(
 def track_profile_click(
     request: TrackClickRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[Optional[User], Depends(get_optional_current_user)] = None,
+    current_user: Annotated[User | None, Depends(get_optional_current_user)] = None,
 ):
     AnalyticsService.log_profile_click(
         db=db,

@@ -57,6 +57,8 @@ import {
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 import { TypoSection, TypoCaption, TypoCard, TypoHeading } from "@/components/shared/Typography";
+import { SocialProofSection } from "@/components/landing/SocialProofSection";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -217,8 +219,8 @@ function Landing() {
             <Link to="/builders" className="hover:text-foreground">
               Builders
             </Link>
-            <a
-              href="#showcase"
+            <Link
+              to="/showcase"
               className={
                 activeSection === "showcase"
                   ? "text-foreground font-semibold"
@@ -226,7 +228,7 @@ function Landing() {
               }
             >
               Showcase
-            </a>
+            </Link>
             <a
               href="#pricing"
               className={
@@ -305,13 +307,13 @@ function Landing() {
                 Builders
               </Link>
 
-              <a
-                href="#showcase"
+              <Link
+                to="/showcase"
                 className="text-sm text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Showcase
-              </a>
+              </Link>
 
               <a
                 href="#pricing"
@@ -401,9 +403,7 @@ function Landing() {
                     <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
                     <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <TypoCaption>
-                    app.devlink.com
-                  </TypoCaption>
+                  <TypoCaption>app.devlink.com</TypoCaption>
                   <div className="w-12" /> {/* Spacing spacer */}
                 </div>
 
@@ -432,9 +432,7 @@ function Landing() {
                   <div className="flex-1 p-4 flex flex-col gap-4 overflow-hidden relative">
                     <div className="flex items-center justify-between border-b border-border pb-2">
                       <TypoCard>Workspace Dashboard</TypoCard>
-                      <TypoCaption>
-                        Dev Mode
-                      </TypoCaption>
+                      <TypoCaption>Dev Mode</TypoCaption>
                     </div>
 
                     {/* Mock Active Project Card */}
@@ -461,9 +459,7 @@ function Landing() {
                         <span className="h-5 w-5 rounded-full bg-secondary text-foreground text-[10px] font-bold flex items-center justify-center border border-border">
                           PM
                         </span>
-                        <TypoCaption>
-                          +
-                        </TypoCaption>
+                        <TypoCaption>+</TypoCaption>
                       </div>
                     </div>
 
@@ -496,6 +492,9 @@ function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* ===== SOCIAL PROOF / PLATFORM GROWTH SECTION (#761) ===== */}
+      <SocialProofSection />
 
       <section id="features" className="border-b border-border">
         <div className="mx-auto grid max-w-6xl gap-4 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
@@ -533,11 +532,16 @@ function Landing() {
       </section>
 
       {/* ===== AI FEATURES SECTION ===== */}
-      <section id="ai-features" className="border-b border-border py-16 bg-gradient-to-b from-background to-surface/10">
+      <section
+        id="ai-features"
+        className="border-b border-border py-16 bg-gradient-to-b from-background to-surface/10"
+      >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-8">
             <TypoHeading as="h2">AI Features</TypoHeading>
-            <TypoCaption as="p">Powerful AI tools to speed up collaboration, streamline triage, and enrich profiles.</TypoCaption>
+            <TypoCaption as="p">
+              Powerful AI tools to speed up collaboration, streamline triage, and enrich profiles.
+            </TypoCaption>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -568,7 +572,10 @@ function Landing() {
                 desc: "Personalized suggestions for projects, teammates and next steps.",
               },
             ].map((f) => (
-              <div key={f.title} className="rounded-md border border-border bg-card p-5 flex flex-col items-start">
+              <div
+                key={f.title}
+                className="rounded-md border border-border bg-card p-5 flex flex-col items-start"
+              >
                 <span className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary">
                   <f.icon size={18} />
                 </span>
@@ -587,9 +594,7 @@ function Landing() {
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-14">
-            <TypoHeading as="h2">
-              See DevLink in action
-            </TypoHeading>
+            <TypoHeading as="h2">See DevLink in action</TypoHeading>
             <TypoCaption as="p">
               Explore how the platform brings teams together — from project dashboards to real-time
               collaboration.
@@ -872,9 +877,7 @@ function Landing() {
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <TypoHeading as="h2">
-              How it works
-            </TypoHeading>
+            <TypoHeading as="h2">How it works</TypoHeading>
             <TypoCaption as="p">
               Form teams, collaborate, and ship products in four simple steps.
             </TypoCaption>
@@ -947,9 +950,7 @@ function Landing() {
                 <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
                   <div className="flex items-center gap-2">
                     <span className="flex h-2.5 w-2.5 rounded-full bg-success animate-pulse" />
-                    <TypoCaption>
-                      Match found nearby
-                    </TypoCaption>
+                    <TypoCaption>Match found nearby</TypoCaption>
                   </div>
                   <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-bold text-primary">
                     98% Match
@@ -1040,14 +1041,11 @@ function Landing() {
 
         <div className="mx-auto max-w-5xl px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-2xl mx-auto">
-            <TypoHeading as="h2">
-              Simple, transparent pricing
-            </TypoHeading>
+            <TypoHeading as="h2">Simple, transparent pricing</TypoHeading>
             <TypoCaption as="p">
               Start for free, upgrade when you need more power. No hidden fees.
             </TypoCaption>
           </div>
-
           <div className="mt-12 flex justify-center">
             <div className="relative flex items-center rounded-full bg-surface border border-border p-1.5 shadow-sm">
               <button
@@ -1093,7 +1091,6 @@ function Landing() {
               </button>
             </div>
           </div>
-
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-center">
             {[
               {
@@ -1186,7 +1183,6 @@ function Landing() {
               </div>
             ))}
           </div>
-
           {/* Trust / Billing Info */}
           <div className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-sm text-muted-foreground font-medium">
             <div className="flex items-center gap-2">
@@ -1202,7 +1198,6 @@ function Landing() {
               <span>No credit card for Hobby</span>
             </div>
           </div>
-
           {/* Feature Comparison */}
           <div className="mt-32 max-w-4xl mx-auto">
             <div className="text-center mb-10">
@@ -1241,7 +1236,6 @@ function Landing() {
               </table>
             </div>
           </div>
-
           {/* FAQ Section */}
           <div className="mt-32 max-w-3xl mx-auto">
             <div className="text-center mb-10">
@@ -1304,12 +1298,8 @@ function Landing() {
       <section className="border-b border-border bg-background">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
           <div className="text-center">
-            <TypoHeading as="h2">
-              Frequently Asked Questions
-            </TypoHeading>
-            <TypoCaption as="p">
-              Everything you need to know about DevLink.
-            </TypoCaption>
+            <TypoHeading as="h2">Frequently Asked Questions</TypoHeading>
+            <TypoCaption as="p">Everything you need to know about DevLink.</TypoCaption>
           </div>
 
           <Accordion
@@ -1355,9 +1345,7 @@ function Landing() {
           <div className="flex items-center gap-2">
             <img src={APP_LOGO} alt="Devlink Logo" className="h-12 w-12 rounded" />
             <span className="text-[20px] font-bold text-foreground ">DevLink</span>
-            <TypoCaption>
-              © {new Date().getFullYear()}
-            </TypoCaption>
+            <TypoCaption>© {new Date().getFullYear()}</TypoCaption>
           </div>
           <div className="flex items-center gap-5 text-[16px] text-muted-foreground">
             {[

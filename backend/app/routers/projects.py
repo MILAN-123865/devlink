@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
-from app.core.cache import cached
+from app.core.cache import cache_manager, cached
 from app.dependencies import get_current_user, get_database, require_project_permission
 from app.middleware.idempotency import IdempotentRoute
 from app.middleware.rate_limit import PROJECT_LIMIT, limiter
@@ -22,6 +22,7 @@ from app.schemas.duplicate_detection import (
     DuplicateProjectCheckResponse,
 )
 from app.schemas.project import (
+    ProjectCloneRequest,
     ProjectCreate,
     ProjectResponse,
     ProjectStatsResponse,
@@ -95,6 +96,7 @@ def create_project(
         new_values=project.model_dump(exclude_unset=True),
     )
 
+    cache_manager.delete_pattern("projects:*")
     return new_project
 
 
@@ -109,6 +111,7 @@ def check_duplicate_project(
     db: Session = Depends(get_database),
 ) -> DuplicateProjectCheckResponse:
     from app.services.duplicate_detection_service import DuplicateDetectionService
+
     return DuplicateDetectionService.find_duplicate_projects(
         db,
         title=req.title,
@@ -252,7 +255,10 @@ def list_projects(
     paid: bool | None = Query(None),
     opensource: bool | None = Query(None),
     tech: str | None = Query(None),
-    sort_by: str | None = Query("newest", description="Sorting option: newest, oldest, most_active, most_bookmarked, most_applications, recently_updated, ai_match_score"),
+    sort_by: str | None = Query(
+        "newest",
+        description="Sorting option: newest, oldest, most_active, most_bookmarked, most_applications, recently_updated, ai_match_score",
+    ),
     db: Session = Depends(get_database),
 ):
 
@@ -283,6 +289,65 @@ def my_projects(
         db,
         current_user.id,
     )
+
+
+@router.get(
+    "/user/{user_id}",
+    response_model=list[ProjectResponse],
+    summary="List projects owned by a specific user",
+)
+def list_user_projects(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+):
+    return ProjectService.list_owner_projects(
+        db,
+        user_id,
+    )
+
+
+@router.post(
+    "/{project_id}/clone",
+    response_model=ProjectResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Clone an existing project as a starting template",
+)
+@limiter.limit("10/minute")
+def clone_project(
+    request: Request,
+    project_id: str,
+    clone_data: ProjectCloneRequest | None = None,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    source_project = None
+    try:
+        val_uuid = uuid.UUID(project_id)
+        source_project = ProjectService.get_project(db, val_uuid)
+    except ValueError:
+        source_project = ProjectService.get_by_slug(db, project_id)
+
+    if not source_project or getattr(source_project, "is_deleted", False) or getattr(source_project, "deleted_at", None) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source project not found",
+        )
+
+    from app.models.project import ProjectVisibility
+    if source_project.visibility == ProjectVisibility.PRIVATE and source_project.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to clone this private project",
+        )
+
+    cloned_project = ProjectService.clone_project(
+        db=db,
+        source_project=source_project,
+        user=current_user,
+        clone_data=clone_data,
+    )
+    cache_manager.delete_pattern("projects:*")
+    return cloned_project
 
 
 @router.put(
@@ -340,7 +405,10 @@ def update_project(
         )
 
     # 2. Description update event
-    if "description" in new_values and old_values.get("description") != new_values["description"]:
+    if (
+        "description" in new_values
+        and old_values.get("description") != new_values["description"]
+    ):
         AuditLogService.create_log(
             db=db,
             actor_id=current_user.id,
@@ -355,8 +423,20 @@ def update_project(
     # 3. Status/Stage change event
     status_keys = {"stage", "visibility", "is_published", "hiring"}
     if any(k in new_values for k in status_keys):
-        changed_old = {k: str(old_values[k]) if isinstance(old_values.get(k), Enum) else old_values.get(k) for k in status_keys if k in new_values}
-        changed_new = {k: str(new_values[k]) if isinstance(new_values.get(k), Enum) else new_values.get(k) for k in status_keys if k in new_values}
+        changed_old = {
+            k: str(old_values[k])
+            if isinstance(old_values.get(k), Enum)
+            else old_values.get(k)
+            for k in status_keys
+            if k in new_values
+        }
+        changed_new = {
+            k: str(new_values[k])
+            if isinstance(new_values.get(k), Enum)
+            else new_values.get(k)
+            for k in status_keys
+            if k in new_values
+        }
         AuditLogService.create_log(
             db=db,
             actor_id=current_user.id,
@@ -379,6 +459,7 @@ def update_project(
         new_values=new_values,
     )
 
+    cache_manager.delete_pattern("projects:*")
     return updated_project
 
 
@@ -390,14 +471,19 @@ def update_project(
 )
 def get_project_audit_trail(
     project_id: uuid.UUID,
-    event_type: Optional[str] = Query(None, description="Filter by event type substring"),
-    user_id: Optional[uuid.UUID] = Query(None, description="Filter by actor or target user ID"),
+    event_type: str | None = Query(
+        None, description="Filter by event type substring"
+    ),
+    user_id: uuid.UUID | None = Query(
+        None, description="Filter by actor or target user ID"
+    ),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_database),
     current_user: User = Depends(require_project_permission("project:read")),
 ) -> PaginatedProjectAuditLogsResponse:
     from app.services.audit_log_service import AuditLogService
+
     result = AuditLogService.search_project_audit_logs(
         db,
         project_id=project_id,
@@ -653,6 +739,8 @@ def delete_project(
         project_id=project_id,
     )
 
+    cache_manager.delete_pattern("projects:*")
+
 
 @router.post(
     "/{project_id}/invite/{user_id}",
@@ -707,23 +795,16 @@ def invite_user(
     db.commit()
     db.refresh(new_member)
 
-    from app.models.notification import NotificationType
-    from app.schemas.notification import NotificationCreate
     from app.services.notification_service import NotificationService
 
-    notification_data = NotificationCreate(
+    NotificationService.create_project_invitation(
+        db=db,
         recipient_id=user_id,
-        type=NotificationType.PROJECT_INVITE,
+        actor_id=current_user.id,
+        project_id=project_id,
         title="Project Invitation",
         message=f"You have been invited to join the project '{project.title}'.",
         action_url=f"/projects/{project_id}",
-        project_id=project_id,
-    )
-    NotificationService.create_notification(
-        db=db,
-        recipient_id=user_id,
-        sender_id=current_user.id,
-        notification=notification_data,
     )
 
     from app.models.audit_log import AuditAction
@@ -739,6 +820,7 @@ def invite_user(
         target_user_id=user_id,
     )
 
+    cache_manager.delete_pattern("projects:*")
     return {"message": "User invited successfully"}
 
 

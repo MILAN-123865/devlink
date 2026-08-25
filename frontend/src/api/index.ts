@@ -122,3 +122,23 @@ export type {
   ProjectTemplateListResponse,
   ProjectTemplateCreateInput,
 } from "./modules/projectTemplates";
+export { skillsApi } from "./modules/skills";
+export type {
+  SkillItem,
+  SkillMatrixResponse,
+  SkillSearchResult,
+} from "./modules/skills";
+export { dashboardLayoutApi } from "./modules/dashboardLayout";
+export type {
+  DashboardWidgetLayout,
+  DashboardLayoutResponse,
+} from "./modules/dashboardLayout";
+export type { PlatformSocialProofResponse } from "./modules/analytics";
+export { featureAnnouncementsApi } from "./modules/featureAnnouncements";
+export type {
+  FeatureAnnouncement,
+  FeatureAnnouncementListResponse,
+  CreateAnnouncementInput,
+  AnnouncementCategory,
+} from "./modules/featureAnnouncements";
+

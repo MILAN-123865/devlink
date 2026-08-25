@@ -1,5 +1,3 @@
-import pytest
-
 
 def test_submit_feedback_success(db, client, register_and_login):
     auth = register_and_login("fb1@example.com", "fbuser1")
@@ -45,4 +43,3 @@ def test_get_my_feedbacks(db, client, register_and_login):
     assert response.status_code == 200
     feedbacks = response.json()
     assert len(feedbacks) >= 1
-

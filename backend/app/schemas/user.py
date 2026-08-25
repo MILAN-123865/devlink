@@ -42,12 +42,26 @@ class PrivacyVisibility(str, Enum):
     PRIVATE = "private"
 
 
+class CollaborationStatus(str, Enum):
+    """Live collaboration presence status a user can set."""
+
+    CODING = "coding"
+    REVIEWING_PR = "reviewing_pr"
+    IN_MEETING = "in_meeting"
+    LOOKING_FOR_PROJECT = "looking_for_project"
+    AVAILABLE = "available"
+
+
+COLLABORATION_STATUSES = tuple(status.value for status in CollaborationStatus)
+
+
 class PrivacySettings(BaseModel):
     email: PrivacyVisibility = PrivacyVisibility.PRIVATE
     github: PrivacyVisibility = PrivacyVisibility.PUBLIC
     resume: PrivacyVisibility = PrivacyVisibility.PUBLIC
     social_links: PrivacyVisibility = PrivacyVisibility.PUBLIC
     availability: PrivacyVisibility = PrivacyVisibility.PUBLIC
+    activity: PrivacyVisibility = PrivacyVisibility.PUBLIC
 
 
 class PrivacySettingsUpdate(BaseModel):
@@ -56,6 +70,7 @@ class PrivacySettingsUpdate(BaseModel):
     resume: PrivacyVisibility | None = None
     social_links: PrivacyVisibility | None = None
     availability: PrivacyVisibility | None = None
+    activity: PrivacyVisibility | None = None
 
 
 # ==========================================================
@@ -79,10 +94,15 @@ class UserBase(BaseModel):
     timezone: SanitizedStr | None = None
 
     website: ValidURL | None = None
+    profile_image: ValidURL | None = None
     resume_url: ValidURL | None = None
+    voice_introduction_url: ValidURL | None = None
     portfolio_url: ValidURL | None = None
     github_url: ValidURL | None = None
     linkedin_url: ValidURL | None = None
+    twitter_url: ValidURL | None = None
+
+    skills: list[str] = Field(default_factory=list)
 
     role: SanitizedStr | None = None
     experience_level: SanitizedStr | None = None
@@ -94,8 +114,11 @@ class UserBase(BaseModel):
 
     open_to_work: bool = True
     is_private: bool = False
+    is_active: bool = True
+    is_verified: bool = False
     privacy_settings: PrivacySettings | None = Field(default_factory=PrivacySettings)
     availability: list[AvailabilitySlot] = Field(default_factory=list)
+    collaboration_status: CollaborationStatus | None = CollaborationStatus.AVAILABLE
 
 
 # ==========================================================
@@ -119,7 +142,7 @@ class UserCreate(UserBase):
                 "username": "janedoe",
                 "email": "jane.doe@example.com",
                 "password": "StrongPassword123!",
-                "open_to_work": True
+                "open_to_work": True,
             }
         }
     )
@@ -133,6 +156,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     first_name: NameStr | None = None
     last_name: NameStr | None = None
+    username: UsernameStr | None = None
 
     headline: HeadlineStr | None = None
     bio: BioStr | None = None
@@ -142,10 +166,15 @@ class UserUpdate(BaseModel):
     public_email: ValidEmail | None = None
 
     website: ValidURL | None = None
+    profile_image: ValidURL | None = None
     resume_url: ValidURL | None = None
+    voice_introduction_url: ValidURL | None = None
     portfolio_url: ValidURL | None = None
     github_url: ValidURL | None = None
     linkedin_url: ValidURL | None = None
+    twitter_url: ValidURL | None = None
+
+    skills: list[str] | None = None
 
     role: SanitizedStr | None = None
     experience_level: SanitizedStr | None = None
@@ -159,6 +188,8 @@ class UserUpdate(BaseModel):
     is_private: bool | None = None
     privacy_settings: PrivacySettingsUpdate | None = None
     availability: list[AvailabilitySlot] | None = None
+    version: int | None = None
+    collaboration_status: CollaborationStatus | None = None
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -168,7 +199,7 @@ class UserUpdate(BaseModel):
                 "headline": "Senior Full-Stack Developer",
                 "bio": "I love building scalable web applications.",
                 "location": "San Francisco, CA",
-                "github_url": "https://github.com/janesmith"
+                "github_url": "https://github.com/janesmith",
             }
         }
     )
@@ -184,10 +215,19 @@ class UserResponse(UserBase):
 
     id: uuid.UUID
 
+    is_active: bool
+    is_verified: bool
+    premium: bool = False
+    is_superuser: bool
+    version: int = 1
+    video_introduction_url: ValidURL | None = None
+    video_introduction_thumbnail_url: ValidURL | None = None
+
 
 # ==========================================================
 # Resume Parse Response
 # ==========================================================
+
 
 class ResumeParseResponse(BaseModel):
     skills: list[str] = Field(default_factory=list)
@@ -278,3 +318,28 @@ class ProfileCompletionResponse(BaseModel):
         default=None,
         description="Badge awarded for 100% profile completion",
     )
+
+
+# ==========================================================
+# Dashboard Layout Customization (#754)
+# ==========================================================
+
+
+class DashboardWidgetLayout(BaseModel):
+    id: str = Field(..., description="Unique widget identifier")
+    order: int = Field(default=0, description="Display order index")
+    pinned: bool = Field(default=False, description="Whether the widget is pinned to top")
+    visible: bool = Field(default=True, description="Whether the widget is visible")
+    column: int = Field(default=1, description="Grid column index (1 for main, 2 for sidebar)")
+
+
+class DashboardLayoutUpdate(BaseModel):
+    widgets: list[DashboardWidgetLayout] = Field(
+        default_factory=list,
+        description="List of configured dashboard widgets and layouts",
+    )
+
+
+class DashboardLayoutResponse(BaseModel):
+    widgets: list[DashboardWidgetLayout]
+    is_customized: bool = True

@@ -1,11 +1,13 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { projectsService } from "@/services";
 import { Card, TagChip, Avatar, Skeleton } from "@/components/shared/primitives";
 import { api } from "@/api";
 import { ProjectDashboard } from "@/features/projects/components/ProjectDashboard";
+import { ProjectCalendar } from "@/features/projects/components/ProjectCalendar";
 import { CollaborativeWorkspace } from "@/components/projects/CollaborativeWorkspace";
 import { ProjectMembersList } from "@/features/projects/components/ProjectMembersList";
+import { CloneProjectDialog } from "@/components/projects/CloneProjectDialog";
 import {
   ArrowLeft,
   Star,
@@ -40,13 +42,9 @@ import { ApplyModal } from "@/features/projects/components/ApplyModal";
 
 export const Route = createFileRoute("/_app/projects/$projectId")({
   loader: async ({ params }) => {
-    try {
-      const project = await projectsService.get(params.projectId);
-      if (!project) throw notFound();
-      return { project };
-    } catch (e) {
-      throw notFound();
-    }
+    const project = await projectsService.get(params.projectId).catch(() => null);
+    if (!project) throw notFound();
+    return { project };
   },
   head: ({ loaderData, params }) => {
     const p = loaderData?.project;
@@ -84,7 +82,7 @@ function ProjectDetail() {
     initialData: loaderData?.project,
   });
   const [tab, setTab] = useState<
-    "overview" | "workspace" | "members" | "activity" | "repos" | "dashboard"
+    "overview" | "workspace" | "members" | "activity" | "repos" | "dashboard" | "calendar"
   >("overview");
   const [copied, setCopied] = useState(false);
   const isOwner = p?.owner === currentUser.name;
@@ -105,11 +103,12 @@ function ProjectDetail() {
   const currentUserRole = isOwner ? "owner" : memberObj?.role || "";
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
   const { data: myApps } = useQuery({
     queryKey: ["myApplications"],
     queryFn: getMyApplications,
   });
-  const projectApplication = myApps?.find(a => a.project_id === projectId);
+  const projectApplication = myApps?.find((a) => a.project_id === projectId);
   const withdrawMutation = useWithdrawApplication();
 
   // Tag generator state
@@ -160,7 +159,7 @@ function ProjectDetail() {
     return (
       <div className="space-y-4">
         <BackButton to="/projects" label="Back to projects" />
-        
+
         {/* Header Card Skeleton */}
         <Card className="p-5">
           <div className="flex items-start gap-4">
@@ -217,11 +216,17 @@ function ProjectDetail() {
       </div>
     );
   }
-  if (!p) throw notFound();
+  if (!p) {
+    // When a child sub-route (e.g. collaboration-metrics) is active and the
+    // project data is unavailable (backend offline / not found), render the
+    // child outlet so sub-pages can display their own standalone content
+    // instead of crashing the whole route tree.
+    return <Outlet />;
+  }
 
   const tabs = dashboard
-    ? (["overview", "workspace", "members", "activity", "repos", "dashboard"] as const)
-    : (["overview", "workspace", "members", "activity", "repos"] as const);
+    ? (["overview", "workspace", "members", "activity", "repos", "dashboard", "calendar"] as const)
+    : (["overview", "workspace", "members", "activity", "repos", "calendar"] as const);
 
   return (
     <div className="space-y-4">
@@ -235,7 +240,7 @@ function ProjectDetail() {
             <TypoHeading as="h1">{p.name}</TypoHeading>
             <TypoCaption as="p">{p.description}</TypoCaption>
             <div className="mt-3 flex flex-wrap gap-1">
-              {p.stack.map((s) => (
+              {p.stack.map((s: string) => (
                 <TagChip key={s}>{s}</TagChip>
               ))}
             </div>
@@ -278,6 +283,16 @@ function ProjectDetail() {
             ) : null}
 
             <ShareProjectButton projectTitle={p.name} projectDescription={p.description} />
+
+            <button
+              type="button"
+              onClick={() => setIsCloneDialogOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-medium text-foreground transition-colors hover:bg-muted"
+              aria-label="Clone project template"
+            >
+              <Copy size={14} />
+              Clone
+            </button>
 
             <BookmarkToggleButton projectId={p.id} />
 
@@ -392,9 +407,7 @@ function ProjectDetail() {
                         ))}
                       </div>
                       <div className="flex items-center justify-between">
-                        <TypoCaption as="p">
-                          {selectedTags.length} tags selected
-                        </TypoCaption>
+                        <TypoCaption as="p">{selectedTags.length} tags selected</TypoCaption>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => tagMutation.mutate()}
@@ -472,12 +485,41 @@ function ProjectDetail() {
       {tab === "dashboard" && (
         <ProjectDashboard projectId={projectId} currentUserRole={currentUserRole} />
       )}
+      {tab === "calendar" && (
+        <ProjectCalendar projectId={projectId} currentUserRole={currentUserRole} />
+      )}
 
       <ApplyModal
         isOpen={isApplyModalOpen}
         onClose={() => setIsApplyModalOpen(false)}
         projectId={projectId}
       />
+
+      {p && (
+        <CloneProjectDialog
+          project={{
+            id: p.id,
+            title: p.name,
+            name: p.name,
+            tagline: p.description,
+            description: p.description,
+            stage: "idea",
+            stars: p.stars,
+            views: p.views,
+            forks: p.forks,
+            members: p.members,
+            icon: p.icon,
+            stack: p.stack,
+            ownerId: p.ownerId,
+            tags: p.stack,
+            owner: p.owner,
+            progress: 0,
+            status: "recruiting",
+          }}
+          open={isCloneDialogOpen}
+          onOpenChange={setIsCloneDialogOpen}
+        />
+      )}
     </div>
   );
 }

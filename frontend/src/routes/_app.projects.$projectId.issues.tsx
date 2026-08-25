@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { issuesService } from "@/services";
 import { issuesApi } from "@/api";
-import { Card } from "@/components/shared/primitives";
+import { Card, EmptyState } from "@/components/shared/primitives";
 import {
   AlertCircle,
   ArrowLeft,
@@ -146,15 +146,13 @@ function IssuesPage() {
           ))}
         </div>
       ) : filteredIssues.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
-            <FileText size={20} />
-          </div>
-          <p className="text-[14px] font-semibold text-foreground">No issues found</p>
-          <TypoCaption as="p">
-            {searchQuery ? "Try adjusting your search." : "Create your first issue to get started."}
-          </TypoCaption>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No issues found"
+          desc={searchQuery ? "Try a different search to find the issue you need." : "Create your first issue to turn work into an actionable task."}
+          action={searchQuery ? <button onClick={() => setSearchQuery("")} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">Clear search</button> : <button onClick={() => setShowCreateModal(true)} className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90">Create issue</button>}
+          className="rounded-xl border border-dashed border-primary/20 bg-primary/5"
+        />
       ) : (
         <div className="space-y-2">
           {filteredIssues.map((issue) => {
@@ -170,9 +168,7 @@ function IssuesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <TypoSection>
-                        {issue.title}
-                      </TypoSection>
+                      <TypoSection>{issue.title}</TypoSection>
                       <span
                         className={cn(
                           "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
@@ -183,9 +179,7 @@ function IssuesPage() {
                         {statusConfig.label}
                       </span>
                     </div>
-                    <TypoCaption as="p">
-                      {issue.description}
-                    </TypoCaption>
+                    <TypoCaption as="p">{issue.description}</TypoCaption>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                       <span className={cn("font-medium", priorityConfig.color)}>
                         {priorityConfig.label} Priority
@@ -266,9 +260,7 @@ function DuplicateCheckModal({ projectId, onClose }: { projectId: string; onClos
             <X size={18} />
           </button>
         </div>
-        <TypoCaption as="p">
-          Use AI to detect similar issues before creating a new one.
-        </TypoCaption>
+        <TypoCaption as="p">Use AI to detect similar issues before creating a new one.</TypoCaption>
 
         <div className="mt-4 space-y-3">
           <div>

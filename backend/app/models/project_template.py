@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
-    Column,
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     func,
@@ -59,13 +59,13 @@ class ProjectTemplate(Base):
     )
 
     tech_stack: Mapped[list[str]] = mapped_column(
-        JSONB,
+        JSONB().with_variant(JSON, "sqlite"),
         default=list,
         nullable=False,
     )
 
     features: Mapped[list[str]] = mapped_column(
-        JSONB,
+        JSONB().with_variant(JSON, "sqlite"),
         default=list,
         nullable=False,
     )

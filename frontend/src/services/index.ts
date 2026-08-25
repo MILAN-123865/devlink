@@ -18,12 +18,15 @@ import {
   hackathonsApi,
   analyticsApi,
   authApi,
+  usersApi,
   collectionsApi,
   recommendationsApi,
   fallbackTechStack,
   searchApi,
   issuesApi,
+  featureAnnouncementsApi,
 } from "@/api";
+
 import type {
   BookmarkCollection,
   BookmarkCollectionWithBookmarks,
@@ -37,14 +40,24 @@ import type { Hackathon, Flare, Message } from "@/mocks/seed";
 const delay = 120;
 const mock = <T>(v: T): Promise<T> => new Promise((r) => setTimeout(() => r(v), delay));
 
-// Wrap a real API call so a network/backend failure silently degrades to the
-// provided fallback. Keeps every page usable if the backend is unreachable.
+// Wrap a real API call so a network/backend failure degrades to the provided
+// fallback. Keeps every page usable if the backend is unreachable.
+//
+// Only ever pass an *empty* fallback -- `[]`, `null`, a zeroed summary. The
+// caller cannot tell a fallback from a real answer, so anything with content
+// in it becomes indistinguishable from data the user actually has (#1249).
+//
+// The warning is unconditional. It used to be `import.meta.env.DEV` only,
+// which meant that in production a swallowed failure produced no signal from
+// either side: no error state on the page and nothing in the console. That is
+// a large part of why eleven routers could 404 on the legacy /api surface
+// (#1246) without anybody noticing.
 async function withFallback<T>(call: () => Promise<T>, fallback: T): Promise<T> {
   if (!isBackendConfigured()) return mock(fallback);
   try {
     return await call();
   } catch (err) {
-    if (import.meta.env.DEV) console.warn("[services] API call failed, using fallback:", err);
+    console.warn("[services] API call failed, using fallback:", err);
     return fallback;
   }
 }
@@ -86,6 +99,31 @@ export interface BackendActivity {
   created_at: string;
 }
 
+export const organizationService = {
+  get: () =>
+    withFallback<typeof seed.organization>(async () => seed.organization, seed.organization),
+  members: () =>
+    withFallback<typeof seed.organization.team>(
+      async () => seed.organization.team,
+      seed.organization.team,
+    ),
+  openings: () =>
+    withFallback<typeof seed.organization.openings>(
+      async () => seed.organization.openings,
+      seed.organization.openings,
+    ),
+  projects: () =>
+    withFallback<typeof seed.organization.projects>(
+      async () => seed.organization.projects,
+      seed.organization.projects,
+    ),
+  activity: () =>
+    withFallback<typeof seed.organization.activity>(
+      async () => seed.organization.activity,
+      seed.organization.activity,
+    ),
+};
+
 export const projectsService = {
   list: (params?: Record<string, unknown>) =>
     withFallback(() => projectsApi.list(params), seed.projects),
@@ -96,12 +134,14 @@ export const projectsService = {
       () => projectsApi.trending(),
       [...seed.projects].sort((a, b) => b.stars - a.stars).slice(0, 5),
     ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   createDraft: (body: any) => withFallback(() => projectsApi.createDraft(body as any), {} as any),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   updateDraft: (id: string, body: any) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     withFallback(() => projectsApi.updateDraft(id, body as any), {} as any),
+
+  clone: (id: string, body?: any) =>
+    projectsApi.clone(id, body),
 };
 
 export const buildersService = {
@@ -157,6 +197,36 @@ export const dashboardService = {
         ((await analyticsApi.dashboard()).quickActions as unknown as typeof seed.quickActions) ??
         seed.quickActions,
       seed.quickActions,
+    ),
+};
+
+export const usersService = {
+  getMe: () =>
+    withFallback(
+      () => usersApi.getMe(),
+      null
+    ),
+  getPrivacySettings: () =>
+    withFallback(
+      () => usersApi.getPrivacySettings(),
+      {
+        email: "private",
+        github: "public",
+        resume: "public",
+        social_links: "public",
+        availability: "public",
+        activity: "public",
+      }
+    ),
+  updatePrivacySettings: (body: Record<string, any>) =>
+    withFallback(
+      () => usersApi.updatePrivacySettings(body),
+      {}
+    ),
+  updateMe: (body: Record<string, any>) =>
+    withFallback(
+      () => usersApi.updateMe(body),
+      {}
     ),
 };
 
@@ -230,6 +300,16 @@ export const flaresService = {
     }, undefined),
 };
 
+export const featureAnnouncementsService = {
+  list: (params?: Parameters<typeof featureAnnouncementsApi.list>[0]) =>
+    featureAnnouncementsApi.list(params),
+  get: (id: string) => featureAnnouncementsApi.get(id),
+  markAsRead: (id: string) => featureAnnouncementsApi.markAsRead(id),
+  markAllAsRead: () => featureAnnouncementsApi.markAllAsRead(),
+  create: (body: Parameters<typeof featureAnnouncementsApi.create>[0]) =>
+    featureAnnouncementsApi.create(body),
+};
+
 export const messagesService = {
   conversations: () => withFallback(() => messagesApi.conversations(), seed.conversations),
   thread: async (id: string) => {
@@ -255,6 +335,13 @@ export const messagesService = {
           attachment_name?: string;
           attachment_size?: number;
           mime_type?: string;
+          is_edited?: boolean;
+          is_deleted?: boolean;
+          is_sent?: boolean;
+          is_pinned?: boolean;
+          scheduled_for?: string;
+          read_at?: string;
+          pinned_at?: string;
         }): seed.Message => ({
           id: m.id,
           from: m.sender_id === currentUser?.id ? "me" : (m.sender_id ?? "me"),
@@ -269,10 +356,18 @@ export const messagesService = {
           attachment_url: m.attachment_url,
           attachment_name: m.attachment_name,
           attachment_size: m.attachment_size,
-        }));
-      },
-      seed.messages[id] ?? [],
-    );
+          mime_type: m.mime_type,
+          sender_id: m.sender_id,
+          is_edited: m.is_edited,
+          is_deleted: m.is_deleted,
+          is_sent: m.is_sent,
+          is_pinned: m.is_pinned,
+          scheduled_for: m.scheduled_for,
+          read_at: m.read_at,
+          pinned_at: m.pinned_at,
+        }),
+      );
+    }, seed.messages[id] ?? []);
   },
   send: (
     conversationId: string,
@@ -284,6 +379,7 @@ export const messagesService = {
       mime_type: string;
       type: string;
     },
+    scheduledFor?: string | null,
   ) =>
     withFallback(
       () =>
@@ -295,6 +391,7 @@ export const messagesService = {
           attachment_name: attachment?.name,
           attachment_size: attachment?.size,
           mime_type: attachment?.mime_type,
+          scheduled_for: scheduledFor ?? null,
         }),
       {
         id: `msg-${Date.now()}`,
@@ -306,8 +403,27 @@ export const messagesService = {
         attachment_name: attachment?.name,
         attachment_size: attachment?.size,
         mime_type: attachment?.mime_type,
+        is_sent: true,
       },
     ),
+  update: (messageId: string, content: string) =>
+    withFallback(() => messagesApi.update(messageId, { content, is_edited: true }), {
+      id: messageId,
+      text: content,
+      is_edited: true,
+    } as unknown as seed.Message),
+  remove: (messageId: string) =>
+    withFallback(() => messagesApi.remove(messageId), {
+      id: messageId,
+      is_deleted: true,
+    } as unknown as seed.Message),
+  pin: (messageId: string) => withFallback(() => messagesApi.pin(messageId), null),
+  unpin: (messageId: string) => withFallback(() => messagesApi.unpin(messageId), null),
+  pinned: (conversationId: string) => withFallback(() => messagesApi.pinned(conversationId), []),
+  scheduled: () => withFallback(() => messagesApi.scheduled(), []),
+  cancelScheduled: (messageId: string) =>
+    withFallback(() => messagesApi.cancelScheduled(messageId), null),
+  search: (q: string) => withFallback(() => messagesApi.search(q), []),
 };
 
 export const issuesService = {
@@ -568,8 +684,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.list();
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -588,8 +703,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.get(id);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -619,8 +733,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.create(name);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -650,8 +763,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.rename(id, name);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -684,8 +796,7 @@ export const collectionsService = {
         await collectionsApi.delete(id);
         return;
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -710,8 +821,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.addBookmark(collectionId, bookmarkId);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -745,8 +855,7 @@ export const collectionsService = {
         await collectionsApi.removeBookmark(collectionId, bookmarkId);
         return;
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 
@@ -769,8 +878,7 @@ export const collectionsService = {
       try {
         return await collectionsApi.getBookmarkCollections(bookmarkId);
       } catch (err) {
-        if (import.meta.env.DEV)
-          console.warn("[services] collections API failed, using fallback:", err);
+        console.warn("[services] collections API failed, using fallback:", err);
       }
     }
 

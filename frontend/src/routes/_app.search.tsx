@@ -5,10 +5,37 @@ import { builders, projects, flares, conversations, hackathons } from "@/mocks/s
 import { repositories, type RepositoryItem } from "@/mocks/repositories";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Search, X, Trophy, GitBranch, Rss, History } from "lucide-react";
+import {
+  Search,
+  X,
+  Trophy,
+  GitBranch,
+  Rss,
+  History,
+  SlidersHorizontal,
+  MapPin,
+  Building2,
+  CheckCircle2,
+} from "lucide-react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import api from "@/lib/api";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
+import {
+  SEARCH_EXPERIENCE_OPTIONS,
+  SEARCH_SORT_OPTIONS,
+  type SearchFilters,
+} from "@/api/modules/search";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 const tabs = ["Developers", "Projects", "Posts", "Messages", "Hackathons", "Repositories"] as const;
 type Tab = (typeof tabs)[number];
@@ -39,9 +66,22 @@ function SearchPage() {
     removeHistoryItem,
     clearHistory,
     clear,
+    filters,
+    setFilters,
+    clearFilters,
   } = useGlobalSearch({ debounceMs: 200 });
 
   const [tab, setTab] = useState<Tab>("Developers");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const activeFilterCount = useMemo(
+    () => Object.values(filters).filter((v) => v !== undefined && v !== "" && v !== null).length,
+    [filters],
+  );
+
+  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
 
   const trackClick = (entityType: string, entityId: string) => {
     const trimmed = debouncedQuery.trim();
@@ -64,7 +104,11 @@ function SearchPage() {
         username: u.username,
         role: u.role || "Developer",
         avatar: u.profile_image || "",
-        skills: [] as string[],
+        skills: u.skills || [],
+        location: u.location || "",
+        experience_level: u.experience_level || "",
+        company: u.company || "",
+        open_to_work: u.open_to_work ?? true,
       }));
     }
     const queryLower = q.toLowerCase().trim();
@@ -81,6 +125,10 @@ function SearchPage() {
         role: b.role,
         avatar: b.avatar,
         skills: b.skills || [],
+        location: "",
+        experience_level: "",
+        company: "",
+        open_to_work: true,
       }));
   }, [results, q]);
 
@@ -226,22 +274,171 @@ function SearchPage() {
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center gap-1 rounded-md border border-border bg-surface p-1 overflow-x-auto">
-        {tabs.map((t) => (
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1 rounded-md border border-border bg-surface p-1 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "rounded px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer",
+                tab === t
+                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {tab === "Developers" && (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            type="button"
+            onClick={() => setShowFilters((s) => !s)}
             className={cn(
-              "rounded px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer",
-              tab === t
-                ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+              "flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer",
+              showFilters || activeFilterCount > 0
+                ? "border-primary/50 bg-primary/5 text-primary"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted",
             )}
           >
-            {t}
+            <SlidersHorizontal size={13} />
+            Filters
+            {activeFilterCount > 0 && (
+              <Badge className="h-4 min-w-4 rounded-full px-1 text-[10px] leading-none">
+                {activeFilterCount}
+              </Badge>
+            )}
           </button>
-        ))}
+        )}
       </div>
+
+      {tab === "Developers" && showFilters && (
+        <Card className="space-y-4 p-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Skills</Label>
+              <Input
+                value={filters.skills || ""}
+                onChange={(e) => updateFilter("skills", e.target.value || undefined)}
+                placeholder="React, Node.js, ..."
+                className="h-9 text-[13px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Location</Label>
+              <Input
+                value={filters.location || ""}
+                onChange={(e) => updateFilter("location", e.target.value || undefined)}
+                placeholder="City, country..."
+                className="h-9 text-[13px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Organization</Label>
+              <Input
+                value={filters.organization || ""}
+                onChange={(e) => updateFilter("organization", e.target.value || undefined)}
+                placeholder="Company name..."
+                className="h-9 text-[13px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Experience</Label>
+              <Select
+                value={filters.experience || "any"}
+                onValueChange={(v) =>
+                  updateFilter(
+                    "experience",
+                    v === "any" ? undefined : (v as SearchFilters["experience"]),
+                  )
+                }
+              >
+                <SelectTrigger className="h-9 text-[13px]">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  {SEARCH_EXPERIENCE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Availability</Label>
+              <Select
+                value={
+                  filters.availability === undefined
+                    ? "any"
+                    : filters.availability
+                      ? "open"
+                      : "unavailable"
+                }
+                onValueChange={(v) =>
+                  updateFilter("availability", v === "any" ? undefined : v === "open")
+                }
+              >
+                <SelectTrigger className="h-9 text-[13px]">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="open">Open to work</SelectItem>
+                  <SelectItem value="unavailable">Not available</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[12px]">Sort by</Label>
+              <Select
+                value={filters.sort || "relevance"}
+                onValueChange={(v) =>
+                  updateFilter("sort", v === "relevance" ? undefined : (v as SearchFilters["sort"]))
+                }
+              >
+                <SelectTrigger className="h-9 text-[13px]">
+                  <SelectValue placeholder="Relevance" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SEARCH_SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border/60 pt-3">
+            <label className="flex items-center gap-2 text-[12px] text-foreground cursor-pointer">
+              <Checkbox
+                checked={filters.remote || false}
+                onCheckedChange={(checked) => updateFilter("remote", checked === true || undefined)}
+              />
+              Remote only
+            </label>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[12px] font-medium text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        </Card>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12 text-center col-span-full">
@@ -267,19 +464,53 @@ function SearchPage() {
                     params={{ username: b.username }}
                     onClick={() => trackClick("user", b.id)}
                   >
-                    <Card interactive className="p-4 flex items-center gap-3">
-                      <Avatar src={b.avatar} alt={b.name} size={40} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground">
-                          <HighlightText text={b.name} query={q} />
-                        </p>
-                        <TypoCaption as="p">{b.role}</TypoCaption>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {b.skills.slice(0, 3).map((s) => (
-                            <TagChip key={s} className="text-[10px]">
-                              <HighlightText text={s} query={q} />
-                            </TagChip>
-                          ))}
+                    <Card interactive className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Avatar src={b.avatar} alt={b.name} size={40} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-[13px] font-semibold text-foreground">
+                              <HighlightText text={b.name} query={q} />
+                            </p>
+                            {b.open_to_work && (
+                              <span
+                                title="Open to work"
+                                className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"
+                              />
+                            )}
+                          </div>
+                          <TypoCaption as="p">{b.role}</TypoCaption>
+
+                          {(b.location || b.company || b.experience_level) && (
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                              {b.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin size={11} />
+                                  <HighlightText text={b.location} query={q} />
+                                </span>
+                              )}
+                              {b.company && (
+                                <span className="flex items-center gap-1">
+                                  <Building2 size={11} />
+                                  <HighlightText text={b.company} query={q} />
+                                </span>
+                              )}
+                              {b.experience_level && (
+                                <span className="flex items-center gap-1 capitalize">
+                                  <CheckCircle2 size={11} />
+                                  {b.experience_level}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {b.skills.slice(0, 4).map((s) => (
+                              <TagChip key={s} className="text-[10px]">
+                                <HighlightText text={s} query={q} />
+                              </TagChip>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </Card>
@@ -436,9 +667,7 @@ function SearchPage() {
                         <TypoCaption as="p">
                           <HighlightText text={r.description} query={q} />
                         </TypoCaption>
-                        <TypoCaption>
-                          {r.language}
-                        </TypoCaption>
+                        <TypoCaption>{r.language}</TypoCaption>
                       </div>
                     </Card>
                   </Link>

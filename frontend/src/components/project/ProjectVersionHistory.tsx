@@ -49,7 +49,6 @@ export function ProjectVersionHistory({
   const { data: versionsData, isLoading } = useQuery({
     queryKey: ["project-versions", projectId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = (await api.get(`/api/projects/${projectId}/versions`)) as any;
       return res?.data || res;
     },
@@ -59,7 +58,6 @@ export function ProjectVersionHistory({
     mutationFn: async (v1: number) => {
       const res = (await api.get(
         `/api/projects/${projectId}/versions/compare?v1=${v1}&v2=current`,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       )) as any;
       return res?.data || res;
     },
@@ -77,7 +75,6 @@ export function ProjectVersionHistory({
 
   const restoreMutation = useMutation({
     mutationFn: async (v1: number) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = (await api.post(`/api/projects/${projectId}/versions/${v1}/restore`)) as any;
       return res?.data || res;
     },
@@ -147,9 +144,7 @@ export function ProjectVersionHistory({
                       {new Date(ver.created_at).toLocaleDateString()}
                     </Badge>
                   </div>
-                  <TypoCaption as="p">
-                    {ver.change_summary || ver.title}
-                  </TypoCaption>
+                  <TypoCaption as="p">{ver.change_summary || ver.title}</TypoCaption>
                 </div>
               ))}
             </CardContent>
@@ -191,9 +186,7 @@ export function ProjectVersionHistory({
                 ) : (
                   Object.entries(compareData.diff).map(([field, { old: oldVal, new: newVal }]) => (
                     <div key={field} className="p-3 border rounded-md space-y-2">
-                      <TypoCaption>
-                        {field}
-                      </TypoCaption>
+                      <TypoCaption>{field}</TypoCaption>
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div className="p-2 bg-red-500/10 rounded border border-red-500/20">
                           <span className="font-semibold text-red-600 block mb-1">

@@ -1,11 +1,14 @@
-import { Card, TagChip, EmptyState } from "@/components/shared/primitives";
+import { Card, EmptyState } from "@/components/shared/primitives";
 import { Sparkles, Plus, Trash2 } from "lucide-react";
 import type { ProfileSkill } from "@/mocks/seed";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
+import type { ReactNode } from "react";
 
 export interface SkillsCardProps {
   skills: ProfileSkill[];
   editable?: boolean;
+  isOwnProfile?: boolean;
+  onManageSkills?: () => void;
   formValues?: ProfileSkill[];
   skillErrors?: Record<string, string>;
   onSkillChange?: (
@@ -15,6 +18,7 @@ export interface SkillsCardProps {
   ) => void;
   onAddSkill?: () => void;
   onRemoveSkill?: (index: number) => void;
+  emptyAction?: ReactNode;
 }
 
 const levelOrder = ["Beginner", "Intermediate", "Advanced", "Expert"] as const;
@@ -38,18 +42,25 @@ const SKILL_CATEGORIES = [
 export function SkillsCard({
   skills,
   editable = false,
+  isOwnProfile = false,
+  onManageSkills,
   formValues = [],
   skillErrors = {},
   onSkillChange,
   onAddSkill,
   onRemoveSkill,
+  emptyAction,
 }: SkillsCardProps) {
   const categoriesList = SKILL_CATEGORIES;
 
-  const groupedByCategory = categoriesList.map((cat) => ({
-    category: cat,
-    items: skills.filter((s) => (s.category || "Languages").toLowerCase() === cat.toLowerCase()),
-  }));
+  const groupedByCategory = categoriesList
+    .map((cat) => ({
+      category: cat,
+      items: skills.filter(
+        (skill) => (skill.category || "Languages").toLowerCase() === cat.toLowerCase(),
+      ),
+    }))
+    .filter(({ items }) => items.length > 0);
 
   if (editable) {
     return (
@@ -88,9 +99,7 @@ export function SkillsCard({
             >
               <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto]">
                 <label className="text-sm">
-                  <TypoCaption>
-                    Skill Name
-                  </TypoCaption>
+                  <TypoCaption>Skill Name</TypoCaption>
                   <input
                     value={skill.name}
                     onChange={(event) => onSkillChange?.(index, "name", event.target.value)}
@@ -99,9 +108,7 @@ export function SkillsCard({
                   />
                 </label>
                 <label className="text-sm">
-                  <TypoCaption>
-                    Proficiency
-                  </TypoCaption>
+                  <TypoCaption>Proficiency</TypoCaption>
                   <select
                     value={skill.level ?? "Intermediate"}
                     onChange={(event) => onSkillChange?.(index, "level", event.target.value)}
@@ -115,9 +122,7 @@ export function SkillsCard({
                   </select>
                 </label>
                 <label className="text-sm">
-                  <TypoCaption>
-                    Years Exp.
-                  </TypoCaption>
+                  <TypoCaption>Years Exp.</TypoCaption>
                   <input
                     type="number"
                     min="0"
@@ -137,9 +142,7 @@ export function SkillsCard({
                 </button>
               </div>
               <label className="mt-3 block text-sm">
-                <TypoCaption>
-                  Category
-                </TypoCaption>
+                <TypoCaption>Category</TypoCaption>
                 <select
                   value={skill.category ?? "Languages"}
                   onChange={(event) => onSkillChange?.(index, "category", event.target.value)}
@@ -174,31 +177,44 @@ export function SkillsCard({
           </div>
           <div>
             <TypoHeading as="h2">Developer Skill Matrix</TypoHeading>
-            <TypoCaption as="p">
-              Categorized technical expertise and proficiency
-            </TypoCaption>
+            <TypoCaption as="p">Categorized technical expertise and proficiency</TypoCaption>
           </div>
         </div>
+        {onManageSkills && (
+          <button
+            type="button"
+            onClick={onManageSkills}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Manage Skills
+          </button>
+        )}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {groupedByCategory.map(({ category, items }) => (
-          <div
-            key={category}
-            className="rounded-lg border border-border bg-muted/20 p-3.5 flex flex-col justify-between space-y-2 hover:border-primary/30 transition-colors"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2 pb-1 border-b border-border/40">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                  {category}
-                </span>
-                <TypoCaption>
-                  {items.length} {items.length === 1 ? "skill" : "skills"}
-                </TypoCaption>
-              </div>
-              {items.length === 0 ? (
-                <TypoCaption as="p">No skills added</TypoCaption>
-              ) : (
+      {skills.length === 0 ? (
+        <EmptyState
+          icon={Sparkles}
+          title="Show off what you build with"
+          desc="Add your languages, frameworks, and tools so collaborators can find the right fit."
+          action={emptyAction}
+          className="py-9"
+        />
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {groupedByCategory.map(({ category, items }) => (
+            <div
+              key={category}
+              className="flex flex-col justify-between space-y-2 rounded-lg border border-border bg-muted/20 p-3.5 transition-colors hover:border-primary/30"
+            >
+              <div>
+                <div className="mb-2 flex items-center justify-between border-b border-border/40 pb-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                    {category}
+                  </span>
+                  <TypoCaption>
+                    {items.length} {items.length === 1 ? "skill" : "skills"}
+                  </TypoCaption>
+                </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {items.map((skill) => (
                     <span
@@ -206,17 +222,15 @@ export function SkillsCard({
                       className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground shadow-sm"
                     >
                       <span>{skill.name}</span>
-                      <TypoCaption>
-                        {skill.level || "Intermediate"}
-                      </TypoCaption>
+                      <TypoCaption>{skill.level || "Intermediate"}</TypoCaption>
                     </span>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

@@ -11,6 +11,8 @@ import { Upload, Image as ImageIcon, AlertCircle, CheckCircle2, Camera } from "l
 import { toast } from "sonner";
 import { uploadImage } from "@/services/imageUpload";
 import { cn } from "@/lib/utils";
+import { TypoCaption } from "@/components/shared/Typography";
+
 import { CameraCapture } from "@/components/shared/CameraCapture";
 import { ImageCropper, ImageCropperHandle, CROP_PRESETS } from "@/components/shared/ImageCropper";
 
@@ -58,6 +60,10 @@ export function ImageCropUploadModal({
       setSelectedFile(null);
       setPreviewUrl(null);
       setError(null);
+      setZoom(1.0);
+      setRotation(0);
+      setPanX(0);
+      setPanY(0);
       setIsCameraActive(false);
       setIsUploading(false);
       setUploadProgress(0);
@@ -170,6 +176,7 @@ export function ImageCropUploadModal({
         )}
 
         {/* Upload State / Dropzone vs Canvas View */}
+
         {isCameraActive ? (
           <CameraCapture
             onCapture={(file) => {

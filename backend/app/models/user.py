@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     func,
@@ -28,7 +29,6 @@ class UserRole(str, Enum):
     MEMBER = "member"
     VIEWER = "viewer"
     MODERATOR = "moderator"
-
 
 
 class User(Base):
@@ -133,6 +133,16 @@ class User(Base):
         nullable=True,
     )
 
+    video_introduction_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    video_introduction_thumbnail_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
     location: Mapped[str | None] = mapped_column(
         String(150),
         nullable=True,
@@ -159,6 +169,11 @@ class User(Base):
         nullable=True,
     )
 
+    voice_introduction_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
     portfolio_url: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -175,6 +190,11 @@ class User(Base):
     )
 
     linkedin_url: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    twitter_url: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
@@ -219,6 +239,19 @@ class User(Base):
         nullable=False,
     )
 
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )
+
+    collaboration_status: Mapped[str | None] = mapped_column(
+        String(40),
+        nullable=True,
+        default="available",
+        server_default="available",
+    )
+
     is_private: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -234,7 +267,14 @@ class User(Base):
             "resume": "public",
             "social_links": "public",
             "availability": "public",
+            "activity": "public",
         },
+    )
+
+    dashboard_layout: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+        default=None,
     )
 
     def get_privacy_settings(self) -> dict:
@@ -244,6 +284,7 @@ class User(Base):
             "resume": "public",
             "social_links": "public",
             "availability": "public",
+            "activity": "public",
         }
         if not self.privacy_settings:
             return defaults
@@ -397,6 +438,13 @@ class User(Base):
         remote_side="User.id",
     )
 
+    availability: Mapped["UserAvailability"] = relationship(
+        "UserAvailability",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     # ------------------------------------------------------------------
     # Audit
     # ------------------------------------------------------------------
@@ -439,9 +487,20 @@ class User(Base):
 
         return (now - last_seen).total_seconds() < threshold
 
+    @property
+    def skills(self) -> list[str]:
+        try:
+            if not hasattr(self, "user_skills") or not self.user_skills:
+                return []
+            return [us.skill.name for us in self.user_skills if getattr(us, "skill", None)]
+        except Exception:
+            return []
+
     # ------------------------------------------------------------------
     # Representation
     # ------------------------------------------------------------------
 
     def __repr__(self) -> str:
         return f"<User(username='{self.username}', email='{self.email}')>"
+
+
