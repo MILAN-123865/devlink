@@ -36,6 +36,7 @@ import ExperienceCard from "@/components/profile/ExperienceCard";
 import { ProfileViewersList } from "@/components/profile/ProfileViewersList";
 import { PinnedProjectsCard } from "@/components/profile/PinnedProjectsCard";
 import { ProfileCompletionChecklist } from "@/components/profile/ProfileCompletionChecklist";
+import { PortfolioExportDialog } from "@/components/profile/PortfolioExportDialog";
 import { FollowButton } from "@/components/shared/FollowButton";
 import { useFollowStatus } from "@/hooks/useFollow";
 import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
@@ -202,6 +203,8 @@ function ProfilePage() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=400&fit=crop&auto=format",
   );
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
@@ -337,6 +340,12 @@ function ProfilePage() {
                 className="inline-flex items-center justify-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 Copy Link
+              </button>
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                Export Profile
               </button>
             </div>
           </div>
@@ -881,6 +890,9 @@ function ProfilePage() {
       )}
 
       {me && (
+        <PortfolioExportDialog
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
         <EditProfileModal
           open={isEditProfileOpen}
           onOpenChange={setIsEditProfileOpen}
