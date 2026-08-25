@@ -14,6 +14,7 @@ from app.schemas.project_template import (
     ProjectTemplateUpdate,
     ProjectTemplateResponse,
 )
+from app.services.search_service import escape_ilike_pattern
 
 
 def _generate_slug(title: str) -> str:
@@ -94,7 +95,8 @@ class ProjectTemplateService:
         stmt = select(ProjectTemplate).where(ProjectTemplate.is_published == True)  # noqa: E712
 
         if search:
-            search_pattern = f"%{search.strip()}%"
+            escaped = escape_ilike_pattern(search.strip())
+            search_pattern = f"%{escaped}%"
             stmt = stmt.where(
                 or_(
                     ProjectTemplate.title.ilike(search_pattern),
