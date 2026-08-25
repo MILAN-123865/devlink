@@ -201,6 +201,11 @@ export const dashboardService = {
 };
 
 export const usersService = {
+  getMe: () =>
+    withFallback(
+      () => usersApi.getMe(),
+      null
+    ),
   getPrivacySettings: () =>
     withFallback(
       () => usersApi.getPrivacySettings(),
