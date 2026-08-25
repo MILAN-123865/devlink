@@ -1,6 +1,7 @@
 import { TypoHeading } from "@/components/shared/Typography";
 import React from "react";
 import { Twitter, Linkedin, Github } from "lucide-react";
+import { sanitizeUrl } from "@/lib/utils";
 
 interface OrganizationHeaderProps {
   name: string;
@@ -82,11 +83,13 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
             </button>
           )}
 
+          {socialLinks?.twitter && sanitizeUrl(socialLinks.twitter) && (
           {socialLinks?.twitter && (
             <a
               href={socialLinks.twitter}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Twitter className="w-5 h-5" />
@@ -97,6 +100,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={socialLinks.github}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Github className="w-5 h-5" />
@@ -107,6 +111,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={socialLinks.linkedin}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Linkedin className="w-5 h-5" />
@@ -115,7 +120,38 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
 
           {website && (
             <a
-              href={website}
+              href={sanitizeUrl(socialLinks.twitter)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <Twitter className="w-5 h-5" />
+            </a>
+          )}
+          {socialLinks?.github && sanitizeUrl(socialLinks.github) && (
+            <a
+              href={sanitizeUrl(socialLinks.github)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+          )}
+          {socialLinks?.linkedin && sanitizeUrl(socialLinks.linkedin) && (
+            <a
+              href={sanitizeUrl(socialLinks.linkedin)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <Linkedin className="w-5 h-5" />
+            </a>
+          )}
+
+          {website && sanitizeUrl(website) && (
+            <a
+              href={sanitizeUrl(website)}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
