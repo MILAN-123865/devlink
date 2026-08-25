@@ -8,9 +8,23 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class MilestoneCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200, description="Title of the milestone")
+    title: str = Field(
+        ..., min_length=1, max_length=200, description="Title of the milestone"
+    )
     description: Optional[str] = Field(default=None, description="Detailed description")
-    due_date: Optional[datetime] = Field(default=None, description="When the milestone is due")
+    due_date: Optional[datetime] = Field(
+        default=None, description="When the milestone is due"
+    )
+    owner_id: Optional[uuid.UUID] = Field(default=None, description="ID of the user assigned to the milestone")
+
+class MilestoneOwner(BaseModel):
+    id: uuid.UUID
+    username: str
+    first_name: str
+    last_name: str
+    profile_image: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MilestoneUpdate(BaseModel):
@@ -19,11 +33,14 @@ class MilestoneUpdate(BaseModel):
     due_date: Optional[datetime] = Field(default=None)
     is_completed: Optional[bool] = Field(default=None)
     is_archived: Optional[bool] = Field(default=None)
+    owner_id: Optional[uuid.UUID] = Field(default=None)
 
 
 class MilestoneResponse(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
+    owner_id: Optional[uuid.UUID] = None
+    owner: Optional[MilestoneOwner] = None
     title: str
     description: Optional[str] = None
     due_date: Optional[datetime] = None
@@ -43,13 +60,19 @@ class MilestoneProgressResponse(BaseModel):
     active_milestones: int
     archived_milestones: int
     overdue_milestones: int
-    completion_percentage: float = Field(description="Percentage of completed vs total active milestones (0-100%)")
+    completion_percentage: float = Field(
+        description="Percentage of completed vs total active milestones (0-100%)"
+    )
 
 
 class MilestoneTimelineItem(BaseModel):
     milestone: MilestoneResponse
-    status: str = Field(description="Status label: 'overdue', 'upcoming', 'completed', 'archived'")
-    days_remaining: Optional[int] = Field(default=None, description="Days remaining until due date (negative if overdue)")
+    status: str = Field(
+        description="Status label: 'overdue', 'upcoming', 'completed', 'archived'"
+    )
+    days_remaining: Optional[int] = Field(
+        default=None, description="Days remaining until due date (negative if overdue)"
+    )
 
 
 class MilestoneTimelineResponse(BaseModel):

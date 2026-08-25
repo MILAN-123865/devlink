@@ -56,20 +56,45 @@ class ActivityHeatmapService:
         return user
 
     @staticmethod
-    def require_visible(subject: User, viewer: User | None) -> None:
+    def require_visible(subject: User, viewer: User | None, db: Session | None = None) -> None:
         """
-        A private profile's heatmap is as revealing as the profile itself -- it
-        shows when someone works and when they stopped -- so it follows the same
-        rule the profile endpoint uses.
+        Check if the subject profile is private OR if their activity privacy settings
+        restrict the viewer from viewing.
         """
-        if not subject.is_private:
-            return
-        if viewer is not None and viewer.id == subject.id:
-            return
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view this private profile.",
-        )
+        # 1. Profile visibility
+        if subject.is_private:
+            if viewer is None or viewer.id != subject.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have permission to view this private profile.",
+                )
+
+        # 2. Activity visibility settings
+        settings = subject.get_privacy_settings()
+        activity_visibility = settings.get("activity", "public")
+
+        is_visible = False
+        if activity_visibility == "public":
+            is_visible = True
+        elif activity_visibility == "authenticated" and viewer is not None:
+            is_visible = True
+        elif activity_visibility == "followers" and viewer is not None and db is not None:
+            if viewer.id == subject.id or getattr(viewer, "is_superuser", False):
+                is_visible = True
+            else:
+                from app.services.follower_service import FollowerService
+                is_visible = FollowerService.is_following(
+                    db, follower_id=viewer.id, following_id=subject.id
+                )
+        elif activity_visibility == "private":
+            if viewer is not None and (viewer.id == subject.id or getattr(viewer, "is_superuser", False)):
+                is_visible = True
+
+        if not is_visible:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This user's activity details are private.",
+            )
 
     # ------------------------------------------------------------------
     # Window helpers
@@ -116,7 +141,9 @@ class ActivityHeatmapService:
         """
         window_start = datetime.combine(start, datetime.min.time(), tzinfo=timezone.utc)
         # Exclusive upper bound at midnight after ``end``.
-        window_end = datetime.combine(end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+        window_end = datetime.combine(
+            end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+        )
 
         stmt = select(Activity.created_at, Activity.activity_type).where(
             Activity.actor_id == user_id,
@@ -210,7 +237,9 @@ class ActivityHeatmapService:
         return streak
 
     @staticmethod
-    def compute_longest_streak(active_days: set[date]) -> tuple[int, date | None, date | None]:
+    def compute_longest_streak(
+        active_days: set[date],
+    ) -> tuple[int, date | None, date | None]:
         """Return ``(length, start, end)`` of the longest consecutive run."""
         if not active_days:
             return 0, None, None
@@ -251,7 +280,9 @@ class ActivityHeatmapService:
         active = {day for day, count in daily_counts.items() if count > 0}
         total_activities = sum(daily_counts.values())
 
-        longest, longest_start, longest_end = ActivityHeatmapService.compute_longest_streak(active)
+        longest, longest_start, longest_end = (
+            ActivityHeatmapService.compute_longest_streak(active)
+        )
 
         busiest_day: date | None = None
         busiest_count = 0
@@ -273,8 +304,12 @@ class ActivityHeatmapService:
             total_days=total_days,
             busiest_day=busiest_day,
             busiest_day_count=busiest_count,
-            daily_average=round(total_activities / total_days, 2) if total_days else 0.0,
-            active_day_average=round(total_activities / len(active), 2) if active else 0.0,
+            daily_average=round(total_activities / total_days, 2)
+            if total_days
+            else 0.0,
+            active_day_average=round(total_activities / len(active), 2)
+            if active
+            else 0.0,
         )
 
     @staticmethod
@@ -309,7 +344,9 @@ class ActivityHeatmapService:
                 daily_counts[day] += 1
                 type_counter[type_value] += 1
 
-        thresholds = ActivityHeatmapService.compute_level_thresholds(daily_counts.values())
+        thresholds = ActivityHeatmapService.compute_level_thresholds(
+            daily_counts.values()
+        )
 
         grid = [
             HeatmapDay(
@@ -323,7 +360,9 @@ class ActivityHeatmapService:
         breakdown = [
             ActivityTypeCount(activity_type=type_value, count=count)
             # Sort by count descending, then name, so the order is stable.
-            for type_value, count in sorted(type_counter.items(), key=lambda item: (-item[1], item[0]))
+            for type_value, count in sorted(
+                type_counter.items(), key=lambda item: (-item[1], item[0])
+            )
         ]
 
         return ActivityHeatmapResponse(
@@ -332,7 +371,9 @@ class ActivityHeatmapService:
             start_date=start,
             end_date=end,
             days=grid,
-            streak=ActivityHeatmapService.build_summary(daily_counts, start, end, reference_day),
+            streak=ActivityHeatmapService.build_summary(
+                daily_counts, start, end, reference_day
+            ),
             breakdown=breakdown,
         )
 

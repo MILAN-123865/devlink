@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { flaresService } from "@/services";
-import { Card, TagChip, Avatar } from "@/components/shared/primitives";
+import { Card, EmptyState, TagChip, Avatar } from "@/components/shared/primitives";
 import { Markdown } from "@/components/shared/Markdown";
 import { PostComposer } from "@/components/shared/PostComposer/PostComposer";
 import { MarkdownEditor } from "@/components/shared/MarkdownEditor";
@@ -53,7 +53,12 @@ function FlareCard({
   const isLiked = likedMap?.[flare.id] ?? false;
 
   return (
-    <Card className={cn("p-4 transition-all", isDraft && "border-amber-500/10 hover:border-amber-500/20")}>
+    <Card
+      className={cn(
+        "p-4 transition-all",
+        isDraft && "border-amber-500/10 hover:border-amber-500/20",
+      )}
+    >
       <div className="flex items-start gap-3">
         <Avatar
           src={flare.author?.avatar}
@@ -178,7 +183,8 @@ function FlaresPage() {
     try {
       const tags = Array.from(new Set(content.match(/#(\w+)/g)?.map((t) => t.slice(1)) ?? []));
       await flaresService.create({
-        content: content || (attachments.length > 0 ? `Shared ${attachments.length} attachment(s)` : ""),
+        content:
+          content || (attachments.length > 0 ? `Shared ${attachments.length} attachment(s)` : ""),
         tags,
         status: "published",
       });
@@ -305,7 +311,12 @@ function FlaresPage() {
           feedPosts.length > 0 ? (
             feedPosts.map((f) => <FlareCard key={f.id} flare={f} />)
           ) : (
-            <TypoCaption as="p">No feed posts found.</TypoCaption>
+            <EmptyState
+              icon={Flame}
+              title="The feed is ready for a spark"
+              desc="Share an update, a question, or a useful tip with the community."
+              className="rounded-xl border border-dashed border-primary/20 bg-primary/5 py-10"
+            />
           )
         ) : draftPosts.length > 0 ? (
           draftPosts.map((f) => (
@@ -319,7 +330,12 @@ function FlaresPage() {
             />
           ))
         ) : (
-          <TypoCaption as="p">No drafts or scheduled posts found.</TypoCaption>
+          <EmptyState
+            icon={BookOpen}
+            title="No saved drafts"
+            desc="Drafts you save for later will appear here."
+            className="rounded-xl border border-dashed border-border/80 bg-muted/20 py-10"
+          />
         )}
       </div>
 
@@ -345,9 +361,7 @@ function FlaresPage() {
         </Card>
         <Card className="p-4">
           <p className="text-[13px] font-semibold text-foreground">Community guidelines</p>
-          <TypoCaption as="p">
-            Be kind, credit sources, no spam. Ship generously.
-          </TypoCaption>
+          <TypoCaption as="p">Be kind, credit sources, no spam. Ship generously.</TypoCaption>
         </Card>
       </aside>
     </div>

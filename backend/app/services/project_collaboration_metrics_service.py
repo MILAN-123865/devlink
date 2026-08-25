@@ -12,7 +12,9 @@ from app.schemas.project_collaboration_metrics import (
 
 class ProjectCollaborationMetricsService:
     @staticmethod
-    def get_metrics_for_project(db: Session, project_id: int) -> ProjectCollaborationMetricsResponse:
+    def get_metrics_for_project(
+        db: Session, project_id: int
+    ) -> ProjectCollaborationMetricsResponse:
         now = datetime.now(timezone.utc)
 
         daily_trend: List[DailyActivityPoint] = []

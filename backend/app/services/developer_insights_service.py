@@ -15,13 +15,17 @@ from app.schemas.developer_insights import (
 
 class DeveloperInsightsService:
     @staticmethod
-    def get_user_insights(db: Session, user: User, date_range: str = "30d") -> DeveloperInsightsResponse:
+    def get_user_insights(
+        db: Session, user: User, date_range: str = "30d"
+    ) -> DeveloperInsightsResponse:
         days_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365, "all": 1000}
         days = days_map.get(date_range, 30)
 
         now = datetime.now(timezone.utc)
 
-        projects_count = getattr(user, "projects_count", 0) or len(getattr(user, "projects", []) or [])
+        projects_count = getattr(user, "projects_count", 0) or len(
+            getattr(user, "projects", []) or []
+        )
         apps_count = len(getattr(user, "applications", []) or [])
         views_count = getattr(user, "profile_views_count", 0) or 42
         followers_count = len(getattr(user, "followers", []) or [])
@@ -40,13 +44,41 @@ class DeveloperInsightsService:
         )
 
         trends = {
-            "projects_created": MetricTrend(current=metrics.projects_created, previous=max(0, metrics.projects_created - 1), percentage_change=12.5),
-            "applications_submitted": MetricTrend(current=metrics.applications_submitted, previous=max(0, metrics.applications_submitted - 1), percentage_change=8.0),
-            "profile_views": MetricTrend(current=metrics.profile_views, previous=max(1, metrics.profile_views - 5), percentage_change=15.2),
-            "followers_gained": MetricTrend(current=metrics.followers_gained, previous=max(0, metrics.followers_gained - 1), percentage_change=20.0),
-            "messages_sent": MetricTrend(current=metrics.messages_sent, previous=max(1, metrics.messages_sent - 4), percentage_change=10.4),
-            "contribution_streak": MetricTrend(current=metrics.contribution_streak, previous=max(0, metrics.contribution_streak - 1), percentage_change=5.0),
-            "ai_match_success_rate": MetricTrend(current=metrics.ai_match_success_rate, previous=78.0, percentage_change=6.5),
+            "projects_created": MetricTrend(
+                current=metrics.projects_created,
+                previous=max(0, metrics.projects_created - 1),
+                percentage_change=12.5,
+            ),
+            "applications_submitted": MetricTrend(
+                current=metrics.applications_submitted,
+                previous=max(0, metrics.applications_submitted - 1),
+                percentage_change=8.0,
+            ),
+            "profile_views": MetricTrend(
+                current=metrics.profile_views,
+                previous=max(1, metrics.profile_views - 5),
+                percentage_change=15.2,
+            ),
+            "followers_gained": MetricTrend(
+                current=metrics.followers_gained,
+                previous=max(0, metrics.followers_gained - 1),
+                percentage_change=20.0,
+            ),
+            "messages_sent": MetricTrend(
+                current=metrics.messages_sent,
+                previous=max(1, metrics.messages_sent - 4),
+                percentage_change=10.4,
+            ),
+            "contribution_streak": MetricTrend(
+                current=metrics.contribution_streak,
+                previous=max(0, metrics.contribution_streak - 1),
+                percentage_change=5.0,
+            ),
+            "ai_match_success_rate": MetricTrend(
+                current=metrics.ai_match_success_rate,
+                previous=78.0,
+                percentage_change=6.5,
+            ),
         }
 
         num_points = min(days, 14)
@@ -70,5 +102,9 @@ class DeveloperInsightsService:
             trends=trends,
             activity_timeline=timeline,
             top_skills_matched=["TypeScript", "FastAPI", "React", "Python", "Docker"],
-            recent_achievements=["Top 10% Contributor", "Project Milestone Master", "7-Day Streak"],
+            recent_achievements=[
+                "Top 10% Contributor",
+                "Project Milestone Master",
+                "7-Day Streak",
+            ],
         )

@@ -12,6 +12,7 @@ from app.models.organization import Organization
 from app.models.project import Project
 from app.models.skill import Skill
 from app.models.user import User
+from app.models.user_skill import UserSkill
 from app.schemas.search import (
     SearchAutocompleteResponse,
     SearchCounts,
@@ -60,6 +61,86 @@ def _is_postgres(db: Session) -> bool:
         return bind is not None and bind.dialect.name == "postgresql"
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------------
+# Advanced developer filters (#945)
+# ---------------------------------------------------------------------
+
+# Mirrors the experience level vocabulary already used across onboarding
+# and skill-level fields (see app.schemas.onboarding / app.models.user_skill).
+_EXPERIENCE_RANK = {
+    "beginner": 1,
+    "intermediate": 2,
+    "advanced": 3,
+    "expert": 4,
+}
+
+
+def _apply_user_filters(
+    query,
+    *,
+    skills: Optional[List[str]] = None,
+    location: Optional[str] = None,
+    experience: Optional[str] = None,
+    availability: Optional[bool] = None,
+    organization: Optional[str] = None,
+    remote: Optional[bool] = None,
+):
+    """Apply optional advanced-search filters to a developer (User) query."""
+    clean_skills = [s.strip() for s in (skills or []) if s and s.strip()]
+    if clean_skills:
+        lowered = [s.lower() for s in clean_skills]
+        query = (
+            query.join(UserSkill, UserSkill.user_id == User.id)
+            .join(Skill, Skill.id == UserSkill.skill_id)
+            .filter(func.lower(Skill.name).in_(lowered))
+            .distinct()
+        )
+
+    if location and location.strip():
+        query = query.filter(User.location.ilike(_ilike_pattern(location)))
+
+    if experience and experience.strip():
+        query = query.filter(func.lower(User.experience_level) == experience.strip().lower())
+
+    if organization and organization.strip():
+        query = query.filter(User.company.ilike(_ilike_pattern(organization)))
+
+    if availability is not None:
+        query = query.filter(User.open_to_work.is_(availability))
+
+    # There is no dedicated "remote" column on User; developers commonly use
+    # "Remote" as their location, so we match on that existing field.
+    if remote:
+        query = query.filter(User.location.ilike("%remote%"))
+
+    return query
+
+
+def _last_active_sort_key(u: User):
+    last = getattr(u, "last_active_at", None) or getattr(u, "last_login", None)
+    if not last:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    return last
+
+
+def _sort_users(users: List[User], sort: Optional[str]) -> List[User]:
+    """Apply a non-relevance sort order to an already-filtered user list."""
+    key = (sort or "").strip().lower()
+    if key == "name":
+        return sorted(users, key=lambda u: (u.username or "").lower())
+    if key == "experience":
+        return sorted(
+            users,
+            key=lambda u: _EXPERIENCE_RANK.get((u.experience_level or "").strip().lower(), 0),
+            reverse=True,
+        )
+    if key == "recent":
+        return sorted(users, key=_last_active_sort_key, reverse=True)
+    return users
 
 
 # ---------------------------------------------------------------------
@@ -183,11 +264,27 @@ def _score_skill(s: Skill, q: str) -> float:
     return score
 
 
-def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
+def search_users(
+    db: Session,
+    q: str,
+    limit: int = 20,
+    *,
+    skills: Optional[List[str]] = None,
+    location: Optional[str] = None,
+    experience: Optional[str] = None,
+    availability: Optional[bool] = None,
+    organization: Optional[str] = None,
+    remote: Optional[bool] = None,
+    sort: Optional[str] = None,
+) -> List[User]:
     """Search active users by name / username / role / headline.
 
     Uses PostgreSQL Full-Text Search when connected to PostgreSQL,
     with a fallback to ILIKE for SQLite/other databases.
+
+    Supports optional advanced filters (skills, location, experience level,
+    open-to-work availability, organization/company, remote) and an
+    alternate sort order (relevance, name, experience, recent).
     """
     clean_q = _normalize_query(q)
     if not clean_q:
@@ -209,13 +306,21 @@ def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
             + func.coalesce(User.headline, ""),
         )
         ts_query = func.websearch_to_tsquery("english", clean_q)
+        query = db.query(User).filter(
+            User.is_active.is_(True),
+            ts_vector.op("@@")(ts_query),
+        )
+        query = _apply_user_filters(
+            query,
+            skills=skills,
+            location=location,
+            experience=experience,
+            availability=availability,
+            organization=organization,
+            remote=remote,
+        )
         results = (
-            db.query(User)
-            .filter(
-                User.is_active.is_(True),
-                ts_vector.op("@@")(ts_query),
-            )
-            .order_by(
+            query.order_by(
                 User.is_verified.desc(),
                 User.premium.desc(),
                 func.ts_rank(ts_vector, ts_query).desc(),
@@ -226,24 +331,35 @@ def search_users(db: Session, q: str, limit: int = 20) -> List[User]:
         )
     else:
         pattern = _ilike_pattern(q)
+        query = db.query(User).filter(
+            User.is_active.is_(True),
+            or_(
+                User.username.ilike(pattern),
+                User.first_name.ilike(pattern),
+                User.last_name.ilike(pattern),
+                User.role.ilike(pattern),
+                User.headline.ilike(pattern),
+            ),
+        )
+        query = _apply_user_filters(
+            query,
+            skills=skills,
+            location=location,
+            experience=experience,
+            availability=availability,
+            organization=organization,
+            remote=remote,
+        )
         results = (
-            db.query(User)
-            .filter(
-                User.is_active.is_(True),
-                or_(
-                    User.username.ilike(pattern),
-                    User.first_name.ilike(pattern),
-                    User.last_name.ilike(pattern),
-                    User.role.ilike(pattern),
-                    User.headline.ilike(pattern),
-                ),
-            )
-            .order_by(User.is_verified.desc(), User.premium.desc(), User.username.asc())
+            query.order_by(User.is_verified.desc(), User.premium.desc(), User.username.asc())
             .limit(fetch_limit)
             .all()
         )
 
-    results.sort(key=lambda x: _score_user(x, clean_q), reverse=True)
+    if sort and sort.strip().lower() != "relevance":
+        results = _sort_users(results, sort)
+    else:
+        results.sort(key=lambda x: _score_user(x, clean_q), reverse=True)
     return results[:limit]
 
 
@@ -611,15 +727,37 @@ class SearchService:
         category: Optional[str] = None,
         page: int = 1,
         limit: int = 20,
+        skills_filter: Optional[List[str]] = None,
+        location: Optional[str] = None,
+        experience: Optional[str] = None,
+        availability: Optional[bool] = None,
+        organization: Optional[str] = None,
+        remote: Optional[bool] = None,
+        sort: Optional[str] = None,
     ) -> dict:
         """Full paginated search across categories.
 
         When ``category`` is provided, only that category's results are
         returned (paginated). Otherwise, the top ``limit`` results from
         *each* category are returned (no cross-category pagination).
+
+        The advanced filter parameters (``skills_filter``, ``location``,
+        ``experience``, ``availability``, ``organization``, ``remote``) and
+        ``sort`` only affect the "developers" (users) results, since those
+        are attributes of developer profiles.
         """
         page = max(1, int(page or 1))
         limit = max(1, min(int(limit or 20), 100))
+
+        user_filter_kwargs = dict(
+            skills=skills_filter,
+            location=location,
+            experience=experience,
+            availability=availability,
+            organization=organization,
+            remote=remote,
+            sort=sort,
+        )
 
         # For single-category search, apply offset pagination.
         if category:
@@ -632,7 +770,7 @@ class SearchService:
             tags: Sequence[SearchResultTag] = []
 
             if cat == "developers":
-                users = search_users(db, q, limit=limit + offset)[
+                users = search_users(db, q, limit=limit + offset, **user_filter_kwargs)[
                     offset : offset + limit
                 ]
             elif cat == "projects":
@@ -654,7 +792,7 @@ class SearchService:
                 logger.warning("Unknown search category: %s", cat)
         else:
             # All-categories mode: top ``limit`` from each category.
-            users = search_users(db, q, limit=limit)
+            users = search_users(db, q, limit=limit, **user_filter_kwargs)
             projects = search_projects(db, q, limit=limit)
             organizations = search_organizations(db, q, limit=limit)
             skills = search_skills(db, q, limit=limit)
@@ -679,6 +817,12 @@ class SearchService:
                     location=u.location,
                     is_verified=u.is_verified,
                     premium=u.premium,
+                    experience_level=u.experience_level,
+                    company=u.company,
+                    open_to_work=u.open_to_work,
+                    skills=[
+                        us.skill.name for us in (u.user_skills or []) if us.skill
+                    ][:6],
                 )
                 for u in users
             ],

@@ -13,11 +13,23 @@ class DailyActivityPoint(BaseModel):
 
 class ProjectCollaborationMetricsResponse(BaseModel):
     project_id: int
-    active_members: int = Field(..., description="Number of active members in last 30 days")
-    total_team_size: int = Field(..., description="Total team members assigned to project")
-    avg_response_time_hours: float = Field(..., description="Average team response time in hours")
-    messages_exchanged: int = Field(..., description="Total messages exchanged in team chat")
+    active_members: int = Field(
+        ..., description="Number of active members in last 30 days"
+    )
+    total_team_size: int = Field(
+        ..., description="Total team members assigned to project"
+    )
+    avg_response_time_hours: float = Field(
+        ..., description="Average team response time in hours"
+    )
+    messages_exchanged: int = Field(
+        ..., description="Total messages exchanged in team chat"
+    )
     tasks_completed: int = Field(..., description="Total milestones & tasks completed")
-    applications_received: int = Field(..., description="Total developer applications received")
-    collaboration_score: float = Field(..., description="Team collaboration health score (0-100)")
+    applications_received: int = Field(
+        ..., description="Total developer applications received"
+    )
+    collaboration_score: float = Field(
+        ..., description="Team collaboration health score (0-100)"
+    )
     daily_activity: List[DailyActivityPoint]

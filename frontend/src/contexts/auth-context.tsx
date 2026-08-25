@@ -14,6 +14,17 @@ export interface AuthUser {
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
+  // Bumped whenever the token changes, to re-run the lookup below.
+  //
+  // This used to read the token once on mount and never look again, so a
+  // token change -- including a sign-out in another tab, which `tokenStore`
+  // now propagates -- left this hook showing the previous user indefinitely.
+  const [tokenVersion, setTokenVersion] = useState(0);
+
+  useEffect(() => {
+    return tokenStore.subscribe(() => setTokenVersion((v) => v + 1));
+  }, []);
+
   useEffect(() => {
     if (!tokenStore.getAccess()) {
       setUser(null);
@@ -31,7 +42,7 @@ export function useAuth() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tokenVersion]);
 
   const logout = useCallback(() => {
     tokenStore.clear();

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -631,8 +631,12 @@ def test_invite_user(client: TestClient, register_and_login):
 
 
 def test_update_project_unauthorized(client: TestClient, register_and_login):
-    owner_id, owner_token = register_and_login("projowner_auth@example.com", "projownerauth")
-    other_id, other_token = register_and_login("projother_auth@example.com", "projotherauth")
+    owner_id, owner_token = register_and_login(
+        "projowner_auth@example.com", "projownerauth"
+    )
+    other_id, other_token = register_and_login(
+        "projother_auth@example.com", "projotherauth"
+    )
 
     # Owner creates project
     c = client.post(
@@ -659,8 +663,12 @@ def test_update_project_unauthorized(client: TestClient, register_and_login):
 
 
 def test_delete_project_unauthorized(client: TestClient, register_and_login):
-    owner_id, owner_token = register_and_login("projdel_owner@example.com", "projdelowner")
-    other_id, other_token = register_and_login("projdel_other@example.com", "projdelother")
+    owner_id, owner_token = register_and_login(
+        "projdel_owner@example.com", "projdelowner"
+    )
+    other_id, other_token = register_and_login(
+        "projdel_other@example.com", "projdelother"
+    )
 
     c = client.post(
         "/api/projects/",
@@ -696,9 +704,10 @@ def test_create_project_unauthenticated(client: TestClient):
     assert res.status_code == 401
 
 
-def test_get_project_not_found(client: TestClient):
-    res = client.get(f"/api/projects/{uuid.uuid4()}")
-    assert res.status_code == 404
+# `test_get_project_not_found` was declared a second time here, identical to
+# the one earlier in this file apart from a local variable name. The later
+# definition shadowed the earlier one, so the file always reported one fewer
+# test than it appeared to contain.
 
 
 def test_create_project_invalid_payload(client: TestClient, register_and_login):
@@ -712,4 +721,3 @@ def test_create_project_invalid_payload(client: TestClient, register_and_login):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 422
-

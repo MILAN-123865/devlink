@@ -126,3 +126,64 @@ PROJECT_LIMIT = _limit(settings.PROJECT_RATE_LIMIT)
 UPLOAD_LIMIT = _limit(settings.UPLOAD_RATE_LIMIT)
 COMMENT_LIMIT = _limit(settings.COMMENT_RATE_LIMIT)
 RECOMMENDATION_LIMIT = _limit(settings.RECOMMENDATION_RATE_LIMIT)
+AUTH_LIMIT = (
+    settings.AUTH_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+LOGIN_LIMIT = (
+    settings.LOGIN_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+REGISTER_LIMIT = (
+    settings.REGISTER_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+PASSWORD_RESET_LIMIT = (
+    settings.PASSWORD_RESET_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+VERIFY_EMAIL_LIMIT = (
+    settings.VERIFY_EMAIL_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+MFA_LIMIT = (
+    settings.MFA_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+
+MESSAGE_LIMIT = (
+    settings.MESSAGE_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+SEARCH_LIMIT = (
+    settings.SEARCH_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+PROJECT_LIMIT = (
+    settings.PROJECT_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+UPLOAD_LIMIT = (
+    settings.UPLOAD_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+COMMENT_LIMIT = (
+    settings.COMMENT_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)
+RECOMMENDATION_LIMIT = (
+    settings.RECOMMENDATION_RATE_LIMIT
+    if (not is_testing or force_rate_limits)
+    else "1000000/minute"
+)

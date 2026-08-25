@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type {
   SearchAutocompleteResponse,
   SearchCategory,
+  SearchFilters,
   SearchHistoryItem,
   SearchResponse,
 } from "@/api/modules/search";
@@ -20,6 +21,8 @@ export interface GlobalSearchState {
   debouncedQuery: string;
   /** Currently active category filter (null = all categories). */
   category: SearchCategory | null;
+  /** Advanced filters applied to the developers results (skills, location, etc). */
+  filters: SearchFilters;
   /** Whether a request is currently in flight. */
   loading: boolean;
   /** Error message from the last failed request, if any. */
@@ -48,6 +51,10 @@ export interface UseGlobalSearchReturn extends GlobalSearchState {
   setQuery: (q: string) => void;
   /** Update the active category filter. */
   setCategory: (c: SearchCategory | null) => void;
+  /** Merge new values into the active advanced filters. */
+  setFilters: (f: SearchFilters | ((prev: SearchFilters) => SearchFilters)) => void;
+  /** Reset all advanced filters back to none. */
+  clearFilters: () => void;
   /** Clear the query and all results. */
   clear: () => void;
   /** Manually re-trigger a search with the current state. */
@@ -69,6 +76,7 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}): UseGlobal
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<SearchCategory | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<SearchAutocompleteResponse | null>(null);
@@ -132,7 +140,7 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}): UseGlobal
     saveToHistory(trimmed);
 
     searchApi
-      .all({ q: trimmed, category: category ?? undefined, limit })
+      .all({ q: trimmed, category: category ?? undefined, limit, ...filters })
       .then((res) => {
         // Stale-response guard: ignore if a newer search request has fired.
         if (searchRequestIdRef.current !== requestId) return;
@@ -148,7 +156,8 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}): UseGlobal
         if (searchRequestIdRef.current !== requestId) return;
         setLoading(false);
       });
-  }, [debouncedQuery, category, limit, minQueryLength, saveToHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, category, limit, minQueryLength, saveToHistory, JSON.stringify(filters)]);
 
   // -------------------------------------------------------------------
   // Autocomplete effect — fires on debouncedQuery only (not category).
@@ -206,10 +215,15 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}): UseGlobal
     setCategory((c) => c);
   }, []);
 
+  const clearFilters = useCallback(() => {
+    setFilters({});
+  }, []);
+
   return {
     query,
     debouncedQuery,
     category,
+    filters,
     loading,
     error,
     suggestions,
@@ -217,6 +231,8 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}): UseGlobal
     recentSearches,
     setQuery,
     setCategory,
+    setFilters,
+    clearFilters,
     clear,
     refresh,
     removeHistoryItem,

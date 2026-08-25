@@ -1,16 +1,19 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
+from app.core.cache import cached
 
-from app.dependencies import get_database, get_current_user_optional, get_current_user, get_optional_current_user
+from app.dependencies import (
+    get_database,
+    get_current_user,
+    get_optional_current_user,
+)
 from app.schemas.search import (
     SearchAutocompleteResponse,
     SearchRequest,
     SearchResponse,
 )
 from app.models.centralized_analytics import CentralizedAnalyticsEvent
-from app.dependencies import get_database, get_current_user_optional, get_current_user
-from app.schemas.search import SearchAutocompleteResponse
 from app.schemas.search_index import (
     SearchIndexedResponse,
     SearchAnalyticsMetric,
@@ -44,24 +47,56 @@ async def semantic_search(
 
 
 @router.get("", summary="Full multi-category search")
+@cached(ttl=60, key_prefix="search")
 def full_search(
     q: str = Query("", max_length=200),
     category: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    skills: Optional[str] = Query(
+        None, description="Comma-separated list of skill names to filter developers by"
+    ),
+    location: Optional[str] = Query(None, max_length=150, description="Filter developers by location"),
+    experience: Optional[str] = Query(
+        None, max_length=50, description="Filter developers by experience level (e.g. beginner, intermediate, advanced, expert)"
+    ),
+    availability: Optional[bool] = Query(
+        None, description="Filter developers by open-to-work availability"
+    ),
+    organization: Optional[str] = Query(
+        None, max_length=150, description="Filter developers by company/organization name"
+    ),
+    remote: Optional[bool] = Query(None, description="Filter developers open to remote work"),
+    sort: Optional[str] = Query(
+        None, description="Sort order for developers: relevance, name, experience, recent"
+    ),
     db: Session = Depends(get_database),
     user: Optional[User] = Depends(get_optional_current_user),
 ):
-    """Full-text paginated search across Users, Projects, Organizations, Skills, and Tags."""
+    """Full-text paginated search across Users, Projects, Organizations, Skills, and Tags.
+
+    Supports advanced filters (skills, location, experience, availability,
+    organization, remote) and a sort order, which apply to the developers
+    (users) results.
+    """
     start_time = time.time()
 
-    results = SearchService.search_legacy_full(  # or SearchService.search depending on your base wrapper
+    skills_list = [s.strip() for s in skills.split(",") if s.strip()] if skills else None
+
+    results = SearchService.search(
         db=db,
         q=q,
         category=category,
         page=page,
         limit=limit,
-    ) if hasattr(SearchService, "search_legacy_full") else SearchService.search_full(db=db, q=q, category=category, page=page, limit=limit) if hasattr(SearchService, "search_full") else SearchService.search(db=db, q=q, category=category, page=page, limit=limit)
+        skills_filter=skills_list,
+        location=location,
+        experience=experience,
+        availability=availability,
+        organization=organization,
+        remote=remote,
+        sort=sort,
+    )
 
     latency_ms = (time.time() - start_time) * 1000
 
@@ -78,13 +113,27 @@ def full_search(
                     total_results += len(v)
 
     if q.strip():
+        applied_filters = {
+            k: v
+            for k, v in {
+                "category": category,
+                "skills": skills_list,
+                "location": location,
+                "experience": experience,
+                "availability": availability,
+                "organization": organization,
+                "remote": remote,
+                "sort": sort,
+            }.items()
+            if v not in (None, "", [])
+        }
         SearchAnalyticsService.log_search(
             db=db,
             query=q,
             results_count=total_results,
             latency_ms=latency_ms,
             user_id=user.id if user else None,
-            filters={"category": category} if category else None,
+            filters=applied_filters or None,
         )
 
         # Log search appearances for returned users/developers
@@ -242,7 +291,9 @@ def get_analytics_dashboard(
     db: Session = Depends(get_database),
     current_user: User = Depends(get_current_user),
 ):
-    if getattr(current_user, "role", None) != UserRole.ADMIN and not getattr(current_user, "is_admin", False):
+    if getattr(current_user, "role", None) != UserRole.ADMIN and not getattr(
+        current_user, "is_admin", False
+    ):
         raise HTTPException(status_code=403, detail="Admin only")
 
     return SearchAnalyticsService.get_dashboard_metrics(db, days=days)

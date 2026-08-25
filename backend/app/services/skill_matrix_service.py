@@ -6,7 +6,6 @@ from sqlalchemy import select, delete
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.user_skill import UserSkill, SkillLevel
-from app.models.skill import Skill
 from app.utils.skill_names import clean_skill_name, normalize_skill_name
 from app.services.skill_service import SkillService
 from app.schemas.skill import SkillCreate
@@ -20,6 +19,7 @@ MATRIX_CATEGORIES = [
     "AI/ML",
     "Design",
 ]
+
 
 class SkillMatrixService:
     """
@@ -35,26 +35,34 @@ class SkillMatrixService:
         )
         user_skills = list(db.scalars(stmt))
 
-        categorized: Dict[str, List[Dict[str, Any]]] = {cat: [] for cat in MATRIX_CATEGORIES}
+        categorized: Dict[str, List[Dict[str, Any]]] = {
+            cat: [] for cat in MATRIX_CATEGORIES
+        }
         categorized["Other"] = []
 
         total_skills = 0
         for us in user_skills:
             if not us.skill:
                 continue
-            cat = us.skill.category if us.skill.category in MATRIX_CATEGORIES else "Other"
+            cat = (
+                us.skill.category if us.skill.category in MATRIX_CATEGORIES else "Other"
+            )
             if cat not in categorized:
                 categorized[cat] = []
-            
-            level_val = us.level.value if isinstance(us.level, SkillLevel) else str(us.level)
-            categorized[cat].append({
-                "id": str(us.id),
-                "skill_id": str(us.skill_id),
-                "name": us.skill.name,
-                "category": us.skill.category or "Languages",
-                "level": level_val.capitalize(),
-                "years_of_experience": us.years_of_experience,
-            })
+
+            level_val = (
+                us.level.value if isinstance(us.level, SkillLevel) else str(us.level)
+            )
+            categorized[cat].append(
+                {
+                    "id": str(us.id),
+                    "skill_id": str(us.skill_id),
+                    "name": us.skill.name,
+                    "category": us.skill.category or "Languages",
+                    "level": level_val.capitalize(),
+                    "years_of_experience": us.years_of_experience,
+                }
+            )
             total_skills += 1
 
         return {
@@ -70,6 +78,7 @@ class SkillMatrixService:
         db.execute(delete(UserSkill).where(UserSkill.user_id == user_id))
         db.flush()
 
+        seen_skill_ids = set()
         for item in skills_data:
             skill_name = item.get("name", "").strip()
             if not skill_name:
@@ -99,6 +108,10 @@ class SkillMatrixService:
                     skill_obj.category = category
                     db.flush()
 
+            if skill_obj.id in seen_skill_ids:
+                continue
+            seen_skill_ids.add(skill_obj.id)
+
             user_skill = UserSkill(
                 user_id=user_id,
                 skill_id=skill_obj.id,
@@ -107,5 +120,5 @@ class SkillMatrixService:
             )
             db.add(user_skill)
 
-        db.flush()
+        db.commit()
         return SkillMatrixService.get_user_skill_matrix(db, user_id)
