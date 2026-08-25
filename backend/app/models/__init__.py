@@ -62,7 +62,10 @@ from .testimonial import (  # noqa: F401
 )
 from .badge import Badge, UserBadge  # noqa: F401
 from .project_release import ProjectRelease, ReleaseStatus, ReleaseType  # noqa: F401
-from .centralized_analytics import CentralizedAnalyticsEvent, AnalyticsEventType  # noqa: F401
+from .centralized_analytics import (
+    CentralizedAnalyticsEvent,
+    AnalyticsEventType,
+)  # noqa: F401
 from .global_announcement import (
     GlobalAnnouncement,
     AnnouncementSeverity,
@@ -77,4 +80,3 @@ from .feature_announcement import (  # noqa: F401
     FeatureAnnouncementRead,
     AnnouncementCategory,
 )
-

@@ -770,6 +770,7 @@ class ProjectService:
         if clone_data.include_milestones:
             try:
                 from app.models.milestone import Milestone
+
                 source_milestones = (
                     db.query(Milestone)
                     .filter(Milestone.project_id == source_project.id)
@@ -803,4 +804,3 @@ class ProjectService:
         )
 
         return new_project
-
