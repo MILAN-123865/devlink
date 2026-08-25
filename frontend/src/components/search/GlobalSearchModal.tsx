@@ -124,7 +124,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
         badge: "Action",
       },
     ],
-    [toggleTheme],
+    [],
   );
 
   // Load recent searches on mount
@@ -306,7 +306,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     });
 
     return results;
-  }, [debouncedQuery]);
+  }, [debouncedQuery, commands]);
 
   // Filtered results based on category filter tab
   const filteredResults = useMemo(() => {

@@ -23,7 +23,6 @@ import {
 import { Skeleton } from "@/components/shared/primitives";
 import { useBookmarkCollections } from "@/hooks/useBookmarkCollections";
 import type { BookmarkCollection } from "@/api";
-import { TypoSection, TypoCaption } from "@/components/shared/Typography";
 
 export function CollectionSidebar({
   activeCollectionId,
@@ -48,7 +47,13 @@ export function CollectionSidebar({
   return (
     <nav aria-label="Bookmark collections" className="space-y-1">
       <div className="flex items-center justify-between px-1 pb-2">
+ feat/organization-roles-987-v2
         <TypoSection>Collections</TypoSection>
+
+        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Collections
+        </h3>
+ main
         <Button
           variant="ghost"
           size="icon"
@@ -91,7 +96,13 @@ export function CollectionSidebar({
       )}
 
       {collections.filter((c) => !c.is_default).length === 0 && !isLoading && (
+ feat/organization-roles-987-v2
         <TypoCaption as="p">No collections yet. Create one to organize your bookmarks.</TypoCaption>
+
+        <p className="px-1 py-2 text-[12px] text-muted-foreground">
+          No collections yet. Create one to organize your bookmarks.
+        </p>
+ main
       )}
     </nav>
   );

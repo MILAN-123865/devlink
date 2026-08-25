@@ -113,7 +113,7 @@ function ProjectsPage() {
       setCreateOpen(true);
       // Remove query param to keep the URL clean
       navigate({
-        search: (prev) => {
+        search: (prev: any) => {
           const next = { ...prev };
           delete next.create;
           return next;

@@ -10,7 +10,6 @@ import { SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { TypoCaption } from "@/components/shared/Typography";
 import {
   useAcceptApplication,
   useRejectApplication,
@@ -57,7 +56,13 @@ export function ApplicationsList({ projectId, className }: Props) {
     return (
       <Card className={cn("p-4", className)}>
         <p className="text-[13px] font-semibold text-destructive">Failed to load applications</p>
+ feat/organization-roles-987-v2
         <TypoCaption as="p">{error instanceof Error ? error.message : "Unknown error"}</TypoCaption>
+
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          {error instanceof Error ? error.message : "Unknown error"}
+        </p>
+ main
       </Card>
     );
   }
@@ -67,7 +72,13 @@ export function ApplicationsList({ projectId, className }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[13px] font-semibold text-foreground">Applications</p>
+ feat/organization-roles-987-v2
           <TypoCaption as="p">Review applicants and update status.</TypoCaption>
+
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            Review applicants and update status.
+          </p>
+ main
         </div>
         <div className="min-w-0">
           <Input
@@ -113,7 +124,13 @@ export function ApplicationsList({ projectId, className }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <ApplicationStatusBadge status={a.status} />
+ feat/organization-roles-987-v2
                       <TypoCaption>Application ID: {a.id}</TypoCaption>
+
+                      <span className="text-[12px] text-muted-foreground">
+                        Application ID: {a.id}
+                      </span>
+ main
                     </div>
 
                     {a.message && (
@@ -158,6 +175,7 @@ export function ApplicationsList({ projectId, className }: Props) {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
+                        variant="secondary"
                         disabled={!canReview || isBusy}
                         onClick={() => acceptMutation.mutate(a.id)}
                       >
