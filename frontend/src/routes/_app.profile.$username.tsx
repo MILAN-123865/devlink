@@ -2,11 +2,13 @@ import { createFileRoute, notFound, Link, useNavigate } from "@tanstack/react-ro
 import { Card, EmptyState, Skeleton } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
-import { builders, currentUser, projects, type Builder, type UserRole } from "@/mocks/seed";
+import { currentUser } from "@/mocks/seed";
 import { toast } from "sonner";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { profileSummaryApi, type ProfileSummaryResponse } from "@/api";
+import { usersApi } from "@/api/modules/users";
+import { projectsApi, type ExtendedProject } from "@/api/modules/projects";
 import { cn } from "@/lib/utils";
 import {
   MapPin,
@@ -21,6 +23,8 @@ import {
   BadgeCheck,
   Camera,
   TrendingUp,
+  FolderOpen,
+  Plus,
   Award,
   FolderKanban,
   Users,
@@ -30,7 +34,6 @@ import {
   FolderGit2,
   ExternalLink,
 } from "lucide-react";
-import { copyText } from "@/lib/clipboard";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
 import { analyticsApi } from "@/api/modules/analytics";
 import SkillsCard from "@/components/profile/SkillsCard";
@@ -42,6 +45,7 @@ import PortfolioShowcaseCard from "@/components/profile/PortfolioShowcaseCard";
 import { ProfileViewersList } from "@/components/profile/ProfileViewersList";
 import { PinnedProjectsCard } from "@/components/profile/PinnedProjectsCard";
 import { ProfileCompletionChecklist } from "@/components/profile/ProfileCompletionChecklist";
+import { PortfolioExportDialog } from "@/components/profile/PortfolioExportDialog";
 import { FollowButton } from "@/components/shared/FollowButton";
 import { useFollowStatus } from "@/hooks/useFollow";
 import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
@@ -51,6 +55,10 @@ import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typog
 import { CollaborationStatusBadge } from "@/features/collaboration/components/CollaborationStatusBadge";
 import { CollaborationStatusPicker } from "@/features/collaboration/components/CollaborationStatusPicker";
 import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
+import { EditProfileModal } from "@/components/profile/EditProfileModal";
+import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
+import DonationModal from "@/components/profile/DonationModal";
+import { HeartIcon } from "@heroicons/react/24/outline";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -289,12 +297,18 @@ export function ProfilePage() {
     isLoading: isStatusLoading,
   } = useCollaborationStatus();
 
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
+
   // Profile banner & avatar state
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=400&fit=crop&auto=format",
   );
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
 
   // Profile summary state
   const [summary, setSummary] = useState<string | null>(null);
@@ -302,7 +316,7 @@ export function ProfilePage() {
   const [editedSummary, setEditedSummary] = useState("");
 
   const summaryMutation = useMutation({
-    mutationFn: () => profileSummaryApi.generate(b.id),
+    mutationFn: () => profileSummaryApi.generate(b?.id || ""),
     onSuccess: (data: ProfileSummaryResponse) => {
       setSummary(data.summary);
       setEditedSummary(data.summary);
@@ -328,6 +342,73 @@ export function ProfilePage() {
     setEditedSummary(summary || "");
     setIsEditing(false);
   };
+
+  // 1. Loading state
+  if (isUserLoading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        {/* Banner & Avatar Skeleton */}
+        <Card className="overflow-hidden p-0 border-border">
+          <Skeleton className="h-44 w-full" />
+          <div className="p-6 pt-0">
+            <div className="flex flex-wrap items-start gap-5 -mt-12">
+              <Skeleton className="h-24 w-24 rounded-full ring-4 ring-card" />
+              <div className="min-w-0 flex-1 pt-12 sm:pt-4 space-y-3">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-3/4" />
+                <div className="flex gap-4 pt-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-12 sm:pt-4">
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-9 w-24" />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <div className="grid gap-4 lg:grid-cols-3 items-start">
+          <div className="space-y-4">
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+          </div>
+          <div className="space-y-4 lg:col-span-2">
+            <Skeleton className="h-64 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Error / Not found state
+  if (isUserError || !b) {
+    return (
+      <Card className="p-12 text-center space-y-4">
+        <AlertTriangle className="mx-auto h-12 w-12 text-destructive/80" />
+        <TypoHeading as="h2" className="text-xl">
+          User Profile Not Found
+        </TypoHeading>
+        <TypoCaption as="p">
+          We couldn't find a DevLink profile for @{username}. The user might not exist or the profile is private.
+        </TypoCaption>
+        <div className="pt-2">
+          <Link
+            to="/builders"
+            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Explore Developers
+          </Link>
+        </div>
+      </Card>
+    );
+  }
+
+  const currentAvatar = avatarUrl ?? b.avatar;
 
   return (
     <div className="space-y-4">
@@ -360,6 +441,12 @@ export function ProfilePage() {
               >
                 Copy Link
               </button>
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                Export Profile
+              </button>
             </div>
           </div>
         </Card>
@@ -383,15 +470,15 @@ export function ProfilePage() {
       {me && (
         <ProfileCompletionChecklist
           userProfile={{
-            avatar: avatarUrl,
+            avatar: currentAvatar,
             banner: bannerUrl || undefined,
             bio: b.bio,
-            skills: b.profileSkills?.map((s) => s.name) ?? b.skills,
+            skills: b.skills,
             experience: b.experienceLevel || b.role || b.company,
             education: headline,
             githubUrl: b.githubUrl,
             portfolioUrl: b.portfolioUrl,
-            projects: projects.length,
+            projects: userProjects.length,
           }}
         />
       )}
@@ -433,7 +520,7 @@ export function ProfilePage() {
         <div className="p-4 sm:p-5 pt-0">
           <div className="flex flex-wrap items-start gap-4 -mt-10 sm:-mt-12">
             <UserAvatar
-              src={avatarUrl}
+              src={currentAvatar}
               name={b.name}
               size="2xl"
               status={b.online}
@@ -481,7 +568,7 @@ export function ProfilePage() {
               </p>
 
               <TypoCaption as="p">
-                @{b.handle} · {b.role}
+                @{b.handle} {b.role ? `· ${b.role}` : ""}
               </TypoCaption>
 
               {/* Availability & Collaboration Status */}
@@ -548,6 +635,16 @@ export function ProfilePage() {
               {!me && (
                 <button
                   type="button"
+                  onClick={() => setIsDonationModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-md bg-pink-600 px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:bg-pink-700"
+                >
+                  <HeartIcon className="w-4 h-4" />
+                  Sponsor
+                </button>
+              )}
+              {!me && (
+                <button
+                  type="button"
                   onClick={() =>
                     navigate({
                       to: "/messages/$conversationId",
@@ -597,14 +694,14 @@ export function ProfilePage() {
             <div className="flex items-center gap-1">
               <button
                 onClick={handleEdit}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/50 hover:text-foreground cursor-pointer"
               >
                 <Pencil size={11} /> Edit
               </button>
               <button
                 onClick={() => summaryMutation.mutate()}
                 disabled={summaryMutation.isPending}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/50 hover:text-foreground disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/50 hover:text-foreground disabled:opacity-50 cursor-pointer"
               >
                 <RotateCw size={11} className={summaryMutation.isPending ? "animate-spin" : ""} />{" "}
                 Regenerate
@@ -845,6 +942,55 @@ export function ProfilePage() {
           }}
           mode="banner"
           title="Upload Cover Banner"
+        />
+      )}
+
+      {me && (
+        <PortfolioExportDialog
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        <EditProfileModal
+          open={isEditProfileOpen}
+          onOpenChange={setIsEditProfileOpen}
+          initialData={{
+            firstName: b.firstName,
+            lastName: b.lastName,
+            username: b.handle,
+            headline: b.headline,
+            bio: b.bio,
+            location: b.location,
+            website: b.website,
+            profileImage: currentAvatar,
+            githubUrl: b.githubUrl,
+            linkedinUrl: b.linkedinUrl,
+            twitterUrl: b.twitterUrl,
+            portfolioUrl: b.portfolioUrl,
+            role: b.role,
+            experienceLevel: b.experienceLevel,
+            company: b.company,
+            skills: b.skills,
+          }}
+          onSuccess={(updated) => {
+            if (updated && updated.username && updated.username !== b.handle) {
+              navigate({ to: "/profile/$username", params: { username: updated.username } });
+            }
+          }}
+        />
+      )}
+
+      {me && (
+        <ManageSkillsModal
+          open={isManageSkillsOpen}
+          onOpenChange={setIsManageSkillsOpen}
+          initialSkills={b.profileSkills}
+          username={b.handle}
+      
+      {!me && b.id && (
+        <DonationModal
+          isOpen={isDonationModalOpen}
+          onClose={() => setIsDonationModalOpen(false)}
+          recipientId={b.id}
+          recipientName={b.name}
         />
       )}
     </div>
