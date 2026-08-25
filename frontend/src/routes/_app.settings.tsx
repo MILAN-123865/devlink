@@ -5,6 +5,12 @@ import { Card } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
 import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
+import { OAuthAccountsSection } from "@/components/settings/OAuthAccountsSection";
+import { MFASection } from "@/features/settings/components/MFASection";
+import { UserSessionsActivity } from "@/components/settings/UserSessionsActivity";
+import { AvailabilitySettings } from "@/components/availability/AvailabilitySettings";
+
+
 import { SecurityDashboard } from "@/features/settings/components/security/SecurityDashboard";
 import { BillingDashboard } from "@/features/settings/components/BillingDashboard";
 import { ConnectedAccountsCard } from "@/features/settings/components/security/ConnectedAccountsCard";
@@ -22,6 +28,14 @@ import {
   Camera,
   Upload,
   Save,
+  ExternalLink,
+  Calendar,
+  HelpCircle,
+  Lock,
+  Key,
+  Plus,
+  Copy,
+  CheckCircle2,
   Sun,
   Moon,
   Monitor,
@@ -37,6 +51,20 @@ import { usersService } from "@/services";
 import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typography";
 
 const tabs = [
+  { id: "account", label: "Account", icon: User },
+  { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "availability", label: "Availability", icon: Calendar },
+  { id: "privacy", label: "Privacy", icon: Lock },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "export", label: "Export Data", icon: Download },
+  { id: "profile", label: "Profile", icon: User, description: "Personal info and avatar" },
+  { id: "appearance", label: "Appearance", icon: Palette, description: "Theme and interface styling" },
+  { id: "notifications", label: "Notifications", icon: Bell, description: "Email and push notifications" },
+  { id: "security", label: "Security", icon: Shield, description: "Password, 2FA, and sessions" },
+  { id: "billing", label: "Billing", icon: CreditCard, description: "Plans, usage, and invoices" },
+  { id: "developer", label: "Developer Accounts", icon: Code2, description: "OAuth & API access tokens" },
   { id: "account", label: "Account", icon: User, description: "Personal profile and public information" },
   { id: "privacy", label: "Privacy", icon: Eye, description: "Visibility and data sharing settings" },
   { id: "notifications", label: "Notifications", icon: Bell, description: "Email and push notification preferences" },
@@ -561,6 +589,19 @@ export function UserSettingsPage() {
               </div>
             )}
 
+            {tab === "availability" && (
+              <div className="p-6 space-y-6">
+                <AvailabilitySettings />
+              </div>
+            )}
+
+            {tab === "security" && <SecurityDashboard userEmail="nancy@example.com" />}
+            {tab === "privacy" && (
+              <div className="p-6 space-y-6">
+                <div>
+                  <TypoHeading as="h2">Privacy Settings</TypoHeading>
+                  <TypoCaption as="p">Control who can view your profile and activities</TypoCaption>
+            {/* 4. SECURITY TAB */}
             {/* 5. SECURITY TAB */}
             {tab === "security" && (
               <div className="space-y-4">
