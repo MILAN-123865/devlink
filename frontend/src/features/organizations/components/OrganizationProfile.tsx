@@ -53,6 +53,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
 
       {/* Tabs */}
       <div className="flex border-b border-gray-800 mb-6 gap-6 overflow-x-auto">
+      <div className="mb-6 flex gap-6 overflow-x-auto border-b border-border">
         {(
           ["about", "members", "team", "projects", "hiring", "tokens", "audit", "activity"] as const
         ).map((tab) => (
@@ -61,8 +62,8 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-sm font-medium capitalize border-b-2 transition-colors shrink-0 ${
               activeTab === tab
-                ? "border-indigo-500 text-indigo-400"
-                : "border-transparent text-gray-400 hover:text-gray-200"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab === "tokens"
@@ -77,16 +78,18 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
       </div>
 
       {/* Tab Content */}
-      <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-6">
+      <div className="rounded-xl border border-border bg-card p-6">
         {activeTab === "about" && (
           <div>
             <TypoHeading as="h2">About Us</TypoHeading>
             <p className="text-gray-300 leading-relaxed mb-6">
+            <p className="mb-6 leading-relaxed text-foreground">
               {organizationData.description || "No description provided."}
             </p>
             {organizationData.technologies && organizationData.technologies.length > 0 && (
               <div className="mt-6">
                 <TypoHeading as="h3" className="text-sm font-semibold text-gray-400 mb-3">
+                <TypoHeading as="h3" className="mb-3 text-sm font-semibold text-muted-foreground">
                   Technologies We Use
                 </TypoHeading>
                 <div className="flex flex-wrap gap-2">
@@ -94,6 +97,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
                     <span
                       key={tech}
                       className="px-3 py-1 bg-gray-800 text-gray-300 text-xs rounded-full border border-gray-700"
+                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs text-muted-foreground"
                     >
                       {tech}
                     </span>
@@ -109,7 +113,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
         {activeTab === "team" && (
           <div>
             <TypoHeading as="h2">Team Members</TypoHeading>
-            <p className="text-gray-400 text-sm">
+            <p className="text-sm text-muted-foreground">
               Showing team members connected to {organizationData.name}.
             </p>
           </div>
@@ -118,7 +122,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
         {activeTab === "projects" && (
           <div>
             <TypoHeading as="h2">Projects</TypoHeading>
-            <p className="text-gray-400 text-sm">
+            <p className="text-sm text-muted-foreground">
               Projects built or maintained by {organizationData.name}.
             </p>
           </div>
@@ -128,11 +132,11 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
           <div>
             <TypoHeading as="h2">Open Roles</TypoHeading>
             {organizationData.hiring ? (
-              <p className="text-gray-300 text-sm">
+              <p className="text-sm text-foreground">
                 We are actively recruiting talent! Apply below.
               </p>
             ) : (
-              <p className="text-gray-400 text-sm">We are not actively hiring right now.</p>
+              <p className="text-sm text-muted-foreground">We are not actively hiring right now.</p>
             )}
           </div>
         )}
@@ -150,6 +154,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
                   <div
                     key={activity.id}
                     className="p-4 rounded-lg bg-gray-800/50 border border-gray-700/50 flex flex-col gap-1"
+                    className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-4"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-indigo-400 capitalize">
@@ -164,6 +169,15 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
                 ))
               ) : (
                 <p className="text-gray-400 text-sm">No recent activity found.</p>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(activity.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground">{activity.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No recent activity found.</p>
               )}
             </div>
           </div>

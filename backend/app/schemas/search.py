@@ -61,6 +61,10 @@ class SearchResultUser(BaseModel):
     location: Optional[str] = None
     is_verified: bool = False
     premium: bool = False
+    experience_level: Optional[str] = None
+    company: Optional[str] = None
+    open_to_work: bool = True
+    skills: List[str] = []
 
 
 class SearchResultProject(BaseModel):
@@ -133,6 +137,7 @@ class SearchResponse(BaseModel):
     skills: List[SearchResultSkill] = []
     tags: List[SearchResultTag] = []
     counts: SearchCounts = Field(default_factory=SearchCounts)
+    search_method: str = Field(..., description="Either 'semantic' or 'keyword_fallback'")
     search_method: str = Field(
         ..., description="Either 'semantic' or 'keyword_fallback'"
     )

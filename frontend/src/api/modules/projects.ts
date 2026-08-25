@@ -4,6 +4,9 @@ import type { Project } from "@/mocks/seed";
 export type ProjectStage = "idea" | "in_development" | "beta" | "launched" | "archived";
 
 export interface ExtendedProject extends Project {
+  title?: string;
+  tagline?: string;
+  tags?: string[];
   stage: ProjectStage;
   is_archived?: boolean;
   archived_at?: string | null;
@@ -40,6 +43,15 @@ export type SimilarProjectWarning = {
   description_similarity: number;
 };
 
+export interface ProjectCloneRequest {
+  title?: string;
+  tagline?: string;
+  description?: string;
+  visibility?: string;
+  include_milestones?: boolean;
+  include_tags?: boolean;
+}
+
 export const projectsApi = {
   list: (query?: {
     page?: number;
@@ -53,6 +65,8 @@ export const projectsApi = {
     opensource?: boolean | string;
     tech?: string;
   }) => api.get<ExtendedProject[]>("/api/projects", { query }),
+  myProjects: () => api.get<ExtendedProject[]>("/api/projects/me/list"),
+  byUser: (userId: string) => api.get<ExtendedProject[]>(`/api/projects/user/${userId}`),
   get: (id: string) => api.get<ExtendedProject>(`/api/projects/${id}`),
   create: (body: Partial<ExtendedProject>) => api.post<ExtendedProject>("/api/projects", body),
   update: (id: string, body: Partial<ExtendedProject>) =>
@@ -75,4 +89,7 @@ export const projectsApi = {
   archive: (id: string) => api.post<ExtendedProject>(`/api/projects/${id}/archive`),
   /** Unarchive a project back to active status */
   unarchive: (id: string) => api.post<ExtendedProject>(`/api/projects/${id}/unarchive`),
+  /** Clone an existing project as a template */
+  clone: (id: string, body?: ProjectCloneRequest) =>
+    api.post<ExtendedProject>(`/api/projects/${id}/clone`, body || {}),
 };

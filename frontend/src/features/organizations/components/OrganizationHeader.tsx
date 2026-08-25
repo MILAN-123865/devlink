@@ -31,9 +31,9 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
   socialLinks,
 }) => {
   return (
-    <div className="relative rounded-xl border border-gray-800 bg-gray-900/50 overflow-hidden mb-6">
+    <div className="relative mb-6 overflow-hidden rounded-xl border border-border bg-card">
       {/* Banner */}
-      <div className="h-32 sm:h-48 w-full bg-gradient-to-r from-blue-900 to-indigo-900 relative">
+      <div className="relative h-32 w-full bg-gradient-to-r from-primary/40 to-primary/10 sm:h-48">
         {bannerUrl && (
           <img src={bannerUrl} alt={`${name} banner`} className="w-full h-full object-cover" />
         )}
@@ -43,7 +43,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
       <div className="p-6 pt-0 relative flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
         <div className="flex items-end gap-4 -mt-12 sm:-mt-16">
           {/* Logo */}
-          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl border-4 border-gray-900 bg-gray-800 overflow-hidden flex items-center justify-center font-bold text-2xl text-white shadow-lg">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-muted text-2xl font-bold text-foreground shadow-lg sm:h-32 sm:w-32">
             {logoUrl ? (
               <img src={logoUrl} alt={`${name} logo`} className="w-full h-full object-cover" />
             ) : (
@@ -68,7 +68,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
                 </span>
               )}
             </TypoHeading>
-            {location && <p className="text-sm text-gray-400">{location}</p>}
+            {location && <p className="text-sm text-muted-foreground">{location}</p>}
           </div>
         </div>
 
@@ -77,13 +77,48 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
             <button
               onClick={onVerifyClick}
               type="button"
-              className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-medium text-sm transition-colors"
+              className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               Apply for Verification
             </button>
           )}
 
           {socialLinks?.twitter && sanitizeUrl(socialLinks.twitter) && (
+          {socialLinks?.twitter && (
+            <a
+              href={socialLinks.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Twitter className="w-5 h-5" />
+            </a>
+          )}
+          {socialLinks?.github && (
+            <a
+              href={socialLinks.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+          )}
+          {socialLinks?.linkedin && (
+            <a
+              href={socialLinks.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Linkedin className="w-5 h-5" />
+            </a>
+          )}
+
+          {website && (
             <a
               href={sanitizeUrl(socialLinks.twitter)}
               target="_blank"
@@ -119,7 +154,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={sanitizeUrl(website)}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Visit Website
             </a>

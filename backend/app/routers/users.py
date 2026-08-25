@@ -19,9 +19,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.core.cache import cache_manager, cached
-from app.dependencies import get_current_user, get_database
+from app.dependencies import get_current_user, get_database, get_optional_current_user
 from app.middleware.rate_limit import SEARCH_LIMIT, limiter
 from app.models.user import User
+from app.services.block_service import BlockService
 from app.schemas.user import (
     CollaborationStatus,
     CurrentUser,
@@ -34,6 +35,9 @@ from app.schemas.user import (
     UserResponse,
     UserStats,
     UserUpdate,
+    DashboardWidgetLayout,
+    DashboardLayoutUpdate,
+    DashboardLayoutResponse,
 )
 from app.schemas.user_report import (
     UserReportCreate,
@@ -43,9 +47,11 @@ from app.services.user_service import UserService
 from app.utils.uploads import (
     save_image_upload,
     save_resume_upload,
+    save_video_introduction_upload,
     save_voice_introduction_upload,
     validate_image_upload,
     validate_resume_upload,
+    validate_video_introduction_upload,
     validate_voice_introduction_upload,
 )
 from app.utils.validators import validate_username
@@ -208,8 +214,42 @@ def get_user_profile_completion(
     return UserService.get_profile_completion(db, user)
 
 
-from app.dependencies import get_current_user, get_database, get_optional_current_user
-from app.services.block_service import BlockService
+@router.get(
+    "/by-username/{username}",
+    response_model=UserResponse,
+    summary="Get User Profile by Username",
+)
+def get_user_by_username(
+    username: str,
+    online_threshold: int | None = Query(
+        None, description="Online threshold in seconds"
+    ),
+    db: Session = Depends(get_database),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    user = UserService.get_by_username(db, username)
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    # Check private profile and blocking restrictions
+    if user.is_private:
+        if not current_user or (
+            current_user.id != user.id
+            and BlockService.is_blocked(db, user.id, current_user.id)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view this private profile.",
+            )
+
+    if online_threshold is not None:
+        user._online_threshold = online_threshold
+
+    user = UserService.apply_privacy_filters(db, user, current_user)
+    return user
 
 
 @router.get(
@@ -354,7 +394,10 @@ def get_collaboration_status(
     Get the current user's live collaboration presence status
     (coding, reviewing_pr, in_meeting, looking_for_project, available).
     """
-    return {"user_id": str(current_user.id), "status": current_user.collaboration_status}
+    return {
+        "user_id": str(current_user.id),
+        "status": current_user.collaboration_status,
+    }
 
 
 @router.put(
@@ -364,7 +407,8 @@ def get_collaboration_status(
 )
 def set_collaboration_status(
     status_val: CollaborationStatus = Query(
-        ..., description="One of: coding, reviewing_pr, in_meeting, looking_for_project, available"
+        ...,
+        description="One of: coding, reviewing_pr, in_meeting, looking_for_project, available",
     ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database),
@@ -488,6 +532,7 @@ async def upload_avatar(
     cache_manager.delete_pattern(f"user:*{current_user.id}*")
     return result
 
+
 @router.post(
     "/me/voice-introduction",
     response_model=UserResponse,
@@ -518,13 +563,59 @@ async def upload_voice_introduction(
         file.filename,
         current_user.id,
     )
+
     full_voice_url = str(request.base_url).rstrip("/") + voice_url
 
-    return UserService.update_voice_introduction_url(
+    result = UserService.update_voice_introduction_url(
         db,
         current_user,
         full_voice_url,
     )
+    cache_manager.delete_pattern(f"user:*{current_user.id}*")
+    return result
+
+
+@router.post(
+    "/me/video-introduction",
+    response_model=UserResponse,
+    summary="Upload user video introduction",
+)
+async def upload_video_introduction(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database),
+):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    contents = await file.read()
+
+    try:
+        validate_video_introduction_upload(
+            file.filename,
+            file.content_type,
+            len(contents),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    video_url = save_video_introduction_upload(
+        contents,
+        file.filename,
+        current_user.id,
+    )
+
+    full_video_url = str(request.base_url).rstrip("/") + video_url
+
+    result = UserService.update_video_introduction_url(
+        db,
+        current_user,
+        full_video_url,
+    )
+    cache_manager.delete_pattern(f"user:*{current_user.id}*")
+    return result
+
 
 @router.delete(
     "/me",
@@ -662,10 +753,7 @@ def verify_user(
     db: Session = Depends(get_database),
 ):
 
-    user = UserService.get_user(
-        db,
-        user_id,
-    )
+    user = UserService.get_user(db, user_id)
 
     if user is None:
         raise HTTPException(
@@ -696,3 +784,64 @@ def report_user(
         raise HTTPException(status_code=400, detail="You cannot report yourself")
 
     return UserService.create_user_report(db, current_user.id, target_user.id, report)
+
+
+# ==========================================================
+# Dashboard Layout Customization (#754)
+# ==========================================================
+
+
+@router.get(
+    "/me/dashboard-layout",
+    response_model=DashboardLayoutResponse,
+    summary="Get Current User Dashboard Layout",
+)
+def get_dashboard_layout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database),
+):
+    if not current_user.dashboard_layout or "widgets" not in current_user.dashboard_layout:
+        return DashboardLayoutResponse(widgets=[], is_customized=False)
+    return DashboardLayoutResponse(
+        widgets=[DashboardWidgetLayout(**w) for w in current_user.dashboard_layout["widgets"]],
+        is_customized=True,
+    )
+
+
+@router.put(
+    "/me/dashboard-layout",
+    response_model=DashboardLayoutResponse,
+    summary="Save Current User Dashboard Layout",
+)
+def update_dashboard_layout(
+    layout: DashboardLayoutUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database),
+):
+    payload = {"widgets": [w.model_dump() for w in layout.widgets]}
+    current_user.dashboard_layout = payload
+    db.commit()
+    db.refresh(current_user)
+    return DashboardLayoutResponse(
+        widgets=layout.widgets,
+        is_customized=True,
+    )
+
+
+@router.delete(
+    "/me/dashboard-layout",
+    response_model=DashboardLayoutResponse,
+    summary="Reset Current User Dashboard Layout to Default",
+)
+def reset_dashboard_layout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_database),
+):
+    current_user.dashboard_layout = None
+    db.commit()
+    db.refresh(current_user)
+    return DashboardLayoutResponse(
+        widgets=[],
+        is_customized=False,
+    )
+

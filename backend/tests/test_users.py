@@ -180,9 +180,9 @@ def test_update_me_unauthenticated(client: TestClient):
     assert res.status_code == 401
 
 
-def test_get_user_not_found(client: TestClient):
-    res = client.get(f"/api/users/{uuid.uuid4()}")
-    assert res.status_code == 404
+# `test_get_user_not_found` was declared a second time here, identical to the
+# one earlier in this file apart from a local variable name. The later
+# definition shadowed the earlier one.
 
 
 def test_update_user_invalid_payload(client: TestClient, register_and_login):

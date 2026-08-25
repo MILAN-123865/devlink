@@ -87,6 +87,23 @@ class ProjectMilestoneService:
                 detail="Only project owners and maintainers can manage milestones.",
             )
 
+    @staticmethod
+    def validate_milestone_owner(db: Session, project: Project, owner_id: uuid.UUID) -> None:
+        """Ensure the given owner_id is a valid active member or the owner of the project."""
+        if project.owner_id == owner_id:
+            return
+
+        stmt = select(ProjectMember).where(
+            ProjectMember.project_id == project.id,
+            ProjectMember.user_id == owner_id,
+            ProjectMember.is_active.is_(True),
+        )
+        if not db.scalar(stmt):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Milestone owner must be an active member of the project.",
+            )
+
     # ------------------------------------------------------------------
     # CRUD Operations
     # ------------------------------------------------------------------
@@ -101,6 +118,9 @@ class ProjectMilestoneService:
         project = ProjectMilestoneService.get_project_or_404(db, project_id)
         ProjectMilestoneService.require_project_maintainer(db, project, actor)
 
+        if milestone_in.owner_id:
+            ProjectMilestoneService.validate_milestone_owner(db, project, milestone_in.owner_id)
+
         now = datetime.now(timezone.utc)
         milestone = Milestone(
             id=uuid.uuid4(),
@@ -110,6 +130,7 @@ class ProjectMilestoneService:
             if milestone_in.description
             else None,
             due_date=milestone_in.due_date,
+            owner_id=milestone_in.owner_id,
             is_completed=False,
             is_archived=False,
             created_at=now,
@@ -185,6 +206,13 @@ class ProjectMilestoneService:
             )
         if milestone_in.due_date is not None:
             milestone.due_date = milestone_in.due_date
+        
+        # We check if owner_id was explicitly provided, since it can be nullified.
+        # But wait, milestone_in is a Pydantic model. If it was passed in the update payload, it will be in the fields set.
+        if "owner_id" in milestone_in.model_fields_set:
+            if milestone_in.owner_id is not None:
+                ProjectMilestoneService.validate_milestone_owner(db, project, milestone_in.owner_id)
+            milestone.owner_id = milestone_in.owner_id
 
         if milestone_in.is_completed is not None:
             if milestone_in.is_completed and not milestone.is_completed:

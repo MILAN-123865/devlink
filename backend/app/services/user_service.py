@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.models.activity import ActivityType
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import (
+    PrivacySettingsUpdate,
+    ProfileCompletionResponse,
+    UserCreate,
+    UserUpdate,
+)
 from app.services.activity_service import ActivityService
 from app.models.application import Application, ApplicationStatus
 from app.models.follower import Follower
@@ -110,6 +115,19 @@ class UserService:
 
         data = user.model_dump(exclude_unset=True, mode="json")
 
+        from fastapi import HTTPException, status
+
+        # Optimistic locking check
+        if "version" in data and data["version"] is not None:
+            expected_version = data.pop("version")
+            if db_user.version != expected_version:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Version conflict: The profile has been updated by another request. Please refresh and try again.",
+                )
+        else:
+            data.pop("version", None)
+
         if "privacy_settings" in data:
             privacy_data = data.pop("privacy_settings")
             if privacy_data:
@@ -118,8 +136,46 @@ class UserService:
                     {k: v for k, v in privacy_data.items() if v is not None}
                 )
                 db_user.privacy_settings = current_settings
+
+        # Username update validation
+        if "username" in data and data["username"] and data["username"] != db_user.username:
+            new_username = data.pop("username").strip()
+            existing_user = UserService.get_by_username(db, new_username)
+            if existing_user and existing_user.id != db_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Username is already taken.",
+                )
+            db_user.username = new_username
+
+        # Skills update handling
+        if "skills" in data:
+            new_skills = data.pop("skills")
+            if new_skills is not None:
+                from app.models.skill import Skill
+                from app.models.user_skill import UserSkill
+
+                db.query(UserSkill).filter(UserSkill.user_id == db_user.id).delete(synchronize_session=False)
+
+                for skill_name in new_skills:
+                    s_name = str(skill_name).strip()
+                    if not s_name:
+                        continue
+                    norm_name = s_name.lower()
+                    slug = norm_name.replace(" ", "-")
+
+                    skill_obj = db.query(Skill).filter(Skill.normalized_name == norm_name).first()
+                    if not skill_obj:
+                        skill_obj = Skill(name=s_name, normalized_name=norm_name, slug=slug)
+                        db.add(skill_obj)
+                        db.flush()
+
+                    user_skill = UserSkill(user_id=db_user.id, skill_id=skill_obj.id)
+                    db.add(user_skill)
+
         for key, value in data.items():
             setattr(db_user, key, value)
+        db_user.version = (db_user.version or 1) + 1
         db.flush()
         db.refresh(db_user)
 
@@ -548,3 +604,24 @@ class UserService:
         db.refresh(db_report)
 
         return db_report
+
+    @staticmethod
+    def update_video_introduction_url(
+        db: Session,
+        user: User,
+        video_introduction_url: str,
+        video_introduction_thumbnail_url: str | None = None,
+    ) -> User:
+        user.video_introduction_url = video_introduction_url
+
+        # Only overwrite the thumbnail when the caller actually supplied one.
+        # Assigning `None` unconditionally meant that re-uploading a video
+        # through the endpoint (which does not generate a thumbnail) wiped a
+        # thumbnail that had been set previously.
+        if video_introduction_thumbnail_url is not None:
+            user.video_introduction_thumbnail_url = video_introduction_thumbnail_url
+
+        db.commit()
+        db.refresh(user)
+
+        return user

@@ -61,4 +61,10 @@ export const authApi = {
       { token, new_password: password },
       { auth: false },
     ),
+  verifyEmail: (token: string) =>
+    api.post<{ success: boolean; message?: string }>(
+      "/api/auth/verify-email",
+      { token },
+      { auth: false },
+    ),
 };

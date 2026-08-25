@@ -89,6 +89,10 @@ export interface SearchResultUser {
   profile_image?: string;
   location?: string;
   verified?: boolean;
+  experience_level?: string;
+  company?: string;
+  open_to_work?: boolean;
+  skills?: string[];
 }
 
 export interface SearchResultProject {
@@ -219,10 +223,46 @@ export const searchHistoryStorage = {
 };
 
 // ---------------------------------------------------------------------
+// Advanced developer filters (#945)
+// ---------------------------------------------------------------------
+
+export type SearchSortOrder = "relevance" | "name" | "experience" | "recent";
+
+export const SEARCH_SORT_OPTIONS: readonly { value: SearchSortOrder; label: string }[] = [
+  { value: "relevance", label: "Relevance" },
+  { value: "name", label: "Name (A-Z)" },
+  { value: "experience", label: "Most experienced" },
+  { value: "recent", label: "Recently active" },
+] as const;
+
+export type SearchExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
+
+export const SEARCH_EXPERIENCE_OPTIONS: readonly { value: SearchExperienceLevel; label: string }[] =
+  [
+    { value: "beginner", label: "Beginner" },
+    { value: "intermediate", label: "Intermediate" },
+    { value: "advanced", label: "Advanced" },
+    { value: "expert", label: "Expert" },
+  ] as const;
+
+/** Advanced filters applied to the "developers" results of a global search. */
+export interface SearchFilters {
+  /** Comma-separated skill names, e.g. "React,Node.js". */
+  skills?: string;
+  location?: string;
+  experience?: SearchExperienceLevel;
+  /** true = open to work, false = not available, undefined = any. */
+  availability?: boolean;
+  organization?: string;
+  remote?: boolean;
+  sort?: SearchSortOrder;
+}
+
+// ---------------------------------------------------------------------
 // API
 // ---------------------------------------------------------------------
 
-export interface SearchQuery {
+export interface SearchQuery extends SearchFilters {
   q: string;
   category?: SearchCategory;
   page?: number;
@@ -238,6 +278,13 @@ export const searchApi = {
         category: params.category,
         page: params.page,
         limit: params.limit,
+        skills: params.skills,
+        location: params.location,
+        experience: params.experience,
+        availability: params.availability,
+        organization: params.organization,
+        remote: params.remote,
+        sort: params.sort,
       },
     }),
   /** Lightweight per-category autocomplete payload. */

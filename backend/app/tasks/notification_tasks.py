@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from app.core.celery_app import celery_app
+from app.tasks.base import BaseTask
 from app.database.session import SessionLocal
 from app.models.notification import NotificationType
 from app.services.notification_service import NotificationService
@@ -18,6 +19,7 @@ def _to_uuid(value: str | None) -> uuid.UUID | None:
 
 
 @celery_app.task(
+    base=BaseTask,
     name="notifications.send",
     bind=True,
     max_retries=3,
@@ -58,7 +60,6 @@ def send_notification_task(self, payload: dict) -> str | None:
         return None
     except Exception as exc:
         db.rollback()
-        logger.exception("send_notification_task failed; retrying")
-        raise self.retry(exc=exc)
+        raise exc  # BaseTask handles retries automatically
     finally:
         db.close()
