@@ -128,6 +128,12 @@ export type {
   SkillMatrixResponse,
   SkillSearchResult,
 } from "./modules/skills";
+export { dashboardLayoutApi } from "./modules/dashboardLayout";
+export type {
+  DashboardWidgetLayout,
+  DashboardLayoutResponse,
+} from "./modules/dashboardLayout";
+export type { PlatformSocialProofResponse } from "./modules/analytics";
 export { featureAnnouncementsApi } from "./modules/featureAnnouncements";
 export type {
   FeatureAnnouncement,
