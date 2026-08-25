@@ -1,4 +1,4 @@
-import { Card } from "@/components/shared/primitives";
+import { Card, EmptyState } from "@/components/shared/primitives";
 import { Github, Linkedin, ExternalLink } from "lucide-react";
 import type { ElementType } from "react";
 import { TypoCaption, TypoHeading } from "@/components/shared/Typography";
@@ -65,9 +65,7 @@ export function SocialLinksCard({
             { key: "linkedinUrl", label: "LinkedIn", value: formValues?.linkedinUrl ?? "" },
           ].map((field) => (
             <label key={field.key} className="block text-sm">
-              <TypoCaption>
-                {field.label}
-              </TypoCaption>
+              <TypoCaption>{field.label}</TypoCaption>
               <input
                 value={field.value}
                 onChange={(event) =>
@@ -102,7 +100,12 @@ export function SocialLinksCard({
       </div>
 
       {links.length === 0 ? (
-        <TypoCaption as="p">No links added yet.</TypoCaption>
+        <EmptyState
+          icon={ExternalLink}
+          title="Make it easy to connect"
+          desc="Add your GitHub, portfolio, or LinkedIn so collaborators can find your work."
+          className="rounded-xl border border-dashed border-primary/20 bg-primary/5 py-8"
+        />
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {links.map((link) => {

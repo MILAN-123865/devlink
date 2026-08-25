@@ -159,3 +159,13 @@ def test_profile_analytics_endpoints():
     # Clean up overrides
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(get_optional_current_user, None)
+
+def test_profile_analytics_trends_have_expected_days():
+    db = TestingSessionLocal()
+    user_id = uuid.uuid4()
+
+    result = AnalyticsService.get_profile_analytics(db=db, user_id=user_id)
+    db.close()
+
+    assert len(result.trends) == 7
+    assert all(trend.date is not None for trend in result.trends)

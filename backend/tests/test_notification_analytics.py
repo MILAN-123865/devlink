@@ -1,3 +1,4 @@
+
 def test_notification_delivery_analytics(client, register_and_login):
     user_id, token = register_and_login(
         "notif_analytics@example.com", "notif_analytics"

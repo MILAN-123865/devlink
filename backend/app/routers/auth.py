@@ -1,3 +1,4 @@
+
 # pyrefly: ignore [missing-import]
 import uuid
 import redis
@@ -122,12 +123,24 @@ def login(
     response_model=AuthResponse,
     summary="Refresh JWT",
 )
-@limiter.limit("10/minute")
+@limiter.limit(AUTH_LIMIT)
 def refresh(
     request: Request,
     payload: RefreshTokenRequest,
     db: Session = Depends(get_database),
 ):
+    # Decoding with the expected type folds the signature, expiry and type
+    # checks into one pass, and rejects a non-refresh token before we go
+    # anywhere near the database.
+    try:
+        decode_token(payload.refresh_token, expected_type=TokenType.REFRESH)
+
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token.",
+        )
+
     user_agent = request.headers.get("user-agent")
     ip_address = request.client.host if request.client else None
     auth_service = AuthService(db)
@@ -182,7 +195,7 @@ def get_current_user_id(
     response_model=LogoutResponse,
     summary="Logout",
 )
-@limiter.limit("10/minute")
+@limiter.limit(AUTH_LIMIT)
 def logout(
     request: Request,
     payload: LogoutRequest | None = None,
@@ -191,6 +204,9 @@ def logout(
 ):
 
     auth_service = AuthService(db)
+
+    # The body is optional: a client that has already discarded its refresh
+    # token can still log out, and the access token identifies the session.
     refresh_token_str = payload.refresh_token if payload else None
 
     return auth_service.logout(user_id, refresh_token_str=refresh_token_str)
@@ -465,61 +481,15 @@ def me(
     return auth_service.get_current_user(user_id)
 
 
-# ==========================================================
-# Refresh Access Token
-# ==========================================================
-
-
-@router.post(
-    "/refresh",
-    response_model=AuthResponse,
-    summary="Refresh JWT",
-)
-@limiter.limit(AUTH_LIMIT)
-def refresh(
-    request: Request,
-    payload: RefreshTokenRequest,
-    db: Session = Depends(get_database),
-):
-
-    # Decoding with the expected type folds the signature, expiry and type
-    # checks into one pass. Previously this decoded once and then called
-    # `is_refresh_token`, which decoded the same token a second time.
-    try:
-        decode_token(payload.refresh_token, expected_type=TokenType.REFRESH)
-
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token.",
-        )
-
-    auth_service = AuthService(db)
-
-    return auth_service.refresh_token(payload.refresh_token)
-
-
-# ==========================================================
-# Logout
-# ==========================================================
-
-
-@router.post(
-    "/logout",
-    response_model=LogoutResponse,
-    summary="Logout",
-)
-@limiter.limit(AUTH_LIMIT)
-def logout(
-    request: Request,
-    payload: LogoutRequest,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_database),
-):
-
-    auth_service = AuthService(db)
-
-    return auth_service.logout(user_id, payload.refresh_token)
+# `/refresh` and `/logout` were each declared a second time here, roughly 350
+# lines below the originals. Both decorators ran at import, so both routes were
+# registered on the router and Starlette served whichever it matched first --
+# the earlier one. The copies below were therefore dead in every sense except
+# the OpenAPI schema, where they showed up as duplicate operations.
+#
+# The behaviour worth keeping from them (the explicit refresh-token type check,
+# and `AUTH_LIMIT` in place of a hardcoded "10/minute") has been folded into the
+# live handlers above.
 
 
 # ==========================================================

@@ -704,9 +704,10 @@ def test_create_project_unauthenticated(client: TestClient):
     assert res.status_code == 401
 
 
-def test_get_project_not_found(client: TestClient):
-    res = client.get(f"/api/projects/{uuid.uuid4()}")
-    assert res.status_code == 404
+# `test_get_project_not_found` was declared a second time here, identical to
+# the one earlier in this file apart from a local variable name. The later
+# definition shadowed the earlier one, so the file always reported one fewer
+# test than it appeared to contain.
 
 
 def test_create_project_invalid_payload(client: TestClient, register_and_login):

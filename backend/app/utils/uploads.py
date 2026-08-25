@@ -28,6 +28,7 @@ ALLOWED_VOICE_MIME_TYPES: Final[set[str]] = {
 
 MAX_VOICE_SIZE_BYTES: Final[int] = 10 * 1024 * 1024
 
+
 def scan_file_for_malware(contents: bytes, filename: str) -> None:
     """
     Malware scanning hook for uploaded files.
@@ -70,11 +71,91 @@ def save_resume_upload(contents: bytes, filename: str, user_id: uuid.UUID | str)
     upload_dir = Path(settings.UPLOAD_DIR) / "resumes"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_name = f"{user_id}-{uuid.uuid4().hex}.pdf"
+    # The extension has to follow the file we were actually given. This was
+    # hardcoded to `.pdf`, so every DOCX resume was stored under a name that
+    # claimed to be a PDF and would not open for whoever downloaded it.
+    # `validate_resume_upload` has already restricted this to .pdf/.docx.
+    extension = Path(filename).suffix.lower()
+    if extension not in {".pdf", ".docx"}:
+        extension = ".pdf"
+
+    safe_name = f"{user_id}-{uuid.uuid4().hex}{extension}"
     destination = upload_dir / safe_name
     destination.write_bytes(contents)
 
     return f"/uploads/resumes/{safe_name}"
+
+
+ALLOWED_VIDEO_EXTENSIONS: Final[set[str]] = {
+    ".mp4",
+    ".webm",
+    ".mov",
+}
+
+ALLOWED_VIDEO_MIME_TYPES: Final[set[str]] = {
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+}
+
+#: Video introductions were sharing `MAX_UPLOAD_SIZE_MB`, which is the *image*
+#: limit -- a few megabytes. That is not a usable ceiling for even a 30-second
+#: clip, so a valid recording was rejected as "too large". Videos get their own
+#: budget, sized against `VIDEO_INTRODUCTION_MAX_SIZE_MB` when configured.
+MAX_VIDEO_SIZE_BYTES: Final[int] = (
+    getattr(settings, "VIDEO_INTRODUCTION_MAX_SIZE_MB", 50) * 1024 * 1024
+)
+
+
+def validate_video_introduction_upload(
+    filename: str | None,
+    content_type: str | None,
+    size_bytes: int,
+) -> None:
+    if not filename:
+        raise ValueError("Please upload a video file.")
+
+    ext = Path(filename).suffix.lower()
+
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise ValueError("Unsupported video format. Allowed: MP4, WebM, MOV.")
+
+    normalized_content_type = (content_type or "").lower()
+
+    if normalized_content_type not in ALLOWED_VIDEO_MIME_TYPES:
+        raise ValueError("Please upload a valid video file.")
+
+    if size_bytes > MAX_VIDEO_SIZE_BYTES:
+        raise ValueError(
+            f"Video file must be smaller than "
+            f"{MAX_VIDEO_SIZE_BYTES // (1024 * 1024)}MB."
+        )
+
+
+def save_video_introduction_upload(
+    contents: bytes,
+    filename: str,
+    user_id: uuid.UUID | str,
+) -> str:
+    """Store a validated video introduction and return its public URL.
+
+    Kept deliberately parallel to :func:`save_voice_introduction_upload`: the
+    two differ only in the directory they write to and the extension set their
+    validator allows.
+    """
+    scan_file_for_malware(contents, filename)
+
+    upload_dir = Path(settings.UPLOAD_DIR) / "video_introductions"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    extension = Path(filename).suffix.lower()
+    safe_name = f"{user_id}-{uuid.uuid4().hex}{extension}"
+
+    destination = upload_dir / safe_name
+    destination.write_bytes(contents)
+
+    return f"/uploads/video_introductions/{safe_name}"
+
 
 def validate_voice_introduction_upload(
     filename: str | None, content_type: str | None, size_bytes: int
@@ -86,16 +167,12 @@ def validate_voice_introduction_upload(
     allowed_exts = {".mp3", ".wav", ".webm", ".ogg"}
 
     if ext not in allowed_exts:
-        raise ValueError(
-            "Unsupported audio format. Allowed: MP3, WAV, WebM, OGG."
-        )
+        raise ValueError("Unsupported audio format. Allowed: MP3, WAV, WebM, OGG.")
 
     normalized_content_type = (content_type or "").lower()
 
     if normalized_content_type not in ALLOWED_VOICE_MIME_TYPES:
-        raise ValueError(
-            "Please upload a valid audio file."
-        )
+        raise ValueError("Please upload a valid audio file.")
 
     if size_bytes > MAX_VOICE_SIZE_BYTES:
         raise ValueError("Voice introduction must be smaller than 10MB.")
@@ -106,6 +183,7 @@ def save_voice_introduction_upload(
     filename: str,
     user_id: uuid.UUID | str,
 ) -> str:
+    """Store a validated voice introduction and return its public URL."""
     scan_file_for_malware(contents, filename)
 
     upload_dir = Path(settings.UPLOAD_DIR) / "voice_introductions"
@@ -118,6 +196,7 @@ def save_voice_introduction_upload(
     destination.write_bytes(contents)
 
     return f"/uploads/voice_introductions/{safe_name}"
+
 
 def validate_image_upload(
     filename: str | None, content_type: str | None, size_bytes: int

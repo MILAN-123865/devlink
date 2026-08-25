@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { projectsService } from "@/services";
 import { Card, TagChip, Avatar, Skeleton } from "@/components/shared/primitives";
@@ -7,6 +7,7 @@ import { ProjectDashboard } from "@/features/projects/components/ProjectDashboar
 import { ProjectCalendar } from "@/features/projects/components/ProjectCalendar";
 import { CollaborativeWorkspace } from "@/components/projects/CollaborativeWorkspace";
 import { ProjectMembersList } from "@/features/projects/components/ProjectMembersList";
+import { CloneProjectDialog } from "@/components/projects/CloneProjectDialog";
 import {
   ArrowLeft,
   Star,
@@ -102,6 +103,7 @@ function ProjectDetail() {
   const currentUserRole = isOwner ? "owner" : memberObj?.role || "";
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
   const { data: myApps } = useQuery({
     queryKey: ["myApplications"],
     queryFn: getMyApplications,
@@ -219,7 +221,7 @@ function ProjectDetail() {
     // project data is unavailable (backend offline / not found), render the
     // child outlet so sub-pages can display their own standalone content
     // instead of crashing the whole route tree.
-    return <Outlet />;  
+    return <Outlet />;
   }
 
   const tabs = dashboard
@@ -238,7 +240,7 @@ function ProjectDetail() {
             <TypoHeading as="h1">{p.name}</TypoHeading>
             <TypoCaption as="p">{p.description}</TypoCaption>
             <div className="mt-3 flex flex-wrap gap-1">
-              {p.stack.map((s) => (
+              {p.stack.map((s: string) => (
                 <TagChip key={s}>{s}</TagChip>
               ))}
             </div>
@@ -281,6 +283,16 @@ function ProjectDetail() {
             ) : null}
 
             <ShareProjectButton projectTitle={p.name} projectDescription={p.description} />
+
+            <button
+              type="button"
+              onClick={() => setIsCloneDialogOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-medium text-foreground transition-colors hover:bg-muted"
+              aria-label="Clone project template"
+            >
+              <Copy size={14} />
+              Clone
+            </button>
 
             <BookmarkToggleButton projectId={p.id} />
 
@@ -482,6 +494,32 @@ function ProjectDetail() {
         onClose={() => setIsApplyModalOpen(false)}
         projectId={projectId}
       />
+
+      {p && (
+        <CloneProjectDialog
+          project={{
+            id: p.id,
+            title: p.name,
+            name: p.name,
+            tagline: p.description,
+            description: p.description,
+            stage: "idea",
+            stars: p.stars,
+            views: p.views,
+            forks: p.forks,
+            members: p.members,
+            icon: p.icon,
+            stack: p.stack,
+            ownerId: p.ownerId,
+            tags: p.stack,
+            owner: p.owner,
+            progress: 0,
+            status: "recruiting",
+          }}
+          open={isCloneDialogOpen}
+          onOpenChange={setIsCloneDialogOpen}
+        />
+      )}
     </div>
   );
 }

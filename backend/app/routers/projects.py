@@ -22,6 +22,7 @@ from app.schemas.duplicate_detection import (
     DuplicateProjectCheckResponse,
 )
 from app.schemas.project import (
+    ProjectCloneRequest,
     ProjectCreate,
     ProjectResponse,
     ProjectStatsResponse,
@@ -290,6 +291,65 @@ def my_projects(
     )
 
 
+@router.get(
+    "/user/{user_id}",
+    response_model=list[ProjectResponse],
+    summary="List projects owned by a specific user",
+)
+def list_user_projects(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+):
+    return ProjectService.list_owner_projects(
+        db,
+        user_id,
+    )
+
+
+@router.post(
+    "/{project_id}/clone",
+    response_model=ProjectResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Clone an existing project as a starting template",
+)
+@limiter.limit("10/minute")
+def clone_project(
+    request: Request,
+    project_id: str,
+    clone_data: ProjectCloneRequest | None = None,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    source_project = None
+    try:
+        val_uuid = uuid.UUID(project_id)
+        source_project = ProjectService.get_project(db, val_uuid)
+    except ValueError:
+        source_project = ProjectService.get_by_slug(db, project_id)
+
+    if not source_project or getattr(source_project, "is_deleted", False) or getattr(source_project, "deleted_at", None) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source project not found",
+        )
+
+    from app.models.project import ProjectVisibility
+    if source_project.visibility == ProjectVisibility.PRIVATE and source_project.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to clone this private project",
+        )
+
+    cloned_project = ProjectService.clone_project(
+        db=db,
+        source_project=source_project,
+        user=current_user,
+        clone_data=clone_data,
+    )
+    cache_manager.delete_pattern("projects:*")
+    return cloned_project
+
+
 @router.put(
     "/{project_id}",
     response_model=ProjectResponse,
@@ -411,10 +471,10 @@ def update_project(
 )
 def get_project_audit_trail(
     project_id: uuid.UUID,
-    event_type: Optional[str] = Query(
+    event_type: str | None = Query(
         None, description="Filter by event type substring"
     ),
-    user_id: Optional[uuid.UUID] = Query(
+    user_id: uuid.UUID | None = Query(
         None, description="Filter by actor or target user ID"
     ),
     page: int = Query(1, ge=1),
