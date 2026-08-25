@@ -87,6 +87,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={socialLinks.twitter}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Twitter className="w-5 h-5" />
@@ -97,6 +98,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={socialLinks.github}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Github className="w-5 h-5" />
@@ -107,6 +109,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={socialLinks.linkedin}
               target="_blank"
               rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-white transition-colors"
               className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Linkedin className="w-5 h-5" />
