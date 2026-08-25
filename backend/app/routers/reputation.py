@@ -35,7 +35,9 @@ def get_my_reputation(
     """
     Returns the authenticated user's total reputation score, rank tier, and recent activity logs.
     """
-    return ReputationService.get_user_reputation_summary(db, current_user.id, viewer=current_user)
+    return ReputationService.get_user_reputation_summary(
+        db, current_user.id, viewer=current_user
+    )
 
 
 @router.get(
@@ -51,7 +53,9 @@ def get_user_reputation(
     """
     Returns a specific user's total reputation score, rank tier, and recent activity logs.
     """
-    return ReputationService.get_user_reputation_summary(db, user_id, viewer=current_user)
+    return ReputationService.get_user_reputation_summary(
+        db, user_id, viewer=current_user
+    )
 
 
 @router.get(

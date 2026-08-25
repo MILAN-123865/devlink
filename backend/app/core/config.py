@@ -240,7 +240,9 @@ class Settings(BaseSettings):
     REFERRER_POLICY_VALUE: str = "strict-origin-when-cross-origin"
 
     ENABLE_PERMISSIONS_POLICY: bool = True
-    PERMISSIONS_POLICY_VALUE: str = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    PERMISSIONS_POLICY_VALUE: str = (
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    )
 
     ENABLE_DNS_PREFETCH_CONTROL: bool = True
     ENABLE_CROSS_DOMAIN_POLICIES: bool = True
