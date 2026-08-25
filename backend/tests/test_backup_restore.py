@@ -26,7 +26,6 @@ from app.schemas.backup import (
 )
 from app.services.backup_service import BackupService, _sha256
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -227,7 +227,9 @@ class Settings(BaseSettings):
     @property
     def trusted_proxy_cidr_list(self) -> list[str]:
         """`TRUSTED_PROXY_CIDRS` split into entries."""
-        return [part.strip() for part in self.TRUSTED_PROXY_CIDRS.split(",") if part.strip()]
+        return [
+            part.strip() for part in self.TRUSTED_PROXY_CIDRS.split(",") if part.strip()
+        ]
 
     # ==========================================================
     # Request Tracing / Correlation IDs
@@ -267,7 +269,9 @@ class Settings(BaseSettings):
     REFERRER_POLICY_VALUE: str = "strict-origin-when-cross-origin"
 
     ENABLE_PERMISSIONS_POLICY: bool = True
-    PERMISSIONS_POLICY_VALUE: str = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    PERMISSIONS_POLICY_VALUE: str = (
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    )
 
     ENABLE_DNS_PREFETCH_CONTROL: bool = True
     ENABLE_CROSS_DOMAIN_POLICIES: bool = True

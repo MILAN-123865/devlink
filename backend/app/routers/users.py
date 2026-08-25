@@ -800,10 +800,15 @@ def get_dashboard_layout(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_database),
 ):
-    if not current_user.dashboard_layout or "widgets" not in current_user.dashboard_layout:
+    if (
+        not current_user.dashboard_layout
+        or "widgets" not in current_user.dashboard_layout
+    ):
         return DashboardLayoutResponse(widgets=[], is_customized=False)
     return DashboardLayoutResponse(
-        widgets=[DashboardWidgetLayout(**w) for w in current_user.dashboard_layout["widgets"]],
+        widgets=[
+            DashboardWidgetLayout(**w) for w in current_user.dashboard_layout["widgets"]
+        ],
         is_customized=True,
     )
 
@@ -844,4 +849,3 @@ def reset_dashboard_layout(
         widgets=[],
         is_customized=False,
     )
-

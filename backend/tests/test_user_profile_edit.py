@@ -10,7 +10,6 @@ from app.main import app
 from app.models.user import User
 from app.core.security import create_access_token
 
-
 # SQLite setup for tests
 engine = create_engine(
     "sqlite://",
@@ -91,7 +90,9 @@ def test_update_username_conflict():
     token1 = create_access_token(str(user1.id))
     headers = {"Authorization": f"Bearer {token1}"}
 
-    response = client.put("/api/users/me", headers=headers, json={"username": "user_two"})
+    response = client.put(
+        "/api/users/me", headers=headers, json={"username": "user_two"}
+    )
     assert response.status_code == 400
     assert "Username is already taken" in response.json()["detail"]
 
@@ -103,6 +104,8 @@ def test_update_username_success():
     token = create_access_token(str(user.id))
     headers = {"Authorization": f"Bearer {token}"}
 
-    response = client.put("/api/users/me", headers=headers, json={"username": "new_username"})
+    response = client.put(
+        "/api/users/me", headers=headers, json={"username": "new_username"}
+    )
     assert response.status_code == 200
     assert response.json()["username"] == "new_username"

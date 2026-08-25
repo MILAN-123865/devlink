@@ -663,9 +663,7 @@ def get_scoped_permissions(db: Session, user_id: uuid.UUID) -> ScopedPermissions
             ORG_ROLE_PERMISSIONS.get(om.role, frozenset())
         )
 
-    for project in db.scalars(
-        select(Project).where(Project.owner_id == user_id)
-    ).all():
+    for project in db.scalars(select(Project).where(Project.owner_id == user_id)).all():
         projects.setdefault(str(project.id), set()).update(
             PROJECT_ROLE_PERMISSIONS[MemberRole.OWNER]
         )
@@ -696,9 +694,7 @@ def get_scoped_permissions(db: Session, user_id: uuid.UUID) -> ScopedPermissions
 
         org_projects = db.scalars(
             select(Project).where(
-                Project.organization_id.in_(
-                    [om.organization_id for om in org_members]
-                )
+                Project.organization_id.in_([om.organization_id for om in org_members])
             )
         ).all()
 

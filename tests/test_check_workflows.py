@@ -94,13 +94,11 @@ def test_a_run_step_is_substantive_even_if_it_also_uses_an_action():
 
 def test_a_checkout_only_job_has_no_substantive_steps():
     """The exact shape of the four hollow workflows."""
-    job = yaml.safe_load(
-        """
+    job = yaml.safe_load("""
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
-        """
-    )
+        """)
 
     assert check_workflows.substantive_steps(job) == 0
 
@@ -109,30 +107,26 @@ def test_setup_without_a_check_is_still_nothing():
     """
     The tempting near-miss: install everything, then forget to run the tool.
     """
-    job = yaml.safe_load(
-        """
+    job = yaml.safe_load("""
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
           - uses: actions/setup-node@v7
           - uses: actions/cache@v4
-        """
-    )
+        """)
 
     assert check_workflows.substantive_steps(job) == 0
 
 
 def test_a_job_that_runs_something_counts_it():
-    job = yaml.safe_load(
-        """
+    job = yaml.safe_load("""
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v4
           - uses: actions/setup-node@v7
           - run: npm ci
           - run: npx tsc --noEmit
-        """
-    )
+        """)
 
     assert check_workflows.substantive_steps(job) == 2
 
@@ -259,9 +253,9 @@ def test_known_hollow_entries_still_exist():
         name for name in check_workflows.KNOWN_HOLLOW if not (workflows / name).exists()
     ]
 
-    assert missing == [], (
-        f"KNOWN_HOLLOW names workflows that no longer exist: {missing}"
-    )
+    assert (
+        missing == []
+    ), f"KNOWN_HOLLOW names workflows that no longer exist: {missing}"
 
 
 def test_known_hollow_entries_are_actually_still_hollow():
