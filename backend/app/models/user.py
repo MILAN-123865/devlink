@@ -258,6 +258,12 @@ class User(Base):
         nullable=False,
     )
 
+    hide_profile_views: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     privacy_settings: Mapped[dict | None] = mapped_column(
         JSON,
         nullable=True,
@@ -486,6 +492,10 @@ class User(Base):
             last_seen = last_seen.replace(tzinfo=timezone.utc)
 
         return (now - last_seen).total_seconds() < threshold
+
+    @property
+    def is_premium(self) -> bool:
+        return bool(getattr(self, "premium", False))
 
     @property
     def skills(self) -> list[str]:

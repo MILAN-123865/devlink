@@ -142,3 +142,9 @@ export type {
   AnnouncementCategory,
 } from "./modules/featureAnnouncements";
 
+export { profileViewsApi } from "./modules/profileViews";
+export type {
+  ProfileViewItem,
+  PaginatedProfileViewsResponse,
+  ProfileViewPrivacyResponse,
+} from "./modules/profileViews";

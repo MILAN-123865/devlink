@@ -865,6 +865,12 @@ function ProfilePage() {
             return <ContributionHeatmap username={b.handle} className="mt-4" />;
           })()}
           <ActivityTimeline userId={b.id} emptyAction={me ? profileAction : undefined} />
+          {me && (
+            <ProfileViewersList
+              isPremium={currentUser?.premium ?? true}
+              className="mt-6"
+            />
+          )}
         </div>
       </div>
       {!me && (
