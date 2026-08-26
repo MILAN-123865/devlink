@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { TypoCaption } from "@/components/shared/Typography";
 
 type CommandPaletteGroup = "pages" | "projects" | "developers";
 
@@ -236,11 +235,15 @@ export function CommandPalette<TItem extends CommandPaletteItemBase>(
                         <span className="mt-0.5 inline-flex h-2 w-2 shrink-0 rounded-full bg-muted-foreground/40" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{item.title}</span>
+ feat/organization-roles-987-v2
+                          {item.description ? <TypoCaption>{item.description}</TypoCaption> : null}
+
                           {item.description ? (
-                            <TypoCaption>
+                            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                               {item.description}
-                            </TypoCaption>
+                            </span>
                           ) : null}
+ main
                         </span>
                       </button>
                     </li>

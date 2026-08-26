@@ -205,6 +205,7 @@ function ProfilePage() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
 
@@ -889,39 +890,36 @@ function ProfilePage() {
       )}
 
       {me && (
-        <>
-          <PortfolioExportDialog
-            open={isExportModalOpen}
-            onOpenChange={setIsExportModalOpen}
-          />
-          <EditProfileModal
-            open={isEditProfileOpen}
-            onOpenChange={setIsEditProfileOpen}
-            initialData={{
-              firstName: b.firstName,
-              lastName: b.lastName,
-              username: b.handle,
-              headline: b.headline,
-              bio: b.bio,
-              location: b.location,
-              website: b.website,
-              profileImage: currentAvatar,
-              githubUrl: b.githubUrl,
-              linkedinUrl: b.linkedinUrl,
-              twitterUrl: b.twitterUrl,
-              portfolioUrl: b.portfolioUrl,
-              role: b.role,
-              experienceLevel: b.experienceLevel,
-              company: b.company,
-              skills: b.skills,
-            }}
-            onSuccess={(updated) => {
-              if (updated && updated.username && updated.username !== b.handle) {
-                navigate({ to: "/profile/$username", params: { username: updated.username } });
-              }
-            }}
-          />
-        </>
+        <PortfolioExportDialog
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        <EditProfileModal
+          open={isEditProfileOpen}
+          onOpenChange={setIsEditProfileOpen}
+          initialData={{
+            firstName: b.firstName,
+            lastName: b.lastName,
+            username: b.handle,
+            headline: b.headline,
+            bio: b.bio,
+            location: b.location,
+            website: b.website,
+            profileImage: currentAvatar,
+            githubUrl: b.githubUrl,
+            linkedinUrl: b.linkedinUrl,
+            twitterUrl: b.twitterUrl,
+            portfolioUrl: b.portfolioUrl,
+            role: b.role,
+            experienceLevel: b.experienceLevel,
+            company: b.company,
+            skills: b.skills,
+          }}
+          onSuccess={(updated) => {
+            if (updated && updated.username && updated.username !== b.handle) {
+              navigate({ to: "/profile/$username", params: { username: updated.username } });
+            }
+          }}
+        />
       )}
 
       {me && (
@@ -930,8 +928,6 @@ function ProfilePage() {
           onOpenChange={setIsManageSkillsOpen}
           initialSkills={b.profileSkills}
           username={b.handle}
-        />
-      )}
       
       {!me && b.id && (
         <DonationModal
