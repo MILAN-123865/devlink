@@ -260,7 +260,14 @@ function Dashboard() {
       {/* Stats Row */}
       <StatsRow />
 
-
+ feat/organization-roles-987-v2
+      {/* Main Grid Grouping (2-column layout on desktop) */}
+      <div className="grid gap-6 lg:grid-cols-12 items-start">
+        {/* Left/Main Column - 9 cols */}
+        <div className="lg:col-span-9 flex flex-col gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <CurrentProjects />
+            <AISuggestions />
 
       {/* PINNED WIDGETS SECTION */}
       {pinnedWidgets.length > 0 && (
@@ -268,6 +275,7 @@ function Dashboard() {
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
             <Pin size={13} className="fill-current" />
             Pinned Widgets
+ main
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {pinnedWidgets.map(({ def, layout }, index) => (

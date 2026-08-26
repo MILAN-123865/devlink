@@ -291,6 +291,21 @@ def my_projects(
     )
 
 
+@router.get(
+    "/user/{user_id}",
+    response_model=list[ProjectResponse],
+    summary="List projects owned by a specific user",
+)
+def list_user_projects(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+):
+    return ProjectService.list_owner_projects(
+        db,
+        user_id,
+    )
+
+
 @router.post(
     "/{project_id}/clone",
     response_model=ProjectResponse,
@@ -468,10 +483,10 @@ def update_project(
 )
 def get_project_audit_trail(
     project_id: uuid.UUID,
-    event_type: Optional[str] = Query(
+    event_type: str | None = Query(
         None, description="Filter by event type substring"
     ),
-    user_id: Optional[uuid.UUID] = Query(
+    user_id: uuid.UUID | None = Query(
         None, description="Filter by actor or target user ID"
     ),
     page: int = Query(1, ge=1),
