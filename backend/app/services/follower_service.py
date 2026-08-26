@@ -37,6 +37,10 @@ class FollowerService:
                 detail="Cannot follow a user who has blocked you or whom you have blocked.",
             )
 
+        existing = FollowerService.get_relationship(db, follower_id, following_id)
+        if existing:
+            return existing
+
         relationship = Follower(
             follower_id=follower_id,
             following_id=following_id,

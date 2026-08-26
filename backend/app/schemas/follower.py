@@ -13,6 +13,10 @@ from pydantic import BaseModel, ConfigDict
 # ==========================================================
 
 
+from typing import Optional
+from app.schemas.user import UserResponse
+
+
 class FollowerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -20,6 +24,8 @@ class FollowerResponse(BaseModel):
     follower_id: uuid.UUID
     following_id: uuid.UUID
     created_at: datetime
+    follower: Optional[UserResponse] = None
+    following: Optional[UserResponse] = None
 
 
 # ==========================================================

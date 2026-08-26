@@ -48,6 +48,7 @@ import { CollaborationStatusPicker } from "@/features/collaboration/components/C
 import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
+import { FollowersListModal } from "@/components/shared/FollowersListModal";
 import DonationModal from "@/components/profile/DonationModal";
 import { HeartIcon } from "@heroicons/react/24/outline";
 
@@ -205,9 +206,9 @@ function ProfilePage() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
+  const [followersModalType, setFollowersModalType] = useState<"followers" | "following" | null>(null);
 
   // Profile summary state
   const [summary, setSummary] = useState<string | null>(null);
@@ -467,18 +468,26 @@ function ProfilePage() {
               </div>
               {b.bio && <p className="mt-2 text-[13px] text-foreground">{b.bio}</p>}
               <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-muted-foreground">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => setFollowersModalType("followers")}
+                  className="hover:underline cursor-pointer focus:outline-none flex items-center gap-1"
+                >
                   <span className="font-semibold">
                     {followStatus?.follower_count ?? b.followers ?? 0}
                   </span>{" "}
                   <TypoCaption>Followers</TypoCaption>
-                </div>
-                <div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFollowersModalType("following")}
+                  className="hover:underline cursor-pointer focus:outline-none flex items-center gap-1"
+                >
                   <span className="font-semibold">
                     {followStatus?.following_count ?? b.following ?? 0}
                   </span>{" "}
                   <TypoCaption>Following</TypoCaption>
-                </div>
+                </button>
                 <div>
                   <span className="font-semibold">{b.contributions ?? 0}</span>{" "}
                   <TypoCaption>Contributions</TypoCaption>
@@ -893,6 +902,10 @@ function ProfilePage() {
         <PortfolioExportDialog
           open={isExportModalOpen}
           onOpenChange={setIsExportModalOpen}
+        />
+      )}
+
+      {me && (
         <EditProfileModal
           open={isEditProfileOpen}
           onOpenChange={setIsEditProfileOpen}
@@ -928,6 +941,8 @@ function ProfilePage() {
           onOpenChange={setIsManageSkillsOpen}
           initialSkills={b.profileSkills}
           username={b.handle}
+        />
+      )}
       
       {!me && b.id && (
         <DonationModal
@@ -937,6 +952,14 @@ function ProfilePage() {
           recipientName={b.name}
         />
       )}
+
+      <FollowersListModal
+        isOpen={followersModalType !== null}
+        onClose={() => setFollowersModalType(null)}
+        userId={b.id}
+        username={b.handle}
+        type={followersModalType ?? "followers"}
+      />
     </div>
   );
 }
