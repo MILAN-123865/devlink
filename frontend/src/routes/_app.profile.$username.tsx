@@ -58,7 +58,6 @@ import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
 import DonationModal from "@/components/profile/DonationModal";
-import { HeartIcon } from "@heroicons/react/24/outline";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -304,9 +303,8 @@ export function ProfilePage() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=400&fit=crop&auto=format",
   );
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b?.avatar);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
 
@@ -638,7 +636,7 @@ export function ProfilePage() {
                   onClick={() => setIsDonationModalOpen(true)}
                   className="inline-flex items-center gap-2 rounded-md bg-pink-600 px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:bg-pink-700"
                 >
-                  <HeartIcon className="w-4 h-4" />
+                  <Heart className="w-4 h-4" />
                   Sponsor
                 </button>
               )}
@@ -949,6 +947,10 @@ export function ProfilePage() {
         <PortfolioExportDialog
           open={isExportModalOpen}
           onOpenChange={setIsExportModalOpen}
+        />
+      )}
+
+      {me && (
         <EditProfileModal
           open={isEditProfileOpen}
           onOpenChange={setIsEditProfileOpen}
@@ -984,7 +986,9 @@ export function ProfilePage() {
           onOpenChange={setIsManageSkillsOpen}
           initialSkills={b.profileSkills}
           username={b.handle}
-      
+        />
+      )}
+
       {!me && b.id && (
         <DonationModal
           isOpen={isDonationModalOpen}
