@@ -9,14 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as ShowcaseRouteImport } from './routes/showcase'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as MaintenanceRouteImport } from './routes/maintenance'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AvatarRouteImport } from './routes/avatar'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -45,6 +37,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app.notification
 import { Route as AppOrganizationsRouteImport } from './routes/_app.organizations'
 import { Route as AppProfileAnalyticsRouteImport } from './routes/_app.profile-analytics'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppRecruiterRouteImport } from './routes/_app.recruiter'
 import { Route as AppRepositoryQualityRouteImport } from './routes/_app.repository-quality'
 import { Route as AppSearchRouteImport } from './routes/_app.search'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -70,25 +63,9 @@ import { Route as AppProjectsProjectIdActivityRouteImport } from './routes/_app.
 import { Route as AppProjectsProjectIdCollaborationMetricsRouteImport } from './routes/_app.projects.$projectId.collaboration-metrics'
 import { Route as AppProjectsProjectIdIssuesRouteImport } from './routes/_app.projects.$projectId.issues'
 
- feat/organization-roles-987-v2
-
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
- main
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShowcaseRoute = ShowcaseRouteImport.update({
-  id: '/showcase',
-  path: '/showcase',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -223,6 +200,11 @@ const AppProfileAnalyticsRoute = AppProfileAnalyticsRouteImport.update({
 const AppProjectsRoute = AppProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecruiterRoute = AppRecruiterRouteImport.update({
+  id: '/recruiter',
+  path: '/recruiter',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRepositoryQualityRoute = AppRepositoryQualityRouteImport.update({
@@ -381,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/organizations': typeof AppOrganizationsRouteWithChildren
   '/profile-analytics': typeof AppProfileAnalyticsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/recruiter': typeof AppRecruiterRoute
   '/repository-quality': typeof AppRepositoryQualityRoute
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -433,6 +416,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/profile-analytics': typeof AppProfileAnalyticsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/recruiter': typeof AppRecruiterRoute
   '/repository-quality': typeof AppRepositoryQualityRoute
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -488,6 +472,7 @@ export interface FileRoutesById {
   '/_app/organizations': typeof AppOrganizationsRouteWithChildren
   '/_app/profile-analytics': typeof AppProfileAnalyticsRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
+  '/_app/recruiter': typeof AppRecruiterRoute
   '/_app/repository-quality': typeof AppRepositoryQualityRoute
   '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -543,6 +528,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/profile-analytics'
     | '/projects'
+    | '/recruiter'
     | '/repository-quality'
     | '/search'
     | '/settings'
@@ -595,6 +581,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile-analytics'
     | '/projects'
+    | '/recruiter'
     | '/repository-quality'
     | '/search'
     | '/settings'
@@ -649,6 +636,7 @@ export interface FileRouteTypes {
     | '/_app/organizations'
     | '/_app/profile-analytics'
     | '/_app/projects'
+    | '/_app/recruiter'
     | '/_app/repository-quality'
     | '/_app/search'
     | '/_app/settings'
@@ -690,33 +678,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
- feat/organization-roles-987-v2
-
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
- main
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/showcase': {
-      id: '/showcase'
-      path: '/showcase'
-      fullPath: '/showcase'
-      preLoaderRoute: typeof ShowcaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -906,6 +872,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/recruiter': {
+      id: '/_app/recruiter'
+      path: '/recruiter'
+      fullPath: '/recruiter'
+      preLoaderRoute: typeof AppRecruiterRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/repository-quality': {
@@ -1214,6 +1187,7 @@ interface AppRouteChildren {
   AppOrganizationsRoute: typeof AppOrganizationsRouteWithChildren
   AppProfileAnalyticsRoute: typeof AppProfileAnalyticsRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
+  AppRecruiterRoute: typeof AppRecruiterRoute
   AppRepositoryQualityRoute: typeof AppRepositoryQualityRoute
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -1241,6 +1215,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOrganizationsRoute: AppOrganizationsRouteWithChildren,
   AppProfileAnalyticsRoute: AppProfileAnalyticsRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,
+  AppRecruiterRoute: AppRecruiterRoute,
   AppRepositoryQualityRoute: AppRepositoryQualityRoute,
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,

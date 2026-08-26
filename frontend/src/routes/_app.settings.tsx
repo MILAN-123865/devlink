@@ -31,7 +31,6 @@ import {
   ExternalLink,
   Calendar,
   HelpCircle,
-  Lock,
   Key,
   Plus,
   Copy,
@@ -595,13 +594,15 @@ export function UserSettingsPage() {
               </div>
             )}
 
-            {tab === "security" && <SecurityDashboard userEmail="nancy@example.com" />}
             {tab === "privacy" && (
               <div className="p-6 space-y-6">
                 <div>
                   <TypoHeading as="h2">Privacy Settings</TypoHeading>
                   <TypoCaption as="p">Control who can view your profile and activities</TypoCaption>
-            {/* 4. SECURITY TAB */}
+                </div>
+              </div>
+            )}
+
             {/* 5. SECURITY TAB */}
             {tab === "security" && (
               <div className="space-y-4">
