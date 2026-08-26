@@ -314,3 +314,57 @@ def test_two_untrusted_clients_get_distinct_keys(trusts_nothing):
     second = rate_limit_key(_FakeRequest(OTHER_CLIENT))
 
     assert first != second
+
+
+def test_spoofed_x_forwarded_for_bypasses_rate_limit_prevented(trusts_nothing):
+    """
+    An attacker sends requests with different spoofed X-Forwarded-For headers
+    but from the same untrusted IP. Each request should count against the same
+    bucket (the real peer address), not the spoofed header values.
+
+    This is the fix for the IP spoofing bypass vulnerability where an attacker
+    could rotate X-Forwarded-For headers to bypass rate limits.
+    """
+    from app.core.client_address import rate_limit_key
+
+    attacker_ip = "203.0.113.100"
+    spoofed_ips = [f"10.0.0.{n}" for n in range(10)]
+
+    keys = {
+        rate_limit_key(
+            _FakeRequest(
+                attacker_ip,
+                {"x-forwarded-for": spoofed_ip}
+            )
+        )
+        for spoofed_ip in spoofed_ips
+    }
+
+    # All requests from the same attacker IP should resolve to the same key
+    # (the real peer address), not the spoofed X-Forwarded-For values
+    assert keys == {f"ip:{attacker_ip}"}
+
+
+def test_spoofed_x_forwarded_for_with_trusted_proxy_prevented(trusted):
+    """
+    Even with a trusted proxy configured, an attacker connecting directly
+    (not through the proxy) cannot spoof X-Forwarded-For.
+    """
+    from app.core.client_address import rate_limit_key
+
+    attacker_ip = "203.0.113.100"
+    spoofed_ips = [f"10.0.0.{n}" for n in range(10)]
+
+    keys = {
+        rate_limit_key(
+            _FakeRequest(
+                attacker_ip,
+                {"x-forwarded-for": spoofed_ip}
+            )
+        )
+        for spoofed_ip in spoofed_ips
+    }
+
+    # The attacker is not connecting through the trusted proxy (10.0.0.0/8),
+    # so the header is ignored and all requests count against the real IP
+    assert keys == {f"ip:{attacker_ip}"}
