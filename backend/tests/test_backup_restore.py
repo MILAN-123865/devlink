@@ -267,7 +267,8 @@ class TestValidateBackup:
         payload["metadata"]["version"] = "99.0"
         # Recompute checksum so only version triggers error
         data_json = json.dumps(payload["data"], sort_keys=True, default=str)
-        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`npayload["checksum"] = _sha256(data_json)
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
+        payload["checksum"] = _sha256(data_json)
         result = BackupService.validate_backup(payload)
         assert result.valid is False
         fields = [e.field for e in result.errors]
@@ -324,7 +325,8 @@ class TestRestoreBackup:
         payload["data"]["profile"] = {"bio": "new bio", "headline": "new headline"}
         # Recompute checksum
         data_json = json.dumps(payload["data"], sort_keys=True, default=str)
-        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`npayload["checksum"] = _sha256(data_json)
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
+        payload["checksum"] = _sha256(data_json)
 
         result = BackupService.restore_backup(db, user, payload)
         assert result.success is True
@@ -341,7 +343,8 @@ class TestRestoreBackup:
         payload = _build_valid_payload(user)
         payload["data"]["bookmarks"] = [{"project_id": str(uuid.uuid4())}]
         data_json = json.dumps(payload["data"], sort_keys=True, default=str)
-        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`npayload["checksum"] = _sha256(data_json)
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
+        payload["checksum"] = _sha256(data_json)
 
         result = BackupService.restore_backup(db, user, payload)
         assert result.restored["bookmarks"] == 0
@@ -355,7 +358,8 @@ class TestRestoreBackup:
         payload = _build_valid_payload(user)
         payload["data"]["skills"] = [{"id": str(uuid.uuid4()), "name": "Python"}]
         data_json = json.dumps(payload["data"], sort_keys=True, default=str)
-        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`npayload["checksum"] = _sha256(data_json)
+        # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
+        payload["checksum"] = _sha256(data_json)
 
         result = BackupService.restore_backup(db, user, payload)
         assert result.restored["skills"] == 0
