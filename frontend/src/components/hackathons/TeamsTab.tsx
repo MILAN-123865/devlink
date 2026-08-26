@@ -136,15 +136,11 @@ function TeamCard({
               <Crown size={11} className="shrink-0 text-warning" aria-label="New team" />
             )}
           </div>
- feat/organization-roles-987-v2
-          {team.description && <TypoCaption as="p">{team.description}</TypoCaption>}
-
           {team.description && (
             <p className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
               {team.description}
             </p>
           )}
- main
         </div>
       </div>
 

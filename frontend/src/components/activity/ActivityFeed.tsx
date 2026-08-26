@@ -71,13 +71,9 @@ export function ActivityItem({ activity }: { activity: BackendActivity }) {
           {actorName && <span> by {actorName}</span>}
         </p>
       </div>
- feat/organization-roles-987-v2
-      <TypoCaption>{getActivityTime(activity.created_at)}</TypoCaption>
-
       <span className="whitespace-nowrap text-[11px] text-muted-foreground">
         {getActivityTime(activity.created_at)}
       </span>
- main
     </li>
   );
 }
