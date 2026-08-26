@@ -62,7 +62,7 @@ def test_verify_recovery_token_success(client, db):
         extra={"jti": jti, "hash_frag": pwd_hash_frag},
     )
 
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`ntoken_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     token_record = PasswordResetToken(
         id=uuid.uuid4(),
         user_id=user.id,
@@ -95,7 +95,7 @@ def test_reset_password_success(client, db):
         extra={"jti": jti, "hash_frag": pwd_hash_frag},
     )
 
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`ntoken_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     token_record = PasswordResetToken(
         id=uuid.uuid4(),
         user_id=user.id,
@@ -140,7 +140,7 @@ def test_reset_password_expired(client, db):
         extra={"jti": jti, "hash_frag": pwd_hash_frag},
     )
 
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`ntoken_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     token_record = PasswordResetToken(
         id=uuid.uuid4(),
         user_id=user.id,
@@ -175,7 +175,7 @@ def test_reset_password_already_used(client, db):
         extra={"jti": jti, "hash_frag": pwd_hash_frag},
     )
 
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`ntoken_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     token_record = PasswordResetToken(
         id=uuid.uuid4(),
         user_id=user.id,
@@ -211,7 +211,7 @@ def test_reset_password_reused_password(client, db):
         extra={"jti": jti, "hash_frag": pwd_hash_frag},
     )
 
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords`ntoken_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     token_record = PasswordResetToken(
         id=uuid.uuid4(),
         user_id=user.id,
