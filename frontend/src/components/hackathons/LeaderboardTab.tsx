@@ -3,6 +3,7 @@ import { Award, Medal } from "lucide-react";
 import { Card, EmptyState } from "@/components/shared/primitives";
 import { hackathonsService } from "@/services";
 import { cn } from "@/lib/utils";
+import { TypoCaption } from "@/components/shared/Typography";
 
 interface Props {
   hackathonId: string;

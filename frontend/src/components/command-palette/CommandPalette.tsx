@@ -1,3 +1,4 @@
+import { TypoCaption } from "@/components/shared/Typography";
 "use client";
 
 import * as React from "react";

@@ -1,5 +1,6 @@
 import { Card, EmptyState } from "@/components/shared/primitives";
 import { MapPin, Clock3, Sparkles } from "lucide-react";
+import { TypoCaption } from "@/components/shared/Typography";
 
 export interface BioCardProps {
   headline?: string | null;

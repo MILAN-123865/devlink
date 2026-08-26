@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { auditService } from "@/services";
 import type { AuditLog } from "@/api";
 import { Activity } from "lucide-react";
+import { TypoCaption } from "@/components/shared/Typography";
 
 interface AuditTimelineProps {
   entityType: string;

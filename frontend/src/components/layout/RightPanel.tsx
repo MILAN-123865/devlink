@@ -1,4 +1,5 @@
 import { Sparkles, Calendar, Activity } from "lucide-react";
+import { TypoSection } from "@/components/shared/Typography";
 
 export function RightPanel() {
   return (

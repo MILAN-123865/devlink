@@ -13,7 +13,7 @@ export function RecruiterDashboard() {
 
   const { data: projects } = useQuery({
     queryKey: ["my-projects"],
-    queryFn: () => projectsApi.listMyProjects(),
+    queryFn: () => projectsApi.myProjects(),
   });
 
   const { data: applications, isLoading } = useQuery({
@@ -117,7 +117,7 @@ export function RecruiterDashboard() {
                   <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold
                     ${app.status === 'accepted' ? 'bg-green-500/10 text-green-500' : 
                       app.status === 'rejected' ? 'bg-red-500/10 text-red-500' : 
-                      app.status === 'interviewing' ? 'bg-blue-500/10 text-blue-500' : 
+                      app.status === 'reviewing' ? 'bg-blue-500/10 text-blue-500' : 
                       app.shortlisted ? 'bg-amber-500/10 text-amber-500' : 
                       'bg-muted text-muted-foreground'}`}>
                     {app.status === 'pending' && app.shortlisted ? 'SHORTLISTED' : app.status}

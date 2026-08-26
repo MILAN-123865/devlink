@@ -1,5 +1,6 @@
 import { Card, EmptyState } from "@/components/shared/primitives";
 import { GraduationCap } from "lucide-react";
+import { TypoCaption } from "@/components/shared/Typography";
 
 export interface EducationEntry {
   school: string;

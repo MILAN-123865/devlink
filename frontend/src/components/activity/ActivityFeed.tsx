@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { BackendActivity } from "@/services";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { TypoCaption } from "@/components/shared/Typography";
 import {
   Activity as ActivityIcon,
   Archive,

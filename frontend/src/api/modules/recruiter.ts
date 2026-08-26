@@ -1,5 +1,5 @@
 import { api } from '../client';
-import type { ApplicationStatus } from './projects';
+import type { ApplicationStatus } from '@/lib/api';
 
 export interface ApplicationResponse {
   id: string;

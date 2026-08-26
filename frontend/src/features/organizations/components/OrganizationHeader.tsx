@@ -114,7 +114,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
             </a>
           )}
 
-          {website && (
+          {socialLinks?.twitter && (
             <a
               href={sanitizeUrl(socialLinks.twitter)}
               target="_blank"

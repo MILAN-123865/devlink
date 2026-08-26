@@ -6,6 +6,7 @@ import { Card, EmptyState } from "@/components/shared/primitives";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { hackathonsService } from "@/services";
 import type { HackathonTeam } from "@/services";
+import { TypoCaption } from "@/components/shared/Typography";
 
 interface Props {
   hackathonId: string;
