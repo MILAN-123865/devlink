@@ -1,4 +1,4 @@
-﻿import { api } from "../client";
+import { api } from "../client";
 
 export interface ProfileViewItem {
   id: string;
@@ -25,10 +25,10 @@ export interface ProfileViewPrivacyResponse {
 
 export const profileViewsApi = {
   recordView: (userId: string) =>
-    api.post<{ status: string; view_id?: string }>(/api/profile-views/),
+    api.post<{ status: string; view_id?: string }>(`/api/profile-views/${userId}`),
 
   getHistory: (page: number = 1, size: number = 10) =>
-    api.get<PaginatedProfileViewsResponse>(/api/profile-views/history?page=&size=),
+    api.get<PaginatedProfileViewsResponse>(`/api/profile-views/history?page=${page}&size=${size}`),
 
   getPrivacy: () =>
     api.get<ProfileViewPrivacyResponse>("/api/profile-views/privacy"),
