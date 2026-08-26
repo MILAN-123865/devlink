@@ -117,7 +117,7 @@ class TestSha256Helper:
 
     def test_known_value(self):
         # codeql[py/weak-sensitive-data-hashing] These are high entropy tokens, not passwords
-        expected = # codeql[py/weak-sensitive-data-hashing]`n        hashlib.sha256(b"hello").hexdigest()
+        expected = hashlib.sha256(b"hello").hexdigest()
         assert _sha256("hello") == expected
 
 
