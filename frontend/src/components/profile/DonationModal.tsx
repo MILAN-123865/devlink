@@ -4,8 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DonationsApi } from "@/api/modules/donations";
 import { useMutation } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
@@ -49,50 +52,42 @@ export default function DonationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-card border-border p-6 text-foreground shadow-xl">
-        <DialogHeader className="mb-2">
-          <div className="flex items-center space-x-3">
-            <Heart className="w-6 h-6 text-pink-500" />
-            <DialogTitle className="text-lg font-medium text-foreground">
-              Support {recipientName}
-            </DialogTitle>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+            <DialogTitle>Support {recipientName}</DialogTitle>
           </div>
+          <DialogDescription>
+            Your contribution helps developers continue creating amazing open source projects and content.
+          </DialogDescription>
         </DialogHeader>
 
-        <div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Your contribution helps developers continue creating amazing open source projects and content.
-          </p>
-
-          <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="space-y-4 py-2">
+          <div className="grid grid-cols-4 gap-2">
             {PRESET_AMOUNTS.map((preset) => (
-              <button
-                type="button"
+              <Button
                 key={preset}
+                type="button"
+                variant={amount === preset && !customAmount ? "default" : "outline"}
                 onClick={() => {
                   setAmount(preset);
                   setCustomAmount("");
                 }}
-                className={`py-2 rounded-lg font-semibold text-sm transition-colors cursor-pointer ${
-                  amount === preset && !customAmount
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
+                className="py-2 font-semibold text-sm"
               >
                 ${preset}
-              </button>
+              </Button>
             ))}
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Custom Amount
-            </label>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-muted-foreground">Custom Amount</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-muted-foreground sm:text-sm">$</span>
-              </div>
-              <input
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground text-sm">
+                $
+              </span>
+              <Input
                 type="number"
                 min="1"
                 placeholder="Other amount"
@@ -101,38 +96,33 @@ export default function DonationModal({
                   setCustomAmount(e.target.value);
                   setAmount(0);
                 }}
-                className="pl-7 block w-full rounded-md border border-border bg-surface text-foreground shadow-xs focus:border-primary focus:ring-1 focus:ring-primary text-sm p-2"
+                className="pl-7"
               />
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-foreground mb-1">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-muted-foreground">
               Leave a Message (Optional)
             </label>
-            <textarea
+            <Textarea
               rows={3}
               placeholder="Thank you for your hard work!"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="block w-full rounded-md border border-border bg-surface text-foreground shadow-xs focus:border-primary focus:ring-1 focus:ring-primary text-sm p-2"
             />
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-          >
+        <div className="mt-4 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="button"
+            className="bg-pink-600 hover:bg-pink-700 text-white"
             onClick={handleDonate}
             disabled={donationMutation.isPending || (!amount && !customAmount)}
-            className="bg-pink-600 hover:bg-pink-700 text-white"
           >
             {donationMutation.isPending ? "Processing..." : "Proceed to Checkout"}
           </Button>

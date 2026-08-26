@@ -30,7 +30,6 @@ import {
   ExternalLink,
   Calendar,
   HelpCircle,
-  Lock,
   Key,
   Plus,
   Copy,
@@ -52,14 +51,14 @@ import { usersService } from "@/services";
 import { TypoSection, TypoCaption, TypoHeading } from "@/components/shared/Typography";
 
 const tabs = [
-  { id: "account", label: "Profile", icon: User },
-  { id: "privacy", label: "Privacy", icon: Eye },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "availability", label: "Availability", icon: Calendar },
-  { id: "security", label: "Security", icon: Shield },
-  { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "developer", label: "Developer Accounts", icon: Code2 },
+  { id: "account", label: "Account / Profile", icon: User, description: "Personal profile and public information" },
+  { id: "privacy", label: "Privacy", icon: Eye, description: "Visibility and data sharing settings" },
+  { id: "notifications", label: "Notifications", icon: Bell, description: "Email and push notification preferences" },
+  { id: "appearance", label: "Appearance", icon: Palette, description: "Theme and interface layout" },
+  { id: "availability", label: "Availability", icon: Calendar, description: "Working hours, timezone, and meeting links" },
+  { id: "security", label: "Security", icon: Shield, description: "Password, two-factor authentication, and sessions" },
+  { id: "billing", label: "Billing", icon: CreditCard, description: "Plans, usage, and invoices" },
+  { id: "developer", label: "Developer Accounts", icon: Code2, description: "OAuth & API access tokens" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -126,6 +125,39 @@ export function UserSettingsPage() {
   // Appearance state
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("system");
   const [compactView, setCompactView] = useState(false);
+
+  // Developer Tokens state
+  const [apiTokens, setApiTokens] = useState([
+    {
+      id: "tok_1",
+      name: "CLI Token",
+      prefix: "dlk_live_9f82...",
+      created: "2 weeks ago",
+      lastUsed: "Yesterday",
+    },
+  ]);
+  const [newTokenName, setNewTokenName] = useState("");
+  const [isCreatingToken, setIsCreatingToken] = useState(false);
+
+  const handleCreateToken = () => {
+    if (!newTokenName.trim()) return;
+    const newToken = {
+      id: `tok_${Date.now()}`,
+      name: newTokenName.trim(),
+      prefix: `dlk_live_${Math.random().toString(36).substring(2, 6)}...`,
+      created: "Just now",
+      lastUsed: "Never",
+    };
+    setApiTokens((prev) => [newToken, ...prev]);
+    setNewTokenName("");
+    setIsCreatingToken(false);
+    toast.success("Personal access token generated");
+  };
+
+  const handleDeleteToken = (tokenId: string) => {
+    setApiTokens((prev) => prev.filter((t) => t.id !== tokenId));
+    toast.success("Token revoked");
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -559,13 +591,14 @@ export function UserSettingsPage() {
               </div>
             )}
 
+            {/* 6. AVAILABILITY TAB */}
             {tab === "availability" && (
-              <div className="p-6 space-y-6">
+              <div className="space-y-4">
                 <AvailabilitySettings />
               </div>
             )}
 
-            {/* 5. SECURITY TAB */}
+            {/* 6. SECURITY TAB */}
             {tab === "security" && (
               <div className="space-y-4">
                 <div className="border-b border-border pb-3">
@@ -597,25 +630,76 @@ export function UserSettingsPage() {
               </div>
             )}
 
-            {/* 6. BILLING TAB */}
+            {/* 7. BILLING TAB */}
             {tab === "billing" && (
               <div className="space-y-4">
                 <BillingDashboard />
               </div>
             )}
 
-            {/* 7. DEVELOPER ACCOUNTS TAB */}
+            {/* 8. DEVELOPER TAB */}
             {tab === "developer" && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="border-b border-border pb-3">
                   <TypoHeading as="h2">Developer Accounts & API Access</TypoHeading>
-                  <TypoCaption as="p">Manage OAuth connections and API credentials</TypoCaption>
+                  <TypoCaption as="p">Manage API credentials and connected developer accounts</TypoCaption>
                 </div>
-                <OAuthAccountsSection />
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <TypoSection as="h3">Personal Access Tokens</TypoSection>
-                  <TypoCaption as="p">Generate tokens to authenticate with the DevLink CLI and API</TypoCaption>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <TypoSection as="h3">Personal Access Tokens</TypoSection>
+                      <TypoCaption as="p">Tokens used to authenticate with the DevLink CLI and API</TypoCaption>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsCreatingToken(true)}
+                      className="gap-1.5"
+                    >
+                      <Plus size={14} /> Generate Token
+                    </Button>
+                  </div>
+
+                  {isCreatingToken && (
+                    <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-3">
+                      <Label htmlFor="tokenName" className="text-xs font-medium">Token Name</Label>
+                      <input
+                        id="tokenName"
+                        value={newTokenName}
+                        onChange={(e) => setNewTokenName(e.target.value)}
+                        placeholder="e.g. CI/CD Runner"
+                        className={inp}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setIsCreatingToken(false)}>Cancel</Button>
+                        <Button size="sm" onClick={handleCreateToken}>Create</Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="divide-y divide-border rounded-lg border border-border bg-card">
+                    {apiTokens.map((token) => (
+                      <div key={token.id} className="flex items-center justify-between p-3.5">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-medium text-foreground">{token.name}</p>
+                          <p className="font-mono text-[11px] text-muted-foreground">{token.prefix}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteToken(token.id)}
+                          className="h-8 text-xs text-destructive hover:text-destructive"
+                        >
+                          Revoke
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                <Separator />
+
+                <ConnectedAccountsCard />
               </div>
             )}
           </Card>

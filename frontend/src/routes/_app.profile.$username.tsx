@@ -28,6 +28,7 @@ import {
   Award,
   FolderKanban,
   Users,
+  Heart,
 } from "lucide-react";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
 import { analyticsApi } from "@/api/modules/analytics";
@@ -49,7 +50,6 @@ import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
 import DonationModal from "@/components/profile/DonationModal";
-import { Heart as HeartIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -512,7 +512,7 @@ function ProfilePage() {
                   onClick={() => setIsDonationModalOpen(true)}
                   className="inline-flex items-center gap-2 rounded-md bg-pink-600 px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:bg-pink-700"
                 >
-                  <HeartIcon className="w-4 h-4" />
+                  <Heart className="w-4 h-4" />
                   Sponsor
                 </button>
               )}

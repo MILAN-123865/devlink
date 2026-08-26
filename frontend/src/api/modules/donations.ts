@@ -12,6 +12,6 @@ export interface CheckoutSessionResponse {
 
 export const DonationsApi = {
   createCheckoutSession: async (data: DonationCreate): Promise<CheckoutSessionResponse> => {
-    return api.post<CheckoutSessionResponse>("/donations/checkout", data);
+    return api.post<CheckoutSessionResponse>("/api/donations/checkout", data);
   },
 };

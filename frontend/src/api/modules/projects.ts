@@ -2,6 +2,7 @@ import { api } from "../client";
 import type { Project } from "@/mocks/seed";
 
 export type ProjectStage = "idea" | "in_development" | "beta" | "launched" | "archived";
+export type ApplicationStatus = "pending" | "accepted" | "rejected" | "withdrawn" | "shortlisted" | "interview" | "interviewing";
 
 export interface ExtendedProject extends Project {
   title?: string;
