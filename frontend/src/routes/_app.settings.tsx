@@ -158,7 +158,6 @@ export function UserSettingsPage() {
     setApiTokens((prev) => prev.filter((t) => t.id !== tokenId));
     toast.success("Token revoked");
   };
-
   useEffect(() => {
     async function loadProfile() {
       setLoadingProfile(true);
