@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { TypoCaption } from "@/components/shared/Typography";
 import {
   Dialog,
   DialogContent,

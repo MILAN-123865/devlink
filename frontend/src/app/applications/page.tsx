@@ -1,4 +1,3 @@
-import { TypoHeading, TypoCaption } from "@/components/shared/Typography";
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
