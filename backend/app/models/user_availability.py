@@ -65,7 +65,7 @@ class UserAvailability(Base):
         nullable=True,
     )
 
-    user = relationship("User", back_populates="availability")
+    user = relationship("User", back_populates="availability_setting")
 
     def __repr__(self) -> str:
         return (

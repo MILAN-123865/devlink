@@ -156,13 +156,7 @@ export function LeaderboardTab({ hackathonId }: Props) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-semibold text-foreground">{entry.team_name}</p>
- feat/organization-roles-987-v2
-                  <TypoCaption as="p">{entry.submission_title}</TypoCaption>
-
-                  <p className="mt-0.5 text-[12px] text-muted-foreground">
-                    {entry.submission_title}
-                  </p>
- main
+                  <TypoCaption as="p" className="mt-0.5 text-[12px] text-muted-foreground">{entry.submission_title}</TypoCaption>
                   <div className="mt-2 flex items-center justify-between">
                     <ScoreBar score={entry.avg_score} />
                     <span className="text-[11px] text-muted-foreground">

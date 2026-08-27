@@ -438,7 +438,7 @@ class User(Base):
         remote_side="User.id",
     )
 
-    availability: Mapped["UserAvailability"] = relationship(
+    availability_setting: Mapped["UserAvailability"] = relationship(
         "UserAvailability",
         back_populates="user",
         uselist=False,

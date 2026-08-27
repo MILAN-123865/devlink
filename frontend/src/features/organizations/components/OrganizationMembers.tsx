@@ -19,17 +19,12 @@ export function OrganizationMembers({ orgId }: OrganizationMembersProps) {
     queryKey: ["organizations", orgId, "members"],
     queryFn: async () => {
       return api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
-
-      const res = await api.get<OrganizationMember[]>(`/organizations/${orgId}/members`);
-      return res;
     },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: OrganizationMemberRole }) => {
-      return api.patch<OrganizationMember>(`/organizations/${orgId}/members/${userId}`, {
-        role,
-      });
+      return api.patch<OrganizationMember>(`/organizations/${orgId}/members/${userId}`, { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organizations", orgId, "members"] });

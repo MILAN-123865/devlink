@@ -60,7 +60,6 @@ export function ImageCropUploadModal({
       setSelectedFile(null);
       setPreviewUrl(null);
       setError(null);
-
       setIsCameraActive(false);
       setIsUploading(false);
       setUploadProgress(0);

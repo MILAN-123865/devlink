@@ -290,3 +290,7 @@ class TestPluginEventDispatch:
         assert result.dispatched_installations_count == 1
         assert result.dispatches[0].plugin_slug == plugin.slug
         assert result.dispatches[0].status == "queued"
+        # The manifest declares a webhook, so the flag is set -- but the URL
+        # itself must not come back in the response.
+        assert result.dispatches[0].has_webhook is True
+        assert not hasattr(result.dispatches[0], "webhook_url")

@@ -28,6 +28,7 @@ import {
   Award,
   FolderKanban,
   Users,
+  Heart,
 } from "lucide-react";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
 import { analyticsApi } from "@/api/modules/analytics";
@@ -49,7 +50,6 @@ import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
 import DonationModal from "@/components/profile/DonationModal";
-import { HeartIcon } from "@heroicons/react/24/outline";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -512,7 +512,7 @@ function ProfilePage() {
                   onClick={() => setIsDonationModalOpen(true)}
                   className="inline-flex items-center gap-2 rounded-md bg-pink-600 px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:bg-pink-700"
                 >
-                  <HeartIcon className="w-4 h-4" />
+                  <Heart className="w-4 h-4" />
                   Sponsor
                 </button>
               )}
@@ -889,39 +889,40 @@ function ProfilePage() {
       )}
 
       {me && (
-        <>
-          <PortfolioExportDialog
-            open={isExportModalOpen}
-            onOpenChange={setIsExportModalOpen}
-          />
-          <EditProfileModal
-            open={isEditProfileOpen}
-            onOpenChange={setIsEditProfileOpen}
-            initialData={{
-              firstName: b.firstName,
-              lastName: b.lastName,
-              username: b.handle,
-              headline: b.headline,
-              bio: b.bio,
-              location: b.location,
-              website: b.website,
-              profileImage: currentAvatar,
-              githubUrl: b.githubUrl,
-              linkedinUrl: b.linkedinUrl,
-              twitterUrl: b.twitterUrl,
-              portfolioUrl: b.portfolioUrl,
-              role: b.role,
-              experienceLevel: b.experienceLevel,
-              company: b.company,
-              skills: b.skills,
-            }}
-            onSuccess={(updated) => {
-              if (updated && updated.username && updated.username !== b.handle) {
-                navigate({ to: "/profile/$username", params: { username: updated.username } });
-              }
-            }}
-          />
-        </>
+        <PortfolioExportDialog
+          open={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
+      )}
+
+      {me && (
+        <EditProfileModal
+          open={isEditProfileOpen}
+          onOpenChange={setIsEditProfileOpen}
+          initialData={{
+            firstName: b.firstName,
+            lastName: b.lastName,
+            username: b.handle,
+            headline: b.headline,
+            bio: b.bio,
+            location: b.location,
+            website: b.website,
+            profileImage: currentAvatar,
+            githubUrl: b.githubUrl,
+            linkedinUrl: b.linkedinUrl,
+            twitterUrl: b.twitterUrl,
+            portfolioUrl: b.portfolioUrl,
+            role: b.role,
+            experienceLevel: b.experienceLevel,
+            company: b.company,
+            skills: b.skills,
+          }}
+          onSuccess={(updated) => {
+            if (updated && updated.username && updated.username !== b.handle) {
+              navigate({ to: "/profile/$username", params: { username: updated.username } });
+            }
+          }}
+        />
       )}
 
       {me && (
@@ -932,7 +933,8 @@ function ProfilePage() {
           username={b.handle}
         />
       )}
-      
+
+
       {!me && b.id && (
         <DonationModal
           isOpen={isDonationModalOpen}

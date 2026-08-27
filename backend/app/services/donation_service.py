@@ -1,12 +1,14 @@
 import os
-import stripe
+try:
+    import stripe
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_mock_key")
+except ImportError:
+    stripe = None
 from sqlalchemy.orm import Session
+import uuid
 from app.models.donation import Donation
 from app.models.user import User
 from app.schemas.donation import DonationCreate
-import uuid
-
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_mock_key")
 
 
 class DonationService:
