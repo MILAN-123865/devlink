@@ -28,6 +28,7 @@ import {
   Award,
   FolderKanban,
   Users,
+  Heart,
 } from "lucide-react";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
 import { analyticsApi } from "@/api/modules/analytics";
@@ -50,7 +51,6 @@ import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
 import { FollowersListModal } from "@/components/shared/FollowersListModal";
 import DonationModal from "@/components/profile/DonationModal";
-import { HeartIcon } from "@heroicons/react/24/outline";
 
 export const Route = createFileRoute("/_app/profile/$username")({
   head: ({ params }) => ({
@@ -204,7 +204,7 @@ function ProfilePage() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=400&fit=crop&auto=format",
   );
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b.avatar);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(b?.avatar);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
@@ -522,7 +522,7 @@ function ProfilePage() {
                   onClick={() => setIsDonationModalOpen(true)}
                   className="inline-flex items-center gap-2 rounded-md bg-pink-600 px-3 py-2 text-[13px] font-semibold text-white transition-opacity hover:bg-pink-700"
                 >
-                  <HeartIcon className="w-4 h-4" />
+                  <Heart className="w-4 h-4" />
                   Sponsor
                 </button>
               )}
@@ -943,7 +943,7 @@ function ProfilePage() {
           username={b.handle}
         />
       )}
-      
+
       {!me && b.id && (
         <DonationModal
           isOpen={isDonationModalOpen}
