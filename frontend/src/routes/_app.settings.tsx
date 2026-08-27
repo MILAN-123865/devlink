@@ -22,7 +22,6 @@ import {
   Shield,
   Bell,
   Palette,
-  Lock,
   Download,
   Trash2,
   Camera,
@@ -140,6 +139,25 @@ export function UserSettingsPage() {
   const [newTokenName, setNewTokenName] = useState("");
   const [isCreatingToken, setIsCreatingToken] = useState(false);
 
+  const handleCreateToken = () => {
+    if (!newTokenName.trim()) return;
+    const newToken = {
+      id: `tok_${Date.now()}`,
+      name: newTokenName.trim(),
+      prefix: `dlk_live_${Math.random().toString(36).substring(2, 6)}...`,
+      created: "Just now",
+      lastUsed: "Never",
+    };
+    setApiTokens((prev) => [newToken, ...prev]);
+    setNewTokenName("");
+    setIsCreatingToken(false);
+    toast.success("Personal access token generated");
+  };
+
+  const handleDeleteToken = (tokenId: string) => {
+    setApiTokens((prev) => prev.filter((t) => t.id !== tokenId));
+    toast.success("Token revoked");
+  };
   useEffect(() => {
     async function loadProfile() {
       setLoadingProfile(true);
@@ -199,26 +217,6 @@ export function UserSettingsPage() {
       last_name: lastName,
     }));
     setSaveStatus("unsaved");
-  };
-
-  const handleCreateToken = () => {
-    if (!newTokenName.trim()) return;
-    const newToken = {
-      id: `tok_${Date.now()}`,
-      name: newTokenName.trim(),
-      prefix: `dlk_live_${Math.random().toString(36).substring(2, 6)}...`,
-      created: "Just now",
-      lastUsed: "Never",
-    };
-    setApiTokens((prev) => [newToken, ...prev]);
-    setNewTokenName("");
-    setIsCreatingToken(false);
-    toast.success("Personal API token created successfully");
-  };
-
-  const handleDeleteToken = (id: string) => {
-    setApiTokens((prev) => prev.filter((t) => t.id !== id));
-    toast.success("API token revoked");
   };
 
   const inp =
@@ -599,7 +597,7 @@ export function UserSettingsPage() {
               </div>
             )}
 
-            {/* 7. SECURITY TAB */}
+            {/* 6. SECURITY TAB */}
             {tab === "security" && (
               <div className="space-y-4">
                 <div className="border-b border-border pb-3">
@@ -631,14 +629,14 @@ export function UserSettingsPage() {
               </div>
             )}
 
-            {/* 8. BILLING TAB */}
+            {/* 7. BILLING TAB */}
             {tab === "billing" && (
               <div className="space-y-4">
                 <BillingDashboard />
               </div>
             )}
 
-            {/* 9. DEVELOPER TAB */}
+            {/* 8. DEVELOPER TAB */}
             {tab === "developer" && (
               <div className="space-y-6">
                 <div className="border-b border-border pb-3">
@@ -649,8 +647,8 @@ export function UserSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground">Personal Access Tokens</h3>
-                      <p className="text-xs text-muted-foreground">Tokens used to authenticate with the DevLink CLI and API</p>
+                      <TypoSection as="h3">Personal Access Tokens</TypoSection>
+                      <TypoCaption as="p">Tokens used to authenticate with the DevLink CLI and API</TypoCaption>
                     </div>
                     <Button
                       size="sm"

@@ -1,4 +1,5 @@
 import { EmptyState, SectionHeader, Skeleton } from "@/components/shared/primitives";
+import { TypoCaption } from "@/components/shared/Typography";
 import { cn } from "@/lib/utils";
 import type { BackendActivity } from "@/services";
 import { useQuery } from "@tanstack/react-query";
@@ -71,9 +72,7 @@ export function ActivityItem({ activity }: { activity: BackendActivity }) {
           {actorName && <span> by {actorName}</span>}
         </p>
       </div>
-      <span className="whitespace-nowrap text-[11px] text-muted-foreground">
-        {getActivityTime(activity.created_at)}
-      </span>
+      <TypoCaption className="whitespace-nowrap text-[11px] text-muted-foreground">{getActivityTime(activity.created_at)}</TypoCaption>
     </li>
   );
 }
