@@ -189,6 +189,13 @@ class Settings(BaseSettings):
 
     ENABLE_RATE_LIMIT: bool = True
     DEFAULT_RATE_LIMIT: str = "100/minute"
+    RATE_LIMIT_ANONYMOUS: str = "60/minute"
+    RATE_LIMIT_AUTHENTICATED: str = "300/minute"
+    RATE_LIMIT_PREMIUM: str = "1000/minute"
+    RATE_LIMIT_ADMIN: str = "5000/minute"
+    RATE_LIMIT_BYPASS_IPS: str = "127.0.0.1,::1"
+    RATE_LIMIT_BYPASS_TOKEN: str = ""
+    RATE_LIMIT_ALGORITHM: str = "sliding_window"
     AUTH_RATE_LIMIT: str = "5/minute"
     LOGIN_RATE_LIMIT: str = "5/minute"
     REGISTER_RATE_LIMIT: str = "3/hour"
@@ -210,6 +217,11 @@ class Settings(BaseSettings):
     #: Left empty rather than defaulting to REDIS_URL so that a developer
     #: without Redis running gets working limits rather than a boot failure.
     RATE_LIMIT_STORAGE_URI: str = ""
+
+    @property
+    def rate_limit_bypass_ip_list(self) -> list[str]:
+        """`RATE_LIMIT_BYPASS_IPS` split into individual IP strings."""
+        return [ip.strip() for ip in self.RATE_LIMIT_BYPASS_IPS.split(",") if ip.strip()]
 
     #: Comma-separated CIDRs for the proxies in front of this application.
     #: `X-Forwarded-For` is honoured only for requests whose immediate peer

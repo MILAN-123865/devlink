@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users2, Plus, LogIn, Loader2, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState } from "@/components/shared/primitives";
+import { TypoCaption } from "@/components/shared/Typography";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { hackathonsService } from "@/services";
 import type { HackathonTeam } from "@/services";
@@ -136,15 +137,11 @@ function TeamCard({
               <Crown size={11} className="shrink-0 text-warning" aria-label="New team" />
             )}
           </div>
- feat/organization-roles-987-v2
-          {team.description && <TypoCaption as="p">{team.description}</TypoCaption>}
-
           {team.description && (
-            <p className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
+            <TypoCaption as="p" className="mt-0.5 line-clamp-2 text-[12px] text-muted-foreground">
               {team.description}
-            </p>
+            </TypoCaption>
           )}
- main
         </div>
       </div>
 

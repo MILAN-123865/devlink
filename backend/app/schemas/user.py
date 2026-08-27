@@ -124,6 +124,7 @@ class UserBase(BaseModel):
     @classmethod
     def set_availability(cls, v):
         return v or []
+
     collaboration_status: CollaborationStatus | None = CollaborationStatus.AVAILABLE
 
 
