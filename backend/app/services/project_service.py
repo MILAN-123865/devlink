@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -770,6 +771,7 @@ class ProjectService:
         if clone_data.include_milestones:
             try:
                 from app.models.milestone import Milestone
+
                 source_milestones = (
                     db.query(Milestone)
                     .filter(Milestone.project_id == source_project.id)
@@ -803,4 +805,3 @@ class ProjectService:
         )
 
         return new_project
-
