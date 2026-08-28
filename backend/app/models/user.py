@@ -438,7 +438,7 @@ class User(Base):
         remote_side="User.id",
     )
 
-    availability: Mapped["UserAvailability"] = relationship(
+    availability_setting: Mapped["UserAvailability"] = relationship(
         "UserAvailability",
         back_populates="user",
         uselist=False,
@@ -492,7 +492,9 @@ class User(Base):
         try:
             if not hasattr(self, "user_skills") or not self.user_skills:
                 return []
-            return [us.skill.name for us in self.user_skills if getattr(us, "skill", None)]
+            return [
+                us.skill.name for us in self.user_skills if getattr(us, "skill", None)
+            ]
         except Exception:
             return []
 

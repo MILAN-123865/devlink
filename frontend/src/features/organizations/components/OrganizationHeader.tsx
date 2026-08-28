@@ -84,6 +84,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
           )}
 
           {socialLinks?.twitter && sanitizeUrl(socialLinks.twitter) && (
+ feature/account-deletion-1307
             <a
               href={socialLinks.twitter}
               target="_blank"
@@ -115,11 +116,13 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
           )}
 
           {website && (
+
+ main
             <a
               href={sanitizeUrl(socialLinks.twitter)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Twitter className="w-5 h-5" />
             </a>
@@ -129,7 +132,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={sanitizeUrl(socialLinks.github)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Github className="w-5 h-5" />
             </a>
@@ -139,7 +142,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={sanitizeUrl(socialLinks.linkedin)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Linkedin className="w-5 h-5" />
             </a>

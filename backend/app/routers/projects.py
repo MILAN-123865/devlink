@@ -483,9 +483,7 @@ def update_project(
 )
 def get_project_audit_trail(
     project_id: uuid.UUID,
-    event_type: str | None = Query(
-        None, description="Filter by event type substring"
-    ),
+    event_type: str | None = Query(None, description="Filter by event type substring"),
     user_id: uuid.UUID | None = Query(
         None, description="Filter by actor or target user ID"
     ),

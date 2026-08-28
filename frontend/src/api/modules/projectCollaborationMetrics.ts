@@ -32,6 +32,7 @@ export interface ProjectCollaborationMetricsResponse {
  */
 export const getProjectCollaborationMetrics = async (
   projectId: number,
+ feature/account-deletion-1307
 ): Promise<ProjectCollaborationMetricsResponse> => {
   try {
     const res = await api.get<ProjectCollaborationMetricsResponse>(
@@ -66,3 +67,7 @@ export const getProjectCollaborationMetrics = async (
   };
 };
 
+
+): Promise<ProjectCollaborationMetricsResponse> =>
+  api.get<ProjectCollaborationMetricsResponse>(`/projects/${projectId}/collaboration-metrics`);
+ main

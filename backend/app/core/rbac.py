@@ -152,6 +152,14 @@ ORG_MANAGE_CANDIDATES = "org:manage_candidates"
 ORG_MANAGE_CONTENT = "org:manage_content"
 ORG_VIEW_CONTENT = "org:view_content"
 
+#: Install, configure and remove plugins on behalf of an organization.
+#:
+#: Its own permission rather than a reuse of :data:`ORG_MANAGE_TOKENS`: a
+#: plugin installation attaches a third-party webhook destination to the
+#: organization's event stream, which is a different question from "may this
+#: person mint an API key", even though the two often land on the same people.
+ORG_MANAGE_PLUGINS = "org:manage_plugins"
+
 ORG_ROLE_PERMISSIONS: dict[OrgMemberRole, frozenset[str]] = {
     OrgMemberRole.OWNER: frozenset(
         {
@@ -163,6 +171,7 @@ ORG_ROLE_PERMISSIONS: dict[OrgMemberRole, frozenset[str]] = {
             ORG_MANAGE_JOBS,
             ORG_MANAGE_CANDIDATES,
             ORG_MANAGE_CONTENT,
+            ORG_MANAGE_PLUGINS,
             ORG_VIEW_CONTENT,
         }
     ),
@@ -175,6 +184,7 @@ ORG_ROLE_PERMISSIONS: dict[OrgMemberRole, frozenset[str]] = {
             ORG_MANAGE_JOBS,
             ORG_MANAGE_CANDIDATES,
             ORG_MANAGE_CONTENT,
+            ORG_MANAGE_PLUGINS,
             ORG_VIEW_CONTENT,
         }
     ),
