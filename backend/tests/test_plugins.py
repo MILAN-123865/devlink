@@ -28,7 +28,6 @@ from app.schemas.plugin import (
 )
 from app.services.plugin_service import PluginService
 
-
 # ---------------------------------------------------------------------------
 # Test Fixtures & Helpers
 # ---------------------------------------------------------------------------

@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users2, Plus, LogIn, Loader2, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState } from "@/components/shared/primitives";
-import { TypoCaption } from "@/components/shared/Typography";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { hackathonsService } from "@/services";
 import type { HackathonTeam } from "@/services";
+import { TypoCaption } from "@/components/shared/Typography";
 
 interface Props {
   hackathonId: string;

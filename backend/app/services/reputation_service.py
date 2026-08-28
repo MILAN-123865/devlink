@@ -181,11 +181,14 @@ class ReputationService:
                 is_visible = True
             else:
                 from app.services.follower_service import FollowerService
+
                 is_visible = FollowerService.is_following(
                     db, follower_id=viewer.id, following_id=user.id
                 )
         elif activity_visibility == "private":
-            if viewer is not None and (viewer.id == user.id or getattr(viewer, "is_superuser", False)):
+            if viewer is not None and (
+                viewer.id == user.id or getattr(viewer, "is_superuser", False)
+            ):
                 is_visible = True
 
         if is_visible:
