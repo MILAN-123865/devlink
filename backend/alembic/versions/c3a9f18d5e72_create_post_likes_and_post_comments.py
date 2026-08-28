@@ -5,7 +5,7 @@ had no owner and a comment had no body. These two tables give both a home;
 the unique constraint on (post_id, user_id) is what makes liking idempotent.
 
 Revision ID: c3a9f18d5e72
-Revises: 1a2b3c4d5ea1
+Revises: 847b3a909e4c
 Create Date: 2026-08-28 11:00:00.000000
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = "c3a9f18d5e72"
-down_revision: Union[str, Sequence[str], None] = "1a2b3c4d5ea1"
+down_revision: Union[str, Sequence[str], None] = "847b3a909e4c"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
