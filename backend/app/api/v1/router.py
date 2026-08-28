@@ -108,9 +108,7 @@ api_v1_router.include_router(conversations.router)
 api_v1_router.include_router(
     profile_summary.router, prefix="/profile-summary", tags=["Profile Summary"]
 )
-api_v1_router.include_router(
-    profile_suggestions.router, tags=["Profile Suggestions"]
-)
+api_v1_router.include_router(profile_suggestions.router, tags=["Profile Suggestions"])
 api_v1_router.include_router(
     profile_suggestions.router,
     prefix="/users/me",
