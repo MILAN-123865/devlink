@@ -9,9 +9,13 @@ export const postsApi = {
   create: async (body: {
     content: string;
     image?: string;
+    media_urls?: string[];
     tags?: string[];
     status?: string;
     publish_at?: string;
+    repository?: { id?: string; name: string; url?: string; stars?: number; language?: string };
+    project?: { id: string; title: string; tech_stack?: string[] };
+    poll?: { question: string; options: string[]; expires_in_days?: number };
   }) => {
     const spamCheck = analyzeSpam(body.content);
     if (spamCheck.isSpam) {
