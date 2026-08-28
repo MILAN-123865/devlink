@@ -84,3 +84,5 @@ from .feature_announcement import (  # noqa: F401
     FeatureAnnouncementRead,
     AnnouncementCategory,
 )
+
+from .stripe_webhook_event import StripeWebhookEvent  # noqa: F401
