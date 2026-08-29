@@ -767,7 +767,14 @@ def invite_user(
             detail="Only the project owner can invite members",
         )
 
+    if user_id == project.owner_id:
+        raise HTTPException(
+            status_code=409,
+            detail="User is already the owner of this project",
+        )
+
     from sqlalchemy import and_, select
+    from sqlalchemy.exc import IntegrityError
 
     from app.models.project_member import MemberRole, ProjectMember
 
@@ -780,9 +787,14 @@ def invite_user(
         )
     )
     if existing_member:
+        if existing_member.is_active:
+            raise HTTPException(
+                status_code=409,
+                detail="User is already an active member of this project",
+            )
         raise HTTPException(
-            status_code=400,
-            detail="User is already invited or a member of the project",
+            status_code=409,
+            detail="User already has a pending invitation for this project",
         )
 
     new_member = ProjectMember(
@@ -792,8 +804,15 @@ def invite_user(
         is_active=False,
     )
     db.add(new_member)
-    db.commit()
-    db.refresh(new_member)
+    try:
+        db.commit()
+        db.refresh(new_member)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Duplicate membership: user is already invited or a member of the project",
+        )
 
     from app.services.notification_service import NotificationService
 

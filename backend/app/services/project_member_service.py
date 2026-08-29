@@ -341,3 +341,82 @@ class ProjectMemberService:
             target_user_id=target_user_id,
             description=f"Removed member {target_user_id} from project",
         )
+
+    @classmethod
+    def add_member(
+        cls,
+        db: Session,
+        project_id: uuid.UUID,
+        user_id: uuid.UUID,
+        role: MemberRole = MemberRole.MEMBER,
+        is_active: bool = True,
+        actor_user: User | None = None,
+    ) -> ProjectMember:
+        """Add a member to a project with strict duplicate prevention and integrity validation."""
+        from sqlalchemy.exc import IntegrityError
+
+        project = db.get(Project, project_id)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found",
+            )
+
+        # 1. Check if user is the project owner
+        if user_id == project.owner_id and role != MemberRole.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User is already the owner of this project",
+            )
+
+        # 2. Service-level check for existing membership record
+        existing = db.scalar(
+            select(ProjectMember).where(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == user_id,
+            )
+        )
+        if existing:
+            if existing.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="User is already an active member of this project",
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="User already has a pending invitation for this project",
+                )
+
+        # 3. Create and persist member record with database integrity safeguard
+        pm = ProjectMember(
+            project_id=project_id,
+            user_id=user_id,
+            role=role,
+            is_active=is_active,
+        )
+        db.add(pm)
+        try:
+            db.commit()
+            db.refresh(pm)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Duplicate membership: user is already a member of this project",
+            )
+
+        if actor_user:
+            AuditLogService.create_log(
+                db=db,
+                actor_id=actor_user.id,
+                action=AuditAction.PROJECT_MEMBER_ADDED,
+                entity_type="project_member",
+                entity_id=str(pm.id),
+                project_id=project_id,
+                target_user_id=user_id,
+                description=f"Added member {user_id} with role {role.value}",
+            )
+
+        return pm
+
