@@ -606,6 +606,9 @@ def test_invite_user(client: TestClient, register_and_login):
         headers={"Authorization": f"Bearer {token1}"},
     )
     assert i.status_code == 201
+    invite_body = i.json()
+    assert invite_body["status"] == "pending"
+    assert invite_body["expires_at"] is not None
 
     # duplicate invite
     i_dup = client.post(
