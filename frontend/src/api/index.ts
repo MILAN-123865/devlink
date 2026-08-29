@@ -8,6 +8,7 @@ export { usersApi } from "./modules/users";
 export { projectsApi } from "./modules/projects";
 export { buildersApi } from "./modules/builders";
 export { postsApi } from "./modules/posts";
+export type { PostComment, PostCommentAuthor, PostEngagement } from "./modules/posts";
 export { messagesApi } from "./modules/messages";
 export { notificationsApi } from "./modules/notifications";
 export { analyticsApi } from "./modules/analytics";
