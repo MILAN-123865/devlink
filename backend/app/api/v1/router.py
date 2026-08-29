@@ -36,6 +36,7 @@ from app.routers import (
     project_documents,
     project_dashboards,
     project_releases,
+    project_dependencies,
     projects,
     permissions,
     recommendations,
@@ -146,3 +147,4 @@ api_v1_router.include_router(
     hackathons.router, prefix="/hackathons", tags=["Hackathons"]
 )
 api_v1_router.include_router(feature_announcements.router)
+api_v1_router.include_router(project_dependencies.router)
