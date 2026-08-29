@@ -136,6 +136,12 @@ def upgrade() -> None:
         ),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column(
+            "parent_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("post_comments.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
+        sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.func.now(),

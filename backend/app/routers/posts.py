@@ -85,11 +85,13 @@ def _map_comment(comment: PostComment) -> PostCommentResponse:
     return PostCommentResponse(
         id=comment.id,
         post_id=comment.post_id,
+        parent_id=comment.parent_id,
         author=_author_response(comment.author),
         content=comment.content,
         ago=get_ago_string(comment.created_at),
         created_at=comment.created_at,
         updated_at=comment.updated_at,
+        replies=[_map_comment(reply) for reply in getattr(comment, 'replies', [])]
     )
 
 
@@ -400,13 +402,15 @@ def list_comments(
     page: int = Query(1, ge=1),
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
-    """Read a post's comments. There was previously no way to."""
+    """Read a post's comments. Returns top-level comments and their nested replies."""
     _get_post_or_404(db, post_id)
 
     comments = (
         db.query(PostComment)
-        .options(joinedload(PostComment.author))
-        .filter(PostComment.post_id == post_id)
+        .options(
+            joinedload(PostComment.author),
+        )
+        .filter(PostComment.post_id == post_id, PostComment.parent_id.is_(None))
         .order_by(PostComment.created_at.asc())
         .offset((page - 1) * limit)
         .limit(limit)
@@ -434,11 +438,19 @@ def comment_post(
     returned so the client can render it without a refetch.
     """
     db_post = _get_post_or_404(db, post_id)
+    
+    if payload.parent_id:
+        parent_comment = db.query(PostComment).filter(PostComment.id == payload.parent_id).first()
+        if not parent_comment:
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+        if parent_comment.post_id != db_post.id:
+            raise HTTPException(status_code=400, detail="Parent comment does not belong to this post")
 
     comment = PostComment(
         post_id=db_post.id,
         author_id=current_user.id,
         content=payload.comment,
+        parent_id=payload.parent_id,
     )
     db.add(comment)
     db.flush()
