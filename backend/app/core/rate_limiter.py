@@ -52,12 +52,21 @@ class RateLimitResult:
     tier: str
 
 
-def parse_rate_limit_string(limit_str: str) -> Tuple[int, int]:
+def parse_rate_limit_string(limit_str: str) -> Tuple[int, int, int]:
     """
     Parses strings like '100/minute', '5/second', '3/hour', '10/15minutes', '500/day'
-    into (max_requests, window_seconds).
+    and optionally '100/minute burst 200' into (max_requests, window_seconds, burst).
+    If burst is not specified, it defaults to max_requests.
     """
     cleaned = limit_str.strip().lower()
+    
+    # Check for burst suffix
+    burst_val = None
+    burst_match = re.search(r'\s+burst\s+(\d+)$', cleaned)
+    if burst_match:
+        burst_val = int(burst_match.group(1))
+        cleaned = cleaned[:burst_match.start()].strip()
+
     if "/" not in cleaned:
         raise ValueError(f"Invalid rate limit format: {limit_str}. Expected 'count/period'")
 
@@ -94,7 +103,8 @@ def parse_rate_limit_string(limit_str: str) -> Tuple[int, int]:
         raise ValueError(f"Unknown time unit: {unit}")
 
     window_seconds = multiplier * unit_multipliers[unit]
-    return count, window_seconds
+    burst = burst_val if burst_val is not None else count
+    return count, window_seconds, burst
 
 
 class InMemorySlidingWindowStore:
@@ -135,6 +145,51 @@ class InMemorySlidingWindowStore:
     def reset(self):
         with self._lock:
             self._hits.clear()
+
+
+class InMemoryTokenBucketStore:
+    """Thread-safe in-memory token bucket for local/fallback use."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        # key -> (tokens_remaining, last_refill_timestamp)
+        self._buckets: Dict[str, Tuple[float, float]] = {}
+
+    def is_allowed(
+        self, key: str, max_requests: int, window_seconds: int, burst: int
+    ) -> Tuple[bool, int, int, int]:
+        now = time.time()
+        refill_rate = max_requests / window_seconds
+
+        with self._lock:
+            if key not in self._buckets:
+                self._buckets[key] = (burst, now)
+
+            tokens, last_refill = self._buckets[key]
+            
+            # Refill tokens based on time passed
+            time_passed = now - last_refill
+            tokens = min(burst, tokens + time_passed * refill_rate)
+            
+            if tokens >= 1:
+                # Consume a token
+                tokens -= 1
+                self._buckets[key] = (tokens, now)
+                
+                remaining = int(tokens)
+                # Calculate time to refill completely
+                reset_seconds = max(1, int((burst - tokens) / refill_rate)) if refill_rate > 0 else window_seconds
+                return True, burst, max(0, remaining), reset_seconds
+            else:
+                self._buckets[key] = (tokens, now)
+                
+                # Time until 1 token is available
+                retry_after = max(1, int(math.ceil((1 - tokens) / refill_rate))) if refill_rate > 0 else window_seconds
+                return False, burst, 0, retry_after
+
+    def reset(self):
+        with self._lock:
+            self._buckets.clear()
 
 
 class RedisSlidingWindowStore:
@@ -185,6 +240,97 @@ class RedisSlidingWindowStore:
             return False, max_requests, 0, retry_after
 
 
+class RedisTokenBucketStore:
+    """Redis-backed token bucket using a Lua script for atomicity."""
+
+    def __init__(self, redis_client: Any = None):
+        self._client = redis_client
+        self._script_sha = None
+
+        # Lua script to atomically refill and consume tokens
+        self._lua_script = """
+        local key = KEYS[1]
+        local burst = tonumber(ARGV[1])
+        local refill_rate = tonumber(ARGV[2])
+        local now = tonumber(ARGV[3])
+        
+        local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
+        local tokens = tonumber(bucket[1])
+        local last_refill = tonumber(bucket[2])
+        
+        if not tokens or not last_refill then
+            tokens = burst
+            last_refill = now
+        end
+        
+        local time_passed = math.max(0, now - last_refill)
+        tokens = math.min(burst, tokens + time_passed * refill_rate)
+        
+        local allowed = 0
+        local retry_after = 0
+        
+        if tokens >= 1 then
+            tokens = tokens - 1
+            allowed = 1
+        else
+            if refill_rate > 0 then
+                retry_after = math.ceil((1 - tokens) / refill_rate)
+            else
+                retry_after = 60 -- Default fallback
+            end
+        end
+        
+        redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+        -- Expire the key when bucket would be full anyway
+        local time_to_full = 0
+        if refill_rate > 0 then
+            time_to_full = math.ceil((burst - tokens) / refill_rate)
+        end
+        redis.call('EXPIRE', key, math.max(60, time_to_full + 5))
+        
+        return {allowed, tokens, retry_after, time_to_full}
+        """
+
+    def _get_client(self):
+        if self._client is not None:
+            return self._client
+        import redis
+
+        uri = settings.RATE_LIMIT_STORAGE_URI.strip() or settings.REDIS_URL
+        self._client = redis.from_url(uri, decode_responses=True)
+        return self._client
+
+    def _load_script(self, client):
+        if not self._script_sha:
+            self._script_sha = client.script_load(self._lua_script)
+        return self._script_sha
+
+    def is_allowed(
+        self, key: str, max_requests: int, window_seconds: int, burst: int
+    ) -> Tuple[bool, int, int, int]:
+        client = self._get_client()
+        script_sha = self._load_script(client)
+        now = time.time()
+        refill_rate = max_requests / window_seconds
+        
+        try:
+            res = client.evalsha(script_sha, 1, key, burst, refill_rate, now)
+        except Exception:
+            # Script might have been flushed from Redis cache, reload and try again
+            self._script_sha = client.script_load(self._lua_script)
+            res = client.evalsha(self._script_sha, 1, key, burst, refill_rate, now)
+
+        allowed = bool(res[0])
+        tokens_remaining = float(res[1])
+        retry_after = max(1, int(res[2]))
+        time_to_full = max(1, int(res[3]))
+        
+        if allowed:
+            return True, burst, int(tokens_remaining), time_to_full
+        else:
+            return False, burst, 0, retry_after
+
+
 class TierRateLimiter:
     """
     Main rate limiting engine coordinating Redis/In-Memory stores,
@@ -193,6 +339,7 @@ class TierRateLimiter:
 
     def __init__(self):
         self._in_memory = InMemorySlidingWindowStore()
+        self._in_memory_tb = InMemoryTokenBucketStore()
         self._redis_store: Optional[RedisSlidingWindowStore] = None
         self._use_redis = bool(
             settings.RATE_LIMIT_STORAGE_URI.strip() or settings.REDIS_URL
@@ -265,7 +412,7 @@ class TierRateLimiter:
         self,
         tier: RateLimitTier,
         custom_limits: Optional[Dict[RateLimitTier, str]] = None,
-    ) -> Tuple[int, int]:
+    ) -> Tuple[int, int, int]:
         """
         Resolves rate limit for a given tier.
         """
@@ -315,16 +462,26 @@ class TierRateLimiter:
                 tier=RateLimitTier.BYPASS.value,
             )
 
-        max_requests, window_seconds = self.get_tier_limit(tier, custom_limits)
+        max_requests, window_seconds, burst = self.get_tier_limit(tier, custom_limits)
         key = f"rate_limit:{endpoint_name}:{tier.value}:{subject_id}"
+        
+        is_token_bucket = burst != max_requests
 
         # Try Redis first, fall back to in-memory on error
         redis_store = self._get_redis_store()
         if redis_store:
             try:
-                allowed, limit, remaining, reset_secs = redis_store.is_allowed(
-                    key, max_requests, window_seconds
-                )
+                if is_token_bucket:
+                    # Use RedisTokenBucketStore logic. For simplicity we can instantiate it on the fly 
+                    # or just reuse the redis client
+                    tb_store = RedisTokenBucketStore(redis_client=redis_store._get_client())
+                    allowed, limit, remaining, reset_secs = tb_store.is_allowed(
+                        key, max_requests, window_seconds, burst
+                    )
+                else:
+                    allowed, limit, remaining, reset_secs = redis_store.is_allowed(
+                        key, max_requests, window_seconds
+                    )
                 return RateLimitResult(
                     allowed=allowed,
                     limit=limit,
@@ -336,9 +493,15 @@ class TierRateLimiter:
             except Exception as e:
                 logger.debug("Redis rate limit check failed (%s); falling back to in-memory.", e)
 
-        allowed, limit, remaining, reset_secs = self._in_memory.is_allowed(
-            key, max_requests, window_seconds
-        )
+        if is_token_bucket:
+            allowed, limit, remaining, reset_secs = self._in_memory_tb.is_allowed(
+                key, max_requests, window_seconds, burst
+            )
+        else:
+            allowed, limit, remaining, reset_secs = self._in_memory.is_allowed(
+                key, max_requests, window_seconds
+            )
+            
         return RateLimitResult(
             allowed=allowed,
             limit=limit,
