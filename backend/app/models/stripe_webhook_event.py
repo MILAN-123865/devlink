@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -35,6 +36,17 @@ class StripeWebhookEvent(Base):
 
     event_type: Mapped[str] = mapped_column(
         String(100),
+        nullable=False,
+    )
+
+    payload: Mapped[dict | None] = mapped_column(
+        sa.JSON(),
+        nullable=True,
+    )
+
+    processing_status: Mapped[str] = mapped_column(
+        String(50),
+        server_default="processing",
         nullable=False,
     )
 
