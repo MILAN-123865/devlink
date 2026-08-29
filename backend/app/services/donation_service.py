@@ -274,6 +274,36 @@ class DonationService:
         return url
 
     # ------------------------------------------------------------------ #
+    #  Retrieval                                                         #
+    # ------------------------------------------------------------------ #
+    
+    @staticmethod
+    def get_donations(
+        db: Session,
+        limit: int = 20,
+        cursor: Optional[str] = None,
+        page: Optional[int] = None,
+        order: str = "desc",
+    ):
+        """
+        List donations with cursor-based keyset pagination.
+        """
+        from app.core.cursor_pagination import apply_cursor_pagination
+        
+        query = db.query(Donation)
+        
+        return apply_cursor_pagination(
+            query=query,
+            model_class=Donation,
+            limit=limit,
+            cursor=cursor,
+            page=page,
+            order=order,
+            sort_column_name="created_at",
+            id_column_name="id",
+        )
+
+    # ------------------------------------------------------------------ #
     #  Webhook                                                            #
     # ------------------------------------------------------------------ #
 

@@ -216,14 +216,42 @@ def apply_cursor_pagination(
                 )
 
     # Apply ordering and overfetch by 1 to detect has_more
-    ordered_query = filtered_query.order_by(
-        desc(sort_col) if order == "desc" else asc(sort_col),
-        desc(id_col) if order == "desc" else asc(id_col),
-    )
+    is_backward = decoded is not None and decoded.d == "prev"
+
+    if is_backward:
+        ordered_query = filtered_query.order_by(
+            asc(sort_col) if order == "desc" else desc(sort_col),
+            asc(id_col) if order == "desc" else desc(id_col),
+        )
+    else:
+        ordered_query = filtered_query.order_by(
+            desc(sort_col) if order == "desc" else asc(sort_col),
+            desc(id_col) if order == "desc" else asc(id_col),
+        )
 
     rows = ordered_query.limit(limit + 1).all()
-    has_more = len(rows) > limit
-    page_items = rows[:limit]
+    has_more_in_this_direction = len(rows) > limit
+    
+    if is_backward:
+        # Reverse rows back to original requested order
+        rows.reverse()
+        if has_more_in_this_direction:
+            # The extra fetched item is at the start after reversal
+            page_items = rows[1:]
+        else:
+            page_items = rows
+            
+        has_more = decoded is not None  # We know there are items ahead if we navigated backwards
+        has_prev = has_more_in_this_direction
+    else:
+        if has_more_in_this_direction:
+            # The extra fetched item is at the end
+            page_items = rows[:-1]
+        else:
+            page_items = rows
+            
+        has_more = has_more_in_this_direction
+        has_prev = decoded is not None
 
     next_cursor_str = None
     if has_more and page_items:
@@ -235,7 +263,7 @@ def apply_cursor_pagination(
         )
 
     prev_cursor_str = None
-    if decoded and page_items:
+    if has_prev and page_items:
         first_item = page_items[0]
         prev_cursor_str = encode_cursor(
             getattr(first_item, sort_column_name),
@@ -249,5 +277,5 @@ def apply_cursor_pagination(
         next_cursor=next_cursor_str,
         prev_cursor=prev_cursor_str,
         has_more=has_more,
-        has_prev=decoded is not None,
+        has_prev=has_prev,
     )
