@@ -142,12 +142,21 @@ export const projectsService = {
   updateDraft: (id: string, body: any) =>
     withFallback(() => projectsApi.updateDraft(id, body as any), {} as any),
 
-  clone: (id: string, body?: any) =>
-    projectsApi.clone(id, body),
+  clone: (id: string, body?: any) => projectsApi.clone(id, body),
 };
 
 export const buildersService = {
-  list: () => withFallback(() => buildersApi.list(), seed.builders),
+  list: (query?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    skills?: string;
+    availability?: boolean;
+    location?: string;
+    experience?: string;
+    remote?: boolean;
+    sort?: string;
+  }) => withFallback(() => buildersApi.list(query), seed.builders),
   get: (id: string) =>
     withFallback(() => buildersApi.get(id), seed.builders.find((b) => b.id === id) ?? null),
   suggested: () => withFallback(() => buildersApi.trending(), seed.builders.slice(3, 6)),
@@ -203,33 +212,19 @@ export const dashboardService = {
 };
 
 export const usersService = {
-  getMe: () =>
-    withFallback(
-      () => usersApi.getMe(),
-      null
-    ),
+  getMe: () => withFallback(() => usersApi.getMe(), null),
   getPrivacySettings: () =>
-    withFallback(
-      () => usersApi.getPrivacySettings(),
-      {
-        email: "private",
-        github: "public",
-        resume: "public",
-        social_links: "public",
-        availability: "public",
-        activity: "public",
-      }
-    ),
+    withFallback(() => usersApi.getPrivacySettings(), {
+      email: "private",
+      github: "public",
+      resume: "public",
+      social_links: "public",
+      availability: "public",
+      activity: "public",
+    }),
   updatePrivacySettings: (body: Record<string, any>) =>
-    withFallback(
-      () => usersApi.updatePrivacySettings(body),
-      {}
-    ),
-  updateMe: (body: Record<string, any>) =>
-    withFallback(
-      () => usersApi.updateMe(body),
-      {}
-    ),
+    withFallback(() => usersApi.updatePrivacySettings(body), {}),
+  updateMe: (body: Record<string, any>) => withFallback(() => usersApi.updateMe(body), {}),
 };
 
 export const activitiesService = {
