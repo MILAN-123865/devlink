@@ -149,10 +149,51 @@ export type FollowStatusResponse = {
   following_count: number;
 };
 
+export type FollowerItem = {
+  id: string;
+  follower_id: string;
+  following_id: string;
+  created_at: string;
+};
+
+export type PaginatedFollowersResult = {
+  items: FollowerItem[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+};
+
 export async function getFollowStatus(userId: UUID): Promise<FollowStatusResponse> {
   return requestJson<FollowStatusResponse>({
     url: `/followers/${userId}/status`,
     method: "GET",
+  });
+}
+
+export async function getFollowers(
+  userId: UUID,
+  params?: { page?: number; limit?: number },
+): Promise<PaginatedFollowersResult> {
+  return api.get<PaginatedFollowersResult>(`/followers/${userId}`, {
+    query: {
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 20,
+    },
+  });
+}
+
+export async function getFollowing(
+  userId: UUID,
+  params?: { page?: number; limit?: number },
+): Promise<PaginatedFollowersResult> {
+  return api.get<PaginatedFollowersResult>(`/followers/${userId}/following`, {
+    query: {
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 20,
+    },
   });
 }
 
