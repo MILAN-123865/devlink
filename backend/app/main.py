@@ -410,6 +410,13 @@ from app.middleware.request_logging import RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)
 
 # ------------------------------------------------------------------
+# CORS Validation (must run before CORSMiddleware)
+# ------------------------------------------------------------------
+from app.middleware.cors_validation import CORSValidationMiddleware
+
+app.add_middleware(CORSValidationMiddleware)
+
+# ------------------------------------------------------------------
 # CORS
 # ------------------------------------------------------------------
 
