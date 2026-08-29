@@ -19,6 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn() }),
   useMutation: () => ({
     mutate: vi.fn(),
     isPending: false,

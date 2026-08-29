@@ -2,7 +2,7 @@ import { createFileRoute, notFound, Link, useNavigate } from "@tanstack/react-ro
 import { Card, EmptyState, Skeleton } from "@/components/shared/primitives";
 import { UserAvatar } from "@/components/user-avatar";
 import { ImageCropUploadModal } from "@/components/shared/ImageCropUploadModal";
-import { currentUser } from "@/mocks/seed";
+import { currentUser, builders, projects } from "@/mocks/seed";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -33,6 +33,7 @@ import {
   GraduationCap,
   FolderGit2,
   ExternalLink,
+  Heart,
 } from "lucide-react";
 import { ReportUserModal } from "@/components/shared/ReportUserModal";
 import { analyticsApi } from "@/api/modules/analytics";
@@ -105,6 +106,8 @@ export function ProfilePage() {
     ? {
         ...builders[0],
         name: currentUser.name,
+        firstName: "Alex",
+        lastName: "Chen",
         handle: currentUser.handle,
         avatar: currentUser.avatar,
         bio: "Product engineer & open source maintainer. Ships fast, builds scalable systems.",
@@ -280,6 +283,9 @@ export function ProfilePage() {
       project.owner_id === b.id ||
       project.ownerId === b.id,
   );
+  const userProjects = profileProjects;
+  const isUserLoading = false;
+  const isUserError = false;
   const profileAction = (
     <Link
       to="/settings"

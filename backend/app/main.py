@@ -533,8 +533,9 @@ app.include_router(
 )
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(blocks.router, prefix="/api/blocks", tags=["User Blocks"])
-from app.routers import testimonials
+from app.routers import razorpay, testimonials
 
+app.include_router(razorpay.router)
 app.include_router(testimonials.router, prefix="/api", tags=["Testimonials"])
 app.include_router(connections.router, prefix="/api/connections", tags=["Connections"])
 app.include_router(export.router, prefix="/api/users", tags=["Export"])
