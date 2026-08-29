@@ -89,6 +89,12 @@ export const projectsApi = {
   archive: (id: string) => api.post<ExtendedProject>(`/api/projects/${id}/archive`),
   /** Unarchive a project back to active status */
   unarchive: (id: string) => api.post<ExtendedProject>(`/api/projects/${id}/unarchive`),
+  /** Invite user to project */
+  inviteMember: (projectId: string, userId: string) =>
+    api.post<{ message: string }>(`/api/projects/${projectId}/invite/${userId}`),
+  /** Cancel a pending project invitation */
+  cancelInvitation: (projectId: string, userId: string) =>
+    api.delete<{ message: string }>(`/api/projects/${projectId}/invitations/${userId}`),
   /** Clone an existing project as a template */
   clone: (id: string, body?: ProjectCloneRequest) =>
     api.post<ExtendedProject>(`/api/projects/${id}/clone`, body || {}),
