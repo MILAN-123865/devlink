@@ -9,6 +9,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    field_validator,
     model_validator,
 )
 
@@ -118,6 +119,12 @@ class UserBase(BaseModel):
     is_verified: bool = False
     privacy_settings: PrivacySettings | None = Field(default_factory=PrivacySettings)
     availability: list[AvailabilitySlot] | None = Field(default_factory=list)
+
+    @field_validator("availability", mode="before")
+    @classmethod
+    def set_availability(cls, v):
+        return v or []
+
     collaboration_status: CollaborationStatus | None = CollaborationStatus.AVAILABLE
 
 

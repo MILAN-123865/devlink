@@ -918,6 +918,12 @@ export function ProfilePage() {
 
           {/* Activity Timeline */}
           <ActivityTimeline userId={b.id} emptyAction={me ? profileAction : undefined} />
+          {me && (
+            <ProfileViewersList
+              isPremium={currentUser?.premium ?? true}
+              className="mt-6"
+            />
+          )}
         </div>
       </div>
 
