@@ -142,8 +142,10 @@ export const projectsService = {
   updateDraft: (id: string, body: any) =>
     withFallback(() => projectsApi.updateDraft(id, body as any), {} as any),
 
-  clone: (id: string, body?: any) =>
-    projectsApi.clone(id, body),
+  clone: (id: string, body?: any) => projectsApi.clone(id, body),
+  invite: (projectId: string, userId: string) => projectsApi.inviteMember(projectId, userId),
+  cancelInvitation: (projectId: string, userId: string) =>
+    projectsApi.cancelInvitation(projectId, userId),
 };
 
 export const buildersService = {
@@ -203,33 +205,19 @@ export const dashboardService = {
 };
 
 export const usersService = {
-  getMe: () =>
-    withFallback(
-      () => usersApi.getMe(),
-      null
-    ),
+  getMe: () => withFallback(() => usersApi.getMe(), null),
   getPrivacySettings: () =>
-    withFallback(
-      () => usersApi.getPrivacySettings(),
-      {
-        email: "private",
-        github: "public",
-        resume: "public",
-        social_links: "public",
-        availability: "public",
-        activity: "public",
-      }
-    ),
+    withFallback(() => usersApi.getPrivacySettings(), {
+      email: "private",
+      github: "public",
+      resume: "public",
+      social_links: "public",
+      availability: "public",
+      activity: "public",
+    }),
   updatePrivacySettings: (body: Record<string, any>) =>
-    withFallback(
-      () => usersApi.updatePrivacySettings(body),
-      {}
-    ),
-  updateMe: (body: Record<string, any>) =>
-    withFallback(
-      () => usersApi.updateMe(body),
-      {}
-    ),
+    withFallback(() => usersApi.updatePrivacySettings(body), {}),
+  updateMe: (body: Record<string, any>) => withFallback(() => usersApi.updateMe(body), {}),
 };
 
 export const activitiesService = {

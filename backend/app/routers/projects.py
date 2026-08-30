@@ -915,6 +915,38 @@ def accept_project_invitation(
 
 
 @router.delete(
+    "/{project_id}/invitations/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation",
+)
+@router.post(
+    "/{project_id}/invitations/{user_id}/cancel",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation (POST alias)",
+)
+def cancel_project_invitation(
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    """Allow project owners or admins to cancel pending invitations."""
+    from app.services.project_member_service import ProjectMemberService
+
+    ProjectMemberService.cancel_invitation(
+        db=db,
+        project_id=project_id,
+        target_user_id=user_id,
+        actor_user=current_user,
+    )
+    cache_manager.delete_pattern("projects:*")
+    return {"message": "Invitation cancelled successfully"}
+
+
+
+@router.delete(
     "/{project_id}/soft",
     status_code=status.HTTP_204_NO_CONTENT,
 )
