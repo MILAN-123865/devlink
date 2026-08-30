@@ -295,6 +295,72 @@ export function ProfilePage() {
     </Link>
   );
 
+  const b = useMemo(() => {
+    if (!fetchedUser) return null;
+    const name =
+      fetchedUser.first_name && fetchedUser.last_name
+        ? `${fetchedUser.first_name} ${fetchedUser.last_name}`
+        : fetchedUser.first_name || fetchedUser.username || username;
+
+    const rawSkills: string[] = Array.isArray(fetchedUser.skills) ? fetchedUser.skills : [];
+    const profileSkills: ProfileSkill[] = rawSkills.map((skillName: string) => ({
+      name: skillName,
+      level: "Intermediate",
+      category: "Languages",
+    }));
+
+    return {
+      id: fetchedUser.id || "",
+      name,
+      firstName: fetchedUser.first_name || "",
+      lastName: fetchedUser.last_name || "",
+      handle: fetchedUser.username || username,
+      avatar: fetchedUser.profile_image || "",
+      headline: fetchedUser.headline ?? "",
+      bio: fetchedUser.bio ?? "",
+      location: fetchedUser.location ?? "",
+      country: fetchedUser.location ?? "",
+      website: fetchedUser.website ?? "",
+      githubUrl: fetchedUser.github_url ?? "",
+      linkedinUrl: fetchedUser.linkedinUrl ?? fetchedUser.linkedin_url ?? "",
+      twitterUrl: fetchedUser.twitterUrl ?? fetchedUser.twitter_url ?? "",
+      portfolioUrl: fetchedUser.portfolioUrl ?? fetchedUser.portfolio_url ?? "",
+      role: fetchedUser.role ?? "Developer",
+      company: fetchedUser.company ?? "",
+      experienceLevel: fetchedUser.experience_level ?? "Intermediate",
+      skills: rawSkills,
+      profileSkills,
+      experience: fetchedUser.experience ?? [],
+      education: fetchedUser.education ?? [],
+      badges: fetchedUser.badges ?? [],
+      online: Boolean(fetchedUser.online || fetchedUser.is_active),
+      premium: Boolean(fetchedUser.premium),
+      verified: Boolean(fetchedUser.is_verified || fetchedUser.verified),
+      collaborationStatus: fetchedUser.collaboration_status ?? "available",
+      followers: fetchedUser.followers_count ?? 0,
+      following: fetchedUser.following_count ?? 0,
+      contributions: fetchedUser.contributions_count ?? 0,
+    };
+  }, [fetchedUser, username]);
+
+  // Fetch real projects for this user
+  const { data: userProjects = [], isLoading: isProjectsLoading } = useQuery({
+    queryKey: ["user-projects", b?.id],
+    queryFn: async () => {
+      if (!b?.id) return [];
+      try {
+        const res = await projectsApi.byUser(b.id);
+        return Array.isArray(res) ? res : [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: Boolean(b?.id),
+  });
+
+  const { data: followStatus } = useFollowStatus(b?.id || "");
+  const followerCount = followStatus?.follower_count ?? b?.followers ?? 0;
+
   // Live collaboration presence status
   const {
     status: myStatus,
@@ -398,7 +464,8 @@ export function ProfilePage() {
           User Profile Not Found
         </TypoHeading>
         <TypoCaption as="p">
-          We couldn't find a DevLink profile for @{username}. The user might not exist or the profile is private.
+          We couldn't find a DevLink profile for @{username}. The user might not exist or the
+          profile is private.
         </TypoCaption>
         <div className="pt-2">
           <Link
@@ -814,8 +881,18 @@ export function ProfilePage() {
               <EmptyState
                 icon={Award}
                 title="Achievements await"
-                desc="Contribute to projects and flares to earn community badges."
-                className="py-4"
+                desc="Complete projects and contribute to the community to earn badges."
+                action={
+                  me ? (
+                    <Link
+                      to="/projects"
+                      className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      Explore projects
+                    </Link>
+                  ) : undefined
+                }
+                className="py-8"
               />
             )}
           </Card>
@@ -860,10 +937,10 @@ export function ProfilePage() {
                 action={
                   me ? (
                     <Link
-                      to="/projects"
-                      className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                      to="/builders"
+                      className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                     >
-                      Create Project
+                      Find builders
                     </Link>
                   ) : undefined
                 }
@@ -955,12 +1032,7 @@ export function ProfilePage() {
         />
       )}
 
-      {me && (
-        <PortfolioExportDialog
-          open={isExportModalOpen}
-          onOpenChange={setIsExportModalOpen}
-        />
-      )}
+      {me && <PortfolioExportDialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen} />}
 
       {me && (
         <EditProfileModal
@@ -1000,7 +1072,6 @@ export function ProfilePage() {
           username={b.handle}
         />
       )}
-
 
       {!me && b.id && (
         <DonationModal

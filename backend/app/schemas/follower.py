@@ -50,6 +50,31 @@ class FollowActionResponse(BaseModel):
 
 
 # ==========================================================
+# Paginated Follower & Following Responses
+# ==========================================================
+
+
+class PaginatedFollowersResponse(BaseModel):
+    items: list[FollowerResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    has_next: bool
+    has_prev: bool
+
+
+class PaginatedFollowingResponse(BaseModel):
+    items: list[FollowerResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    has_next: bool
+    has_prev: bool
+
+
+# ==========================================================
 # Unfollow Response
 # ==========================================================
 
@@ -58,3 +83,4 @@ class UnfollowResponse(BaseModel):
     message: str
     follower_count: int
     following_count: int
+
