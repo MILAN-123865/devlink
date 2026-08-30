@@ -149,7 +149,17 @@ export const projectsService = {
 };
 
 export const buildersService = {
-  list: () => withFallback(() => buildersApi.list(), seed.builders),
+  list: (query?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    skills?: string;
+    availability?: boolean;
+    location?: string;
+    experience?: string;
+    remote?: boolean;
+    sort?: string;
+  }) => withFallback(() => buildersApi.list(query), seed.builders),
   get: (id: string) =>
     withFallback(() => buildersApi.get(id), seed.builders.find((b) => b.id === id) ?? null),
   suggested: () => withFallback(() => buildersApi.trending(), seed.builders.slice(3, 6)),
