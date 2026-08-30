@@ -167,10 +167,7 @@ export type PaginatedFollowersResult = {
 };
 
 export async function getFollowStatus(userId: UUID): Promise<FollowStatusResponse> {
-  return requestJson<FollowStatusResponse>({
-    url: `/followers/${userId}/status`,
-    method: "GET",
-  });
+  return api.get<FollowStatusResponse>(`/api/followers/${userId}/status`);
 }
 
 export async function getFollowers(
@@ -198,14 +195,44 @@ export async function getFollowing(
 }
 
 export async function followUser(userId: UUID): Promise<FollowStatusResponse> {
-  await api.post<void>(`/followers/${userId}`);
-
+  await api.post<void>(`/api/followers/${userId}`);
   return getFollowStatus(userId);
 }
 
 export async function unfollowUser(userId: UUID): Promise<FollowStatusResponse> {
-  await api.delete<void>(`/followers/${userId}`);
+  await api.delete<void>(`/api/followers/${userId}`);
   return getFollowStatus(userId);
+}
+
+export type FollowerResponse = {
+  id: UUID;
+  follower_id: UUID;
+  following_id: UUID;
+  created_at: string;
+  follower?: {
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    username: string;
+    headline?: string;
+    profile_image?: string;
+  };
+  following?: {
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    username: string;
+    headline?: string;
+    profile_image?: string;
+  };
+};
+
+export async function getFollowers(userId: UUID): Promise<FollowerResponse[]> {
+  return api.get<FollowerResponse[]>(`/api/followers/${userId}`);
+}
+
+export async function getFollowing(userId: UUID): Promise<FollowerResponse[]> {
+  return api.get<FollowerResponse[]>(`/api/followers/${userId}/following`);
 }
 
 export async function getMyApplications(): Promise<ApplicationResponse[]> {

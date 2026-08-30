@@ -450,7 +450,7 @@ export function Avatar({
   className,
 }: {
   src?: string | null;
-  alt: string;
+  alt?: string;
   size?: number;
   online?: boolean;
   name?: string | null;

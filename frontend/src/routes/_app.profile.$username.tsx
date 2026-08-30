@@ -58,6 +58,7 @@ import { CollaborationStatusPicker } from "@/features/collaboration/components/C
 import { useCollaborationStatus } from "@/hooks/useCollaborationStatus";
 import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import { ManageSkillsModal } from "@/components/profile/ManageSkillsModal";
+import { FollowersListModal } from "@/components/shared/FollowersListModal";
 import DonationModal from "@/components/profile/DonationModal";
 
 export const Route = createFileRoute("/_app/profile/$username")({
@@ -379,6 +380,7 @@ export function ProfilePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
+  const [followersModalType, setFollowersModalType] = useState<"followers" | "following" | null>(null);
 
   // Profile summary state
   const [summary, setSummary] = useState<string | null>(null);
@@ -659,6 +661,24 @@ export function ProfilePage() {
                   <CollaborationStatusBadge status={b.collaborationStatus} />
                 )}
               </div>
+              {b.bio && <p className="mt-2 text-[13px] text-foreground">{b.bio}</p>}
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => setFollowersModalType("followers")}
+                  className="hover:underline cursor-pointer focus:outline-none flex items-center gap-1"
+                >
+                  <span className="font-semibold">
+                    {followStatus?.follower_count ?? b.followers ?? 0}
+                  </span>{" "}
+                  <TypoCaption>Followers</TypoCaption>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFollowersModalType("following")}
+                  className="hover:underline cursor-pointer focus:outline-none flex items-center gap-1"
+                >
+                  <span className="font-semibold">
 
               <p className="mt-2 text-xs text-foreground leading-relaxed">{b.bio}</p>
 
@@ -692,7 +712,7 @@ export function ProfilePage() {
                     {followStatus?.following_count ?? b.following ?? 0}
                   </span>{" "}
                   <TypoCaption>Following</TypoCaption>
-                </div>
+                </button>
                 <div>
                   <span className="font-semibold text-foreground">{b.contributions ?? 0}</span>{" "}
                   <TypoCaption>Contributions</TypoCaption>
@@ -1081,6 +1101,14 @@ export function ProfilePage() {
           recipientName={b.name}
         />
       )}
+
+      <FollowersListModal
+        isOpen={followersModalType !== null}
+        onClose={() => setFollowersModalType(null)}
+        userId={b.id}
+        username={b.handle}
+        type={followersModalType ?? "followers"}
+      />
     </div>
   );
 }

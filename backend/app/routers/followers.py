@@ -61,19 +61,6 @@ def follow_user(
         user_id,
     )
 
-    try:
-        NotificationService.enqueue(
-            db,
-            recipient_id=user_id,
-            sender_id=current_user.id,
-            type=NotificationType.FOLLOW,
-            title="New follower",
-            message=f"{current_user.username} started following you.",
-            action_url=f"/users/{current_user.id}",
-        )
-    except Exception as e:
-        print(f"ENQUEUE ERROR: {e}")
-
     return follow
 
 
