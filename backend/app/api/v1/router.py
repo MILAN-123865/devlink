@@ -37,6 +37,9 @@ from app.routers import (
     project_dashboards,
     project_releases,
     project_meeting_notes,
+    project_faq,
+    project_dependencies,
+    project_watchers,
     projects,
     permissions,
     recommendations,
@@ -148,3 +151,6 @@ api_v1_router.include_router(
 )
 api_v1_router.include_router(feature_announcements.router)
 api_v1_router.include_router(project_meeting_notes.router)
+api_v1_router.include_router(project_faq.router)
+api_v1_router.include_router(project_dependencies.router)
+api_v1_router.include_router(project_watchers.router)
