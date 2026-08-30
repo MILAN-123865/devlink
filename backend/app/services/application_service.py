@@ -42,12 +42,10 @@ class ApplicationService:
             ApplicationStatus.INTERVIEWING,
             ApplicationStatus.ACCEPTED,
             ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
         },
         ApplicationStatus.INTERVIEWING: {
             ApplicationStatus.ACCEPTED,
             ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
         },
         ApplicationStatus.ACCEPTED: set(),
         ApplicationStatus.REJECTED: set(),
@@ -353,11 +351,11 @@ class ApplicationService:
         db: Session,
         db_application: Application,
     ) -> Application:
-
-        ApplicationService._validate_status_transition(
-            db_application.status,
-            ApplicationStatus.WITHDRAWN,
-        )
+        if db_application.status != ApplicationStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only pending applications can be withdrawn",
+            )
 
         db_application.status = ApplicationStatus.WITHDRAWN
         db.flush()

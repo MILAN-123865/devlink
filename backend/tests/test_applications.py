@@ -290,6 +290,62 @@ def test_withdraw_application_unauthorized(
     assert res.status_code == 403
 
 
+def test_owner_cannot_withdraw_application(
+    client: TestClient, register_and_login, test_project
+):
+    pid = test_project["id"]
+    owner_token = test_project["token"]
+    _, applicant_token = register_and_login(
+        "owner_withdraw@example.com", "ownerwithdraw"
+    )
+
+    created = client.post(
+        "/api/applications/",
+        json={"project_id": str(pid), "flare_id": str(test_project["flare_id"])},
+        headers={"Authorization": f"Bearer {applicant_token}"},
+    )
+    assert created.status_code == 201
+    app_id = created.json()["id"]
+
+    res = client.patch(
+        f"/api/applications/{app_id}/withdraw",
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    assert res.status_code == 403
+    assert res.json()["detail"] == "Only the applicant can withdraw this application"
+
+
+def test_cannot_withdraw_non_pending_application(
+    client: TestClient, register_and_login, test_project
+):
+    pid = test_project["id"]
+    owner_token = test_project["token"]
+    _, applicant_token = register_and_login(
+        "nonpending_withdraw@example.com", "npwithdraw"
+    )
+
+    created = client.post(
+        "/api/applications/",
+        json={"project_id": str(pid), "flare_id": str(test_project["flare_id"])},
+        headers={"Authorization": f"Bearer {applicant_token}"},
+    )
+    assert created.status_code == 201
+    app_id = created.json()["id"]
+
+    accepted = client.patch(
+        f"/api/applications/{app_id}/accept",
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    assert accepted.status_code == 200
+
+    res = client.patch(
+        f"/api/applications/{app_id}/withdraw",
+        headers={"Authorization": f"Bearer {applicant_token}"},
+    )
+    assert res.status_code == 400
+    assert res.json()["detail"] == "Only pending applications can be withdrawn"
+
+
 def test_create_application_unauthenticated(client: TestClient, test_project):
     pid = test_project["id"]
     res = client.post(
