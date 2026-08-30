@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+    PROJECT_INVITATION_EXPIRE_DAYS: int = 7
 
     PASSWORD_HASH_SCHEME: str = "bcrypt"
 
@@ -98,6 +99,27 @@ class Settings(BaseSettings):
     # ==========================================================
 
     REDIS_URL: str = "redis://localhost:6379/0"
+
+    # ----------------------------------------------------------
+    # In-process (L1) response cache
+    # ----------------------------------------------------------
+    #
+    # The tier in front of Redis. It used to be an unbounded dict, which on a
+    # worker that runs for weeks is a leak: the keys `@cached` builds are
+    # per-caller and per-argument, so the key space is the product of every
+    # user id and every set of query arguments the decorated routes see
+    # (#1402).
+    #
+    # A ceiling on entries rather than on bytes -- measuring an arbitrary
+    # decoded JSON structure costs more than the cache saves. Raise it if
+    # `cache_manager.stats()["evictions"]` climbs steadily, which means the
+    # working set is larger than the ceiling.
+    CACHE_L1_MAX_ENTRIES: int = 1000
+
+    # How often expired entries are reclaimed. Eviction handles a cache that
+    # fills up; the sweep handles the other shape -- entries that expire and
+    # are never read again, which nothing else would ever remove.
+    CACHE_L1_SWEEP_SECONDS: float = 60.0
 
     # ==========================================================
     # CORS

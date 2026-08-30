@@ -219,6 +219,7 @@ def test_project_invite_endpoint_and_notification(db, client):
     assert member is not None
     assert member.is_active is False
     assert member.role == MemberRole.MEMBER
+    assert member.expires_at is not None
 
     notifs = NotificationService.list_notifications(
         db,
