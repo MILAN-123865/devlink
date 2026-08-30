@@ -78,13 +78,14 @@ class TestTierRateLimitConfig:
 
 class TestParseRateLimitString:
     def test_parse_valid_limits(self):
-        assert parse_rate_limit_string("100/minute") == (100, 60)
-        assert parse_rate_limit_string("5/second") == (5, 1)
-        assert parse_rate_limit_string("10/sec") == (10, 1)
-        assert parse_rate_limit_string("3/hour") == (3, 3600)
-        assert parse_rate_limit_string("500/day") == (500, 86400)
-        assert parse_rate_limit_string("3/15minutes") == (3, 900)
-        assert parse_rate_limit_string("20/2hours") == (20, 7200)
+        assert parse_rate_limit_string("100/minute") == (100, 60, 100)
+        assert parse_rate_limit_string("5/second") == (5, 1, 5)
+        assert parse_rate_limit_string("10/sec") == (10, 1, 10)
+        assert parse_rate_limit_string("3/hour") == (3, 3600, 3)
+        assert parse_rate_limit_string("500/day") == (500, 86400, 500)
+        assert parse_rate_limit_string("3/15minutes") == (3, 900, 3)
+        assert parse_rate_limit_string("20/2hours") == (20, 7200, 20)
+        assert parse_rate_limit_string("10/minute burst 50") == (10, 60, 50)
 
     def test_parse_invalid_formats(self):
         with pytest.raises(ValueError, match="Invalid rate limit format"):
@@ -146,6 +147,27 @@ class TestInMemorySlidingWindowStore:
         allowed, _, rem, _ = store.is_allowed("k1", 1, 60)
         assert allowed is True
         assert rem == 0
+
+
+from app.core.rate_limiter import InMemoryTokenBucketStore
+
+class TestInMemoryTokenBucketStore:
+    def test_token_bucket_burst(self):
+        store = InMemoryTokenBucketStore()
+        key = "tb_key"
+        
+        # 10 reqs per 60s, burst 5
+        # we can do 5 requests immediately
+        for _ in range(5):
+            allowed, limit, rem, retry = store.is_allowed(key, 10, 60, 5)
+            assert allowed is True
+            assert limit == 5
+            
+        # 6th should be rejected
+        allowed, limit, rem, retry = store.is_allowed(key, 10, 60, 5)
+        assert allowed is False
+        assert rem == 0
+        assert retry > 0
 
 
 class TestRedisSlidingWindowStore:
