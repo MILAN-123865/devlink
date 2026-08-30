@@ -54,6 +54,26 @@ def _ilike_pattern(q: str) -> str:
     return f"%{escaped}%"
 
 
+def escape_ilike_pattern(q: str) -> str:
+    """Escape SQL LIKE wildcards (% and _) in a search term for use in ILIKE patterns.
+
+    This prevents ReDoS and query performance issues caused by unescaped wildcards
+    in user-provided search input. The escaped term can then be wrapped with %
+    for use in ILIKE queries.
+
+    Example:
+        escaped = escape_ilike_pattern("100%")  # returns "100\\%"
+        pattern = f"%{escaped}%"  # safe to use in ILIKE
+    """
+    if not q:
+        return ""
+    return (
+        q.replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    )
+
+
 def _is_postgres(db: Session) -> bool:
     """Check if the active database dialect is PostgreSQL."""
     try:
