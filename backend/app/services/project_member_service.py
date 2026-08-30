@@ -18,19 +18,73 @@ from app.core.rbac import (
     has_project_permission,
     PROJECT_MANAGE_ROLES,
     PROJECT_REMOVE_MEMBERS,
+    PROJECT_VIEW,
 )
 
 
 class ProjectMemberService:
     @classmethod
+    def get_membership(
+        cls,
+        db: Session,
+        project_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> ProjectMember | None:
+        """Return the project membership row, or ``None`` if it does not exist."""
+        return db.scalar(
+            select(ProjectMember).where(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == user_id,
+            )
+        )
+
+    @classmethod
+    def require_membership(
+        cls,
+        db: Session,
+        project_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> ProjectMember:
+        """Return the membership row, or 404 if it does not exist (#1310)."""
+        membership = cls.get_membership(db, project_id, user_id)
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project membership not found",
+            )
+        return membership
+
+    @classmethod
+    def require_project_member_access(
+        cls,
+        db: Session,
+        project: Project,
+        actor_user: User,
+        permission: str = PROJECT_VIEW,
+        *,
+        forbidden_detail: str = "You do not have access to this project's members",
+    ) -> None:
+        """403 unless the actor belongs to the project or holds ``permission``."""
+        if actor_user.is_superuser or actor_user.id == project.owner_id:
+            return
+
+        if not has_project_permission(db, actor_user.id, project.id, permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=forbidden_detail,
+            )
+
+    @classmethod
     def get_project_members(
-        cls, db: Session, project_id: uuid.UUID
+        cls, db: Session, project_id: uuid.UUID, actor_user: User
     ) -> List[Dict[str, Any]]:
         project = db.get(Project, project_id)
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
             )
+
+        cls.require_project_member_access(db, project, actor_user)
 
         stmt = (
             select(ProjectMember, User)
@@ -102,15 +156,13 @@ class ProjectMemberService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
             )
 
-        # Authorization check
-        if actor_user.id != project.owner_id and not actor_user.is_superuser:
-            if not has_project_permission(
-                db, actor_user.id, project_id, PROJECT_MANAGE_ROLES
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Insufficient permissions to manage project roles",
-                )
+        cls.require_project_member_access(
+            db,
+            project,
+            actor_user,
+            PROJECT_MANAGE_ROLES,
+            forbidden_detail="Insufficient permissions to manage project roles",
+        )
 
         # Cannot alter project owner role via normal update
         if target_user_id == project.owner_id:
@@ -119,23 +171,9 @@ class ProjectMemberService:
                 detail="Cannot change project owner role. Use transfer ownership instead.",
             )
 
-        pm = db.scalar(
-            select(ProjectMember).where(
-                ProjectMember.project_id == project_id,
-                ProjectMember.user_id == target_user_id,
-            )
-        )
-        if not pm:
-            pm = ProjectMember(
-                project_id=project_id,
-                user_id=target_user_id,
-                role=new_role,
-                is_active=True,
-            )
-            db.add(pm)
-        else:
-            pm.role = new_role
-            pm.is_active = True
+        pm = cls.require_membership(db, project_id, target_user_id)
+        pm.role = new_role
+        pm.is_active = True
 
         db.commit()
         db.refresh(pm)
@@ -307,28 +345,18 @@ class ProjectMemberService:
             )
 
         # Allow self-removal, otherwise require manage permissions
-        if (
-            actor_user.id != target_user_id
-            and actor_user.id != project.owner_id
-            and not actor_user.is_superuser
-        ):
-            if not has_project_permission(
-                db, actor_user.id, project_id, PROJECT_REMOVE_MEMBERS
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Insufficient permissions to remove team members",
-                )
-
-        pm = db.scalar(
-            select(ProjectMember).where(
-                ProjectMember.project_id == project_id,
-                ProjectMember.user_id == target_user_id,
+        if actor_user.id != target_user_id:
+            cls.require_project_member_access(
+                db,
+                project,
+                actor_user,
+                PROJECT_REMOVE_MEMBERS,
+                forbidden_detail="Insufficient permissions to remove team members",
             )
-        )
-        if pm:
-            db.delete(pm)
-            db.commit()
+
+        pm = cls.require_membership(db, project_id, target_user_id)
+        db.delete(pm)
+        db.commit()
 
         # Audit log
         AuditLogService.create_log(
