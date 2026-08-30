@@ -717,6 +717,9 @@ app.include_router(
     email_templates.router, prefix="/api", tags=["Email Notification Templates"]
 )
 
+from app.routers import project_meeting_notes
+
+app.include_router(project_meeting_notes.router, prefix="/api", tags=["Project Meeting Notes"])
 from app.routers import project_faq
 
 app.include_router(project_faq.router, prefix="/api", tags=["Project FAQ"])
