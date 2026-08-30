@@ -143,6 +143,9 @@ export const projectsService = {
     withFallback(() => projectsApi.updateDraft(id, body as any), {} as any),
 
   clone: (id: string, body?: any) => projectsApi.clone(id, body),
+  invite: (projectId: string, userId: string) => projectsApi.inviteMember(projectId, userId),
+  cancelInvitation: (projectId: string, userId: string) =>
+    projectsApi.cancelInvitation(projectId, userId),
 };
 
 export const buildersService = {

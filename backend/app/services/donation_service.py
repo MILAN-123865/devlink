@@ -274,6 +274,36 @@ class DonationService:
         return url
 
     # ------------------------------------------------------------------ #
+    #  Retrieval                                                         #
+    # ------------------------------------------------------------------ #
+    
+    @staticmethod
+    def get_donations(
+        db: Session,
+        limit: int = 20,
+        cursor: Optional[str] = None,
+        page: Optional[int] = None,
+        order: str = "desc",
+    ):
+        """
+        List donations with cursor-based keyset pagination.
+        """
+        from app.core.cursor_pagination import apply_cursor_pagination
+        
+        query = db.query(Donation)
+        
+        return apply_cursor_pagination(
+            query=query,
+            model_class=Donation,
+            limit=limit,
+            cursor=cursor,
+            page=page,
+            order=order,
+            sort_column_name="created_at",
+            id_column_name="id",
+        )
+
+    # ------------------------------------------------------------------ #
     #  Webhook                                                            #
     # ------------------------------------------------------------------ #
 
@@ -311,7 +341,8 @@ class DonationService:
         # Claim the event id before doing any work. A retry that arrives while
         # the first delivery is still in flight loses the insert here rather
         # than running the handler a second time.
-        if not DonationService._claim_event(db, event_id, event_type):
+        event_dict = dict(event)
+        if not DonationService._claim_event(db, event_id, event_type, event_dict):
             logger.info("Ignoring already-processed Stripe event %s", event_id)
             return "duplicate"
 
@@ -319,23 +350,34 @@ class DonationService:
         session = _session_field(data, "object") or {}
 
         if event_type == "checkout.session.completed":
-            return DonationService._handle_checkout_completed(db, event_id, session)
-
-        if event_type in (
+            outcome = DonationService._handle_checkout_completed(db, event_id, session)
+        elif event_type in (
             "checkout.session.async_payment_failed",
             "checkout.session.expired",
         ):
-            return DonationService._handle_checkout_failed(db, session, event_type)
+            outcome = DonationService._handle_checkout_failed(db, session, event_type)
+        else:
+            logger.debug("Stripe event type %s needs no handling", event_type)
+            outcome = "ignored"
 
-        logger.debug("Stripe event type %s needs no handling", event_type)
-        return "ignored"
+        # Finalize the processing status
+        event_record = (
+            db.query(StripeWebhookEvent)
+            .filter(StripeWebhookEvent.event_id == event_id)
+            .first()
+        )
+        if event_record is not None:
+            event_record.processing_status = outcome
+            db.commit()
+
+        return outcome
 
     # ------------------------------------------------------------------ #
     #  Webhook helpers                                                    #
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _claim_event(db: Session, event_id: str, event_type: str) -> bool:
+    def _claim_event(db: Session, event_id: str, event_type: str, payload_data: dict) -> bool:
         """
         Record ``event_id`` as being processed. ``False`` if it already was.
 
@@ -351,7 +393,12 @@ class DonationService:
         if existing is not None:
             return False
 
-        db.add(StripeWebhookEvent(event_id=event_id, event_type=event_type))
+        db.add(StripeWebhookEvent(
+            event_id=event_id, 
+            event_type=event_type, 
+            payload=payload_data,
+            processing_status="processing"
+        ))
         try:
             db.commit()
         except IntegrityError:

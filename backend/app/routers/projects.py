@@ -795,11 +795,18 @@ def invite_user(
             detail="User is already invited or a member of the project",
         )
 
+    from datetime import timedelta
+
+    from app.core.config import settings
+    from app.utils.time import utcnow
+
     new_member = ProjectMember(
         project_id=project_id,
         user_id=user_id,
         role=MemberRole.MEMBER,
         is_active=False,
+        expires_at=utcnow()
+        + timedelta(days=settings.PROJECT_INVITATION_EXPIRE_DAYS),
     )
     db.add(new_member)
     db.commit()
@@ -831,7 +838,112 @@ def invite_user(
     )
 
     cache_manager.delete_pattern("projects:*")
-    return {"message": "User invited successfully"}
+    return {
+        "message": "User invited successfully",
+        "status": new_member.invitation_status().value,
+        "expires_at": new_member.expires_at,
+    }
+
+
+@router.post(
+    "/{project_id}/invitations/accept",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+)
+def accept_project_invitation(
+    project_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    project = ProjectService.get_project(db, project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    from sqlalchemy import and_, select
+
+    from app.models.project_member import ProjectMember
+    from app.utils.time import is_expired, utcnow
+
+    invitation = db.scalar(
+        select(ProjectMember).where(
+            and_(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == current_user.id,
+                ProjectMember.is_active.is_(False),
+            )
+        )
+    )
+    if invitation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project invitation not found",
+        )
+
+    if is_expired(invitation.expires_at):
+        raise HTTPException(
+            status_code=400,
+            detail="Invitation has expired",
+        )
+
+    invitation.is_active = True
+    invitation.joined_at = utcnow()
+    db.commit()
+    db.refresh(invitation)
+
+    from app.models.audit_log import AuditAction
+    from app.services.audit_log_service import AuditLogService
+
+    AuditLogService.create_log(
+        db=db,
+        actor_id=current_user.id,
+        action=AuditAction.INVITATION_ACCEPTED,
+        entity_type="project",
+        entity_id=str(project_id),
+        project_id=project_id,
+        target_user_id=current_user.id,
+    )
+
+    cache_manager.delete_pattern("projects:*")
+    return {
+        "message": "Invitation accepted",
+        "status": invitation.invitation_status().value,
+        "expires_at": invitation.expires_at,
+    }
+
+
+@router.delete(
+    "/{project_id}/invitations/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation",
+)
+@router.post(
+    "/{project_id}/invitations/{user_id}/cancel",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation (POST alias)",
+)
+def cancel_project_invitation(
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    """Allow project owners or admins to cancel pending invitations."""
+    from app.services.project_member_service import ProjectMemberService
+
+    ProjectMemberService.cancel_invitation(
+        db=db,
+        project_id=project_id,
+        target_user_id=user_id,
+        actor_user=current_user,
+    )
+    cache_manager.delete_pattern("projects:*")
+    return {"message": "Invitation cancelled successfully"}
+
 
 
 @router.delete(

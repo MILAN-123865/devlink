@@ -18,6 +18,8 @@ export interface Skill {
 export interface Builder {
   id: ID;
   name: string;
+  firstName?: string;
+  lastName?: string;
   handle: string;
   role: UserRole;
   avatar: string;

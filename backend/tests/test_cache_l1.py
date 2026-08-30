@@ -87,6 +87,28 @@ def test_disabling_drops_what_is_held():
 
 
 # --------------------------------------------------------------------------
+# L1 Toggle
+# --------------------------------------------------------------------------
+
+def test_l1_can_be_disabled_while_l2_is_enabled():
+    c = MultiLevelCache(enabled=True, l1_enabled=False)
+    fake = MagicMock()
+    fake.get.return_value = '"cached"'
+    fake.ttl.return_value = 5
+    c._redis_client = fake
+
+    # Writes do not touch L1
+    c.set("k", "v", ttl=60)
+    assert c.l1_size == 0
+
+    # Reads hit L2 directly
+    assert c.get("k") == "cached"
+    assert c.l1_size == 0
+    assert c.stats()["hits_l2"] == 1
+    assert c.stats()["hits_l1"] == 0
+
+
+# --------------------------------------------------------------------------
 # L1 is bounded
 # --------------------------------------------------------------------------
 
@@ -178,9 +200,22 @@ def test_expired_entries_are_swept_without_being_read():
     assert c.l1_size == 50
     time.sleep(1.1)
 
-    # A read of *some other* key is enough to trigger the sweep.
+    # A read of *some other* key is enough to trigger the sweep (inline sweep).
     c.get("unrelated")
 
+    assert c.l1_size == 0
+
+
+def test_expired_entries_are_swept_by_background_thread():
+    # Sweep every 0.1 seconds
+    c = MultiLevelCache(max_entries=1000, sweep_interval=0.1, enabled=True)
+    for i in range(10):
+        c.set(f"k{i}", i, ttl=1)
+
+    assert c.l1_size == 10
+    time.sleep(1.2)  # Wait for expiry and background thread to run
+
+    # We do NOT read any key. The background thread should have swept it.
     assert c.l1_size == 0
 
 

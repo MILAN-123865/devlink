@@ -32,6 +32,8 @@ def upgrade() -> None:
         # than racing an in-flight handler.
         sa.Column("event_id", sa.String(length=255), primary_key=True, nullable=False),
         sa.Column("event_type", sa.String(length=100), nullable=False),
+        sa.Column("payload", sa.JSON(), nullable=True),
+        sa.Column("processing_status", sa.String(length=50), server_default="processing", nullable=False),
         sa.Column("donation_id", UUID(as_uuid=True), nullable=True),
         sa.Column(
             "processed_at",

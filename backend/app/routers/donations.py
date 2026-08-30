@@ -10,11 +10,35 @@ from app.services.donation_service import (
     StripeNotConfigured,
     WebhookVerificationError,
 )
+from typing import Optional
+from app.core.rate_limiter import rate_limit_tier
+from app.schemas.cursor_pagination import CursorPageResponse
+from app.schemas.donation import DonationResponse
 
 router = APIRouter(prefix="/donations", tags=["Donations"])
 
 
+@router.get("", response_model=CursorPageResponse[DonationResponse])
+def get_donations(
+    limit: int = 20,
+    cursor: Optional[str] = None,
+    page: Optional[int] = None,
+    order: str = "desc",
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user_optional),
+):
+    """List donations via cursor-based keyset pagination."""
+    return DonationService.get_donations(
+        db=db, limit=limit, cursor=cursor, page=page, order=order
+    )
+
+
 @router.post("/checkout", response_model=CheckoutSessionResponse)
+@rate_limit_tier(
+    anonymous="5/minute burst 10",
+    authenticated="20/minute burst 40",
+    name="donation_checkout",
+)
 def create_checkout_session(
     donation_data: DonationCreate,
     db: Session = Depends(get_database),
@@ -42,6 +66,10 @@ def create_checkout_session(
 
 
 @router.post("/webhook")
+@rate_limit_tier(
+    anonymous="100/minute burst 200", 
+    name="stripe_webhook"
+)
 async def stripe_webhook(request: Request, db: Session = Depends(get_database)):
     """
     Receive a Stripe webhook delivery.

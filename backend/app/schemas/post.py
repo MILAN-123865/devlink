@@ -129,6 +129,7 @@ class PostResponse(BaseModel):
 
 class PostCommentCreate(BaseModel):
     comment: str = Field(..., min_length=1, max_length=MAX_COMMENT_LENGTH)
+    parent_id: Optional[uuid.UUID] = None
 
     @field_validator("comment")
     @classmethod
@@ -144,11 +145,13 @@ class PostCommentResponse(BaseModel):
 
     id: uuid.UUID
     post_id: uuid.UUID
+    parent_id: Optional[uuid.UUID] = None
     author: PostAuthorResponse
     content: str
     ago: str = "just now"
     created_at: datetime
     updated_at: datetime
+    replies: list[PostCommentResponse] = []
 
 
 class PostEngagementResponse(BaseModel):
