@@ -327,14 +327,22 @@ def clone_project(
     except ValueError:
         source_project = ProjectService.get_by_slug(db, project_id)
 
-    if not source_project or getattr(source_project, "is_deleted", False) or getattr(source_project, "deleted_at", None) is not None:
+    if (
+        not source_project
+        or getattr(source_project, "is_deleted", False)
+        or getattr(source_project, "deleted_at", None) is not None
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Source project not found",
         )
 
     from app.models.project import ProjectVisibility
-    if source_project.visibility == ProjectVisibility.PRIVATE and source_project.owner_id != current_user.id:
+
+    if (
+        source_project.visibility == ProjectVisibility.PRIVATE
+        and source_project.owner_id != current_user.id
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to clone this private project",
@@ -424,16 +432,20 @@ def update_project(
     status_keys = {"stage", "visibility", "is_published", "hiring"}
     if any(k in new_values for k in status_keys):
         changed_old = {
-            k: str(old_values[k])
-            if isinstance(old_values.get(k), Enum)
-            else old_values.get(k)
+            k: (
+                str(old_values[k])
+                if isinstance(old_values.get(k), Enum)
+                else old_values.get(k)
+            )
             for k in status_keys
             if k in new_values
         }
         changed_new = {
-            k: str(new_values[k])
-            if isinstance(new_values.get(k), Enum)
-            else new_values.get(k)
+            k: (
+                str(new_values[k])
+                if isinstance(new_values.get(k), Enum)
+                else new_values.get(k)
+            )
             for k in status_keys
             if k in new_values
         }
@@ -471,9 +483,7 @@ def update_project(
 )
 def get_project_audit_trail(
     project_id: uuid.UUID,
-    event_type: str | None = Query(
-        None, description="Filter by event type substring"
-    ),
+    event_type: str | None = Query(None, description="Filter by event type substring"),
     user_id: uuid.UUID | None = Query(
         None, description="Filter by actor or target user ID"
     ),
@@ -797,11 +807,18 @@ def invite_user(
             detail="User already has a pending invitation for this project",
         )
 
+    from datetime import timedelta
+
+    from app.core.config import settings
+    from app.utils.time import utcnow
+
     new_member = ProjectMember(
         project_id=project_id,
         user_id=user_id,
         role=MemberRole.MEMBER,
         is_active=False,
+        expires_at=utcnow()
+        + timedelta(days=settings.PROJECT_INVITATION_EXPIRE_DAYS),
     )
     db.add(new_member)
     try:
@@ -840,7 +857,112 @@ def invite_user(
     )
 
     cache_manager.delete_pattern("projects:*")
-    return {"message": "User invited successfully"}
+    return {
+        "message": "User invited successfully",
+        "status": new_member.invitation_status().value,
+        "expires_at": new_member.expires_at,
+    }
+
+
+@router.post(
+    "/{project_id}/invitations/accept",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+)
+def accept_project_invitation(
+    project_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    project = ProjectService.get_project(db, project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    from sqlalchemy import and_, select
+
+    from app.models.project_member import ProjectMember
+    from app.utils.time import is_expired, utcnow
+
+    invitation = db.scalar(
+        select(ProjectMember).where(
+            and_(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id == current_user.id,
+                ProjectMember.is_active.is_(False),
+            )
+        )
+    )
+    if invitation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project invitation not found",
+        )
+
+    if is_expired(invitation.expires_at):
+        raise HTTPException(
+            status_code=400,
+            detail="Invitation has expired",
+        )
+
+    invitation.is_active = True
+    invitation.joined_at = utcnow()
+    db.commit()
+    db.refresh(invitation)
+
+    from app.models.audit_log import AuditAction
+    from app.services.audit_log_service import AuditLogService
+
+    AuditLogService.create_log(
+        db=db,
+        actor_id=current_user.id,
+        action=AuditAction.INVITATION_ACCEPTED,
+        entity_type="project",
+        entity_id=str(project_id),
+        project_id=project_id,
+        target_user_id=current_user.id,
+    )
+
+    cache_manager.delete_pattern("projects:*")
+    return {
+        "message": "Invitation accepted",
+        "status": invitation.invitation_status().value,
+        "expires_at": invitation.expires_at,
+    }
+
+
+@router.delete(
+    "/{project_id}/invitations/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation",
+)
+@router.post(
+    "/{project_id}/invitations/{user_id}/cancel",
+    status_code=status.HTTP_200_OK,
+    response_model=dict,
+    summary="Cancel pending project invitation (POST alias)",
+)
+def cancel_project_invitation(
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    db: Session = Depends(get_database),
+    current_user: User = Depends(get_current_user),
+):
+    """Allow project owners or admins to cancel pending invitations."""
+    from app.services.project_member_service import ProjectMemberService
+
+    ProjectMemberService.cancel_invitation(
+        db=db,
+        project_id=project_id,
+        target_user_id=user_id,
+        actor_user=current_user,
+    )
+    cache_manager.delete_pattern("projects:*")
+    return {"message": "Invitation cancelled successfully"}
+
 
 
 @router.delete(

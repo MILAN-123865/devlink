@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -37,6 +38,13 @@ class User(Base):
     """
 
     __tablename__ = "users"
+
+    __table_args__ = (
+        Index("ix_users_open_to_work_active", "open_to_work", "is_active"),
+        Index("ix_users_experience_level", "experience_level"),
+        Index("ix_users_location", "location"),
+        Index("ix_users_company", "company"),
+    )
 
     # ------------------------------------------------------------------
     # Primary Key
@@ -258,6 +266,12 @@ class User(Base):
         nullable=False,
     )
 
+    hide_profile_views: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     privacy_settings: Mapped[dict | None] = mapped_column(
         JSON,
         nullable=True,
@@ -438,7 +452,7 @@ class User(Base):
         remote_side="User.id",
     )
 
-    availability: Mapped["UserAvailability"] = relationship(
+    availability_setting: Mapped["UserAvailability"] = relationship(
         "UserAvailability",
         back_populates="user",
         uselist=False,
@@ -488,11 +502,17 @@ class User(Base):
         return (now - last_seen).total_seconds() < threshold
 
     @property
+    def is_premium(self) -> bool:
+        return bool(getattr(self, "premium", False))
+
+    @property
     def skills(self) -> list[str]:
         try:
             if not hasattr(self, "user_skills") or not self.user_skills:
                 return []
-            return [us.skill.name for us in self.user_skills if getattr(us, "skill", None)]
+            return [
+                us.skill.name for us in self.user_skills if getattr(us, "skill", None)
+            ]
         except Exception:
             return []
 
@@ -502,5 +522,3 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(username='{self.username}', email='{self.email}')>"
-
-

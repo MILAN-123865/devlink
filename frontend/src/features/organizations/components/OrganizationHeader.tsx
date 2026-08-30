@@ -6,11 +6,15 @@ import { sanitizeUrl } from "@/lib/utils";
 interface OrganizationHeaderProps {
   name: string;
   logoUrl?: string;
+  logo_url?: string;
+  logo?: string;
   bannerUrl?: string;
+  banner_url?: string;
   location?: string;
   website?: string;
   isHiring: boolean;
   isVerified?: boolean;
+  verified?: boolean;
   onVerifyClick?: () => void;
   socialLinks?: {
     twitter?: string;
@@ -84,46 +88,11 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
           )}
 
           {socialLinks?.twitter && sanitizeUrl(socialLinks.twitter) && (
-          {socialLinks?.twitter && (
-            <a
-              href={socialLinks.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Twitter className="w-5 h-5" />
-            </a>
-          )}
-          {socialLinks?.github && (
-            <a
-              href={socialLinks.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-          )}
-          {socialLinks?.linkedin && (
-            <a
-              href={socialLinks.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-          )}
-
-          {website && (
             <a
               href={sanitizeUrl(socialLinks.twitter)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Twitter className="w-5 h-5" />
             </a>
@@ -133,7 +102,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={sanitizeUrl(socialLinks.github)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Github className="w-5 h-5" />
             </a>
@@ -143,7 +112,7 @@ export const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
               href={sanitizeUrl(socialLinks.linkedin)}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Linkedin className="w-5 h-5" />
             </a>
