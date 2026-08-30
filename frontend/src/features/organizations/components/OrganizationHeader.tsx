@@ -6,11 +6,15 @@ import { sanitizeUrl } from "@/lib/utils";
 interface OrganizationHeaderProps {
   name: string;
   logoUrl?: string;
+  logo_url?: string;
+  logo?: string;
   bannerUrl?: string;
+  banner_url?: string;
   location?: string;
   website?: string;
   isHiring: boolean;
   isVerified?: boolean;
+  verified?: boolean;
   onVerifyClick?: () => void;
   socialLinks?: {
     twitter?: string;

@@ -410,6 +410,13 @@ from app.middleware.request_logging import RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)
 
 # ------------------------------------------------------------------
+# CORS Validation (must run before CORSMiddleware)
+# ------------------------------------------------------------------
+from app.middleware.cors_validation import CORSValidationMiddleware
+
+app.add_middleware(CORSValidationMiddleware)
+
+# ------------------------------------------------------------------
 # CORS
 # ------------------------------------------------------------------
 
@@ -526,8 +533,9 @@ app.include_router(
 )
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(blocks.router, prefix="/api/blocks", tags=["User Blocks"])
-from app.routers import testimonials
+from app.routers import razorpay, testimonials
 
+app.include_router(razorpay.router)
 app.include_router(testimonials.router, prefix="/api", tags=["Testimonials"])
 app.include_router(connections.router, prefix="/api/connections", tags=["Connections"])
 app.include_router(export.router, prefix="/api/users", tags=["Export"])
@@ -709,6 +717,22 @@ from app.routers import email_templates
 app.include_router(
     email_templates.router, prefix="/api", tags=["Email Notification Templates"]
 )
+
+from app.routers import project_polls
+
+app.include_router(project_polls.router, prefix="/api", tags=["Project Polls"])
+from app.routers import project_meeting_notes
+
+app.include_router(project_meeting_notes.router, prefix="/api", tags=["Project Meeting Notes"])
+from app.routers import project_faq
+
+app.include_router(project_faq.router, prefix="/api", tags=["Project FAQ"])
+from app.routers import project_dependencies
+
+app.include_router(project_dependencies.router, prefix="/api", tags=["Project Dependencies"])
+from app.routers import project_watchers
+
+app.include_router(project_watchers.router, prefix="/api", tags=["Project Watchers"])
 
 from app.routers import developer_insights
 

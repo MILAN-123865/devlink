@@ -1,52 +1,43 @@
 import React, { useState } from "react";
 import { OrganizationHeader } from "./OrganizationHeader";
+import { OrganizationMembers } from "./OrganizationMembers";
 import { OrganizationApiTokens } from "./OrganizationApiTokens";
 import { OrganizationAuditLogs } from "./OrganizationAuditLogs";
-import { OrganizationMembers } from "./OrganizationMembers";
 import { TypoHeading } from "@/components/shared/Typography";
 
 interface OrganizationProfileProps {
-  organizationData: {
-    name: string;
-    logo_url?: string;
-    banner_url?: string;
-    location?: string;
-    website?: string;
-    description?: string;
-    hiring: boolean;
-    technologies?: string[];
-    socialLinks?: {
-      twitter?: string;
-      linkedin?: string;
-      github?: string;
-    };
-    activityFeed?: {
-      id: string;
-      type: string;
-      content: string;
-      date: string;
-    }[];
-  };
   orgId: string;
+  organizationData?: any;
 }
 
-export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
-  organizationData,
-  orgId,
-}) => {
+export function OrganizationProfile({ orgId, organizationData: propOrgData }: OrganizationProfileProps) {
   const [activeTab, setActiveTab] = useState<
     "about" | "members" | "team" | "projects" | "hiring" | "tokens" | "audit" | "activity"
   >("about");
 
+  const organizationData = propOrgData || {
+    name: "DevLink Org",
+    logo: "",
+    verified: true,
+    hiring: true,
+    description: "Empowering developers to build the open-source web together.",
+    technologies: ["React", "TypeScript", "TailwindCSS", "FastAPI", "PostgreSQL"],
+    socialLinks: {
+      github: "https://github.com/nensii21/devlink",
+      twitter: "https://twitter.com/devlink",
+    },
+    activityFeed: [
+      { id: "1", type: "project", content: "Launched DevLink v2.0", date: "2026-08-01" },
+      { id: "2", type: "hiring", content: "Posted new Senior Frontend role", date: "2026-08-05" },
+    ],
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
+    <div className="space-y-6">
       <OrganizationHeader
         name={organizationData.name}
-        logoUrl={organizationData.logo_url}
-        bannerUrl={organizationData.banner_url}
-        location={organizationData.location}
-        website={organizationData.website}
+        logo={organizationData.logo}
+        verified={organizationData.verified}
         isHiring={organizationData.hiring}
         socialLinks={organizationData.socialLinks}
       />
@@ -102,7 +93,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
                   Technologies We Use
                 </TypoHeading>
                 <div className="flex flex-wrap gap-2">
-                  {organizationData.technologies.map((tech) => (
+                  {organizationData.technologies.map((tech: string) => (
                     <span
                       key={tech}
  feature/account-deletion-1307
@@ -162,7 +153,7 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
             <TypoHeading as="h2">Activity Feed</TypoHeading>
             <div className="mt-6 space-y-4">
               {organizationData.activityFeed && organizationData.activityFeed.length > 0 ? (
-                organizationData.activityFeed.map((activity) => (
+                organizationData.activityFeed.map((activity: any) => (
                   <div
                     key={activity.id}
  feature/account-deletion-1307
@@ -203,4 +194,4 @@ export const OrganizationProfile: React.FC<OrganizationProfileProps> = ({
       </div>
     </div>
   );
-};
+}

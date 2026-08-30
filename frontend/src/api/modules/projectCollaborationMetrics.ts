@@ -68,6 +68,8 @@ export const getProjectCollaborationMetrics = async (
 };
 
 
+export const getProjectCollaborationMetrics = (
+  projectId: number
 ): Promise<ProjectCollaborationMetricsResponse> =>
   api.get<ProjectCollaborationMetricsResponse>(`/projects/${projectId}/collaboration-metrics`);
  main
