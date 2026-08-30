@@ -27,6 +27,8 @@ import {
   Camera,
   Upload,
   Save,
+  CreditCard,
+  Code2,
   ExternalLink,
   Calendar,
   HelpCircle,
@@ -39,8 +41,6 @@ import {
   Monitor,
   Eye,
   EyeOff,
-  CreditCard,
-  Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -86,6 +86,7 @@ export function UserSettingsPage() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=400&fit=crop&auto=format",
   );
+
 
   // Profile / Account state
   const [profileData, setProfileData] = useState({

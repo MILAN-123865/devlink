@@ -19,18 +19,7 @@ export interface ProjectCollaborationMetricsResponse {
   daily_activity: DailyActivityPoint[];
 }
 
-/**
- * Collaboration metrics for one project.
- *
- * Errors propagate. This used to catch everything and return a fixed object --
- * a collaboration score of 92, 342 messages exchanged and a seven-day chart
- * hardcoded to the week of 2026-08-04 -- so a 401, a 500 or an unreachable
- * backend rendered as somebody's real-looking project metrics (#1249).
- *
- * `ProjectCollaborationMetrics` already had a loading skeleton, an error panel
- * and a Retry button. The catch here is what made them unreachable.
- */
-export const getProjectCollaborationMetrics = async (
-  projectId: number,
+export const getProjectCollaborationMetrics = (
+  projectId: number
 ): Promise<ProjectCollaborationMetricsResponse> =>
   api.get<ProjectCollaborationMetricsResponse>(`/projects/${projectId}/collaboration-metrics`);

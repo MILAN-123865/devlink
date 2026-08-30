@@ -72,7 +72,6 @@ export class SectionErrorBoundary extends Component<
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
               <AlertTriangle size={20} />
             </div>
-
             <div className="min-w-0 flex-1">
               <TypoSection as="h3" className="text-[15px] font-semibold tracking-tight text-foreground">
                 Something went wrong in {sectionName}
