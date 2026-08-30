@@ -410,6 +410,13 @@ from app.middleware.request_logging import RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)
 
 # ------------------------------------------------------------------
+# CORS Validation (must run before CORSMiddleware)
+# ------------------------------------------------------------------
+from app.middleware.cors_validation import CORSValidationMiddleware
+
+app.add_middleware(CORSValidationMiddleware)
+
+# ------------------------------------------------------------------
 # CORS
 # ------------------------------------------------------------------
 
@@ -713,6 +720,9 @@ app.include_router(
 from app.routers import project_dependencies
 
 app.include_router(project_dependencies.router, prefix="/api", tags=["Project Dependencies"])
+from app.routers import project_watchers
+
+app.include_router(project_watchers.router, prefix="/api", tags=["Project Watchers"])
 
 from app.routers import developer_insights
 

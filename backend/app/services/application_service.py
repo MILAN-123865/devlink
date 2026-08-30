@@ -42,12 +42,10 @@ class ApplicationService:
             ApplicationStatus.INTERVIEWING,
             ApplicationStatus.ACCEPTED,
             ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
         },
         ApplicationStatus.INTERVIEWING: {
             ApplicationStatus.ACCEPTED,
             ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
         },
         ApplicationStatus.ACCEPTED: set(),
         ApplicationStatus.REJECTED: set(),
@@ -76,18 +74,6 @@ class ApplicationService:
         flare_id: uuid.UUID,
         application: ApplicationCreate,
     ) -> Application:
-        existing_application = db.scalar(
-            select(Application).where(
-                Application.applicant_id == applicant_id,
-                Application.project_id == project_id,
-            )
-        )
-
-        if existing_application:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="You have already applied to this project.",
-            )
         db_application = Application(
             applicant_id=applicant_id,
             project_id=project_id,
@@ -106,7 +92,7 @@ class ApplicationService:
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="You have already applied to this project.",
+                detail="You have already applied to this project with this status.",
             )
         db.refresh(db_application)
         return db_application
@@ -365,11 +351,11 @@ class ApplicationService:
         db: Session,
         db_application: Application,
     ) -> Application:
-
-        ApplicationService._validate_status_transition(
-            db_application.status,
-            ApplicationStatus.WITHDRAWN,
-        )
+        if db_application.status != ApplicationStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only pending applications can be withdrawn",
+            )
 
         db_application.status = ApplicationStatus.WITHDRAWN
         db.flush()
