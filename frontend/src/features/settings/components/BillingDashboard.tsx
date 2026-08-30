@@ -63,8 +63,11 @@ const MOCK_HISTORY = [
   },
 ];
 
+import { RazorpaySubscriptionModal } from "@/components/billing/RazorpaySubscriptionModal";
+
 export function BillingDashboard() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
   const usagePercent = (MOCK_USAGE.storage.used / MOCK_USAGE.storage.total) * 100;
@@ -198,12 +201,21 @@ export function BillingDashboard() {
           Upgrade your plan for more storage and features, or cancel your current subscription.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button>Upgrade Plan</Button>
+          <Button onClick={() => setIsRazorpayModalOpen(true)} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+            Subscribe with Razorpay (UPI / INR)
+          </Button>
+          <Button variant="outline">Upgrade Plan</Button>
           <Button variant="destructive" onClick={() => setIsCancelModalOpen(true)}>
             Cancel Subscription
           </Button>
         </div>
       </Card>
+
+      {/* Razorpay Subscription Modal */}
+      <RazorpaySubscriptionModal
+        isOpen={isRazorpayModalOpen}
+        onClose={() => setIsRazorpayModalOpen(false)}
+      />
 
       {/* Cancel Confirmation Dialog */}
       <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
