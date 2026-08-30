@@ -349,6 +349,67 @@ def test_commenting_on_a_missing_post_is_404(client, author):
 
 
 # --------------------------------------------------------------------------
+# Comment Threading
+# --------------------------------------------------------------------------
+
+def test_can_reply_to_a_comment(client, author, reader):
+    _, author_token = author
+    _, reader_token = reader
+    post_id = _create_post(client, author_token)
+
+    # Top-level comment
+    comment_id = client.post(
+        f"/api/posts/{post_id}/comment",
+        json={"comment": "first"},
+        headers=_auth(reader_token),
+    ).json()["id"]
+
+    # Reply
+    reply_id = client.post(
+        f"/api/posts/{post_id}/comment",
+        json={"comment": "reply", "parent_id": comment_id},
+        headers=_auth(author_token),
+    ).json()["id"]
+
+    comments = client.get(f"/api/posts/{post_id}/comments").json()
+    assert len(comments) == 1
+    assert comments[0]["id"] == comment_id
+    assert len(comments[0]["replies"]) == 1
+    assert comments[0]["replies"][0]["id"] == reply_id
+    assert comments[0]["replies"][0]["parent_id"] == comment_id
+
+def test_replying_to_a_missing_comment_is_404(client, author):
+    _, token = author
+    post_id = _create_post(client, token)
+    missing = "00000000-0000-0000-0000-000000000000"
+
+    response = client.post(
+        f"/api/posts/{post_id}/comment",
+        json={"comment": "reply", "parent_id": missing},
+        headers=_auth(token),
+    )
+    assert response.status_code == 404
+
+def test_replying_to_a_comment_on_another_post_is_400(client, author, reader):
+    _, token = author
+    post_1 = _create_post(client, token)
+    post_2 = _create_post(client, token)
+
+    comment_1 = client.post(
+        f"/api/posts/{post_1}/comment",
+        json={"comment": "first"},
+        headers=_auth(token),
+    ).json()["id"]
+
+    response = client.post(
+        f"/api/posts/{post_2}/comment",
+        json={"comment": "reply", "parent_id": comment_1},
+        headers=_auth(token),
+    )
+    assert response.status_code == 400
+
+
+# --------------------------------------------------------------------------
 # Comment deletion
 # --------------------------------------------------------------------------
 
