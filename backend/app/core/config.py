@@ -114,6 +114,7 @@ class Settings(BaseSettings):
     # decoded JSON structure costs more than the cache saves. Raise it if
     # `cache_manager.stats()["evictions"]` climbs steadily, which means the
     # working set is larger than the ceiling.
+    CACHE_L1_ENABLED: bool = True
     CACHE_L1_MAX_ENTRIES: int = 1000
 
     # How often expired entries are reclaimed. Eviction handles a cache that

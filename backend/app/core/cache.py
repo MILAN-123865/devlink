@@ -91,6 +91,7 @@ class MultiLevelCache:
         max_entries: int = DEFAULT_L1_MAX_ENTRIES,
         sweep_interval: float = DEFAULT_SWEEP_INTERVAL,
         enabled: Optional[bool] = None,
+        l1_enabled: bool = True,
     ):
         # An OrderedDict is the LRU: `move_to_end` on a hit, `popitem(last=False)`
         # to evict the coldest entry.
@@ -101,6 +102,7 @@ class MultiLevelCache:
         self._max_entries = max(1, int(max_entries))
         self._sweep_interval = float(sweep_interval)
         self._last_sweep = time.time()
+        self._l1_enabled = l1_enabled
 
         # Explicit, and settable. The previous version computed
         # `"pytest" in sys.modules` once at import and could never be told
@@ -112,6 +114,10 @@ class MultiLevelCache:
         self._misses = 0
         self._evictions = 0
         self._expired = 0
+        
+        # Start the background sweep thread
+        self._sweep_thread = threading.Thread(target=self._sweep_loop, daemon=True)
+        self._sweep_thread.start()
 
     # ------------------------------------------------------------------ #
     #  Enabled state                                                      #
@@ -167,6 +173,21 @@ class MultiLevelCache:
     # ------------------------------------------------------------------ #
     #  L1 bookkeeping                                                     #
     # ------------------------------------------------------------------ #
+
+    def _sweep_loop(self) -> None:
+        """
+        Background task to periodically sweep expired entries.
+        """
+        while True:
+            # We sleep in small increments to allow tests to run fast or exit.
+            # But normally we sleep for sweep_interval.
+            time.sleep(self._sweep_interval if self._sweep_interval > 0 else 0.1)
+            if self._enabled and self._l1_enabled:
+                now = time.time()
+                with self._lock:
+                    swept = self._sweep_expired_locked(now)
+                    if swept:
+                        logger.debug("Background cache sweep reclaimed %d expired L1 entries", swept)
 
     def _sweep_expired_locked(self, now: float) -> int:
         """
@@ -232,6 +253,7 @@ class MultiLevelCache:
         with self._lock:
             return {
                 "enabled": self._enabled,
+                "l1_enabled": self._l1_enabled,
                 "l1_entries": len(self._l1_cache),
                 "l1_max_entries": self._max_entries,
                 "l2_connected": self._redis_client is not None,
@@ -253,21 +275,22 @@ class MultiLevelCache:
 
         now = time.time()
 
-        with self._lock:
-            self._maybe_sweep_locked(now)
+        if self._l1_enabled:
+            with self._lock:
+                self._maybe_sweep_locked(now)
 
-            entry = self._l1_cache.get(key)
-            if entry is not None:
-                value, expiry = entry
-                if expiry > now:
-                    # A hit makes the entry the most recently used, which is
-                    # the whole of the LRU policy.
-                    self._l1_cache.move_to_end(key)
-                    self._hits_l1 += 1
-                    logger.debug(f"Cache HIT (L1): {key}")
-                    return value
-                del self._l1_cache[key]
-                self._expired += 1
+                entry = self._l1_cache.get(key)
+                if entry is not None:
+                    value, expiry = entry
+                    if expiry > now:
+                        # A hit makes the entry the most recently used, which is
+                        # the whole of the LRU policy.
+                        self._l1_cache.move_to_end(key)
+                        self._hits_l1 += 1
+                        logger.debug(f"Cache HIT (L1): {key}")
+                        return value
+                    del self._l1_cache[key]
+                    self._expired += 1
 
         if self._redis_client:
             try:
@@ -279,9 +302,10 @@ class MultiLevelCache:
                     # seconds to live was served from L1 for another minute,
                     # and one with an hour left was re-fetched twelve times an
                     # hour.
-                    remaining = self._remaining_ttl(key)
-                    with self._lock:
-                        self._store_l1_locked(key, value, time.time() + remaining)
+                    if self._l1_enabled:
+                        remaining = self._remaining_ttl(key)
+                        with self._lock:
+                            self._store_l1_locked(key, value, time.time() + remaining)
                     self._hits_l2 += 1
                     logger.debug(f"Cache HIT (L2): {key}")
                     return value
@@ -329,8 +353,9 @@ class MultiLevelCache:
             self.delete(key)
             return
 
-        with self._lock:
-            self._store_l1_locked(key, value, time.time() + ttl)
+        if self._l1_enabled:
+            with self._lock:
+                self._store_l1_locked(key, value, time.time() + ttl)
 
         if self._redis_client:
             try:
@@ -341,8 +366,9 @@ class MultiLevelCache:
 
     def delete(self, key: str) -> None:
         """Invalidate a key across all cache levels."""
-        with self._lock:
-            self._l1_cache.pop(key, None)
+        if self._l1_enabled:
+            with self._lock:
+                self._l1_cache.pop(key, None)
 
         if self._redis_client:
             try:
@@ -358,10 +384,11 @@ class MultiLevelCache:
         Redis half batches: the old loop issued one DELETE per matched key,
         serially, which is a round trip per key on a warm cache.
         """
-        with self._lock:
-            doomed = [k for k in self._l1_cache if fnmatch.fnmatch(k, pattern)]
-            for key in doomed:
-                del self._l1_cache[key]
+        if self._l1_enabled:
+            with self._lock:
+                doomed = [k for k in self._l1_cache if fnmatch.fnmatch(k, pattern)]
+                for key in doomed:
+                    del self._l1_cache[key]
 
         if not self._redis_client:
             return
@@ -387,6 +414,7 @@ class MultiLevelCache:
 cache_manager = MultiLevelCache(
     max_entries=settings.CACHE_L1_MAX_ENTRIES,
     sweep_interval=settings.CACHE_L1_SWEEP_SECONDS,
+    l1_enabled=settings.CACHE_L1_ENABLED,
 )
 
 
