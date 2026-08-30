@@ -56,6 +56,25 @@ class Settings(BaseSettings):
     PASSWORD_HASH_SCHEME: str = "bcrypt"
 
     # ----------------------------------------------------------
+    # Backup signing
+    # ----------------------------------------------------------
+    #
+    # Key for the HMAC that makes an exported backup verifiable as ours. A
+    # plain digest cannot do that job: the writer and the checker both compute
+    # a public function of the data, so anyone editing the file can recompute
+    # it. Restore writes profile fields, so "did we write this file?" needs a
+    # real answer.
+    #
+    # Empty means "fall back to SECRET_KEY", which the app already requires.
+    # Set it separately to rotate backup signatures without invalidating every
+    # session.
+    BACKUP_SIGNING_SECRET: str = ""
+
+    # Backup uploads are read into memory to be parsed as JSON, so the ceiling
+    # is a memory ceiling.
+    MAX_BACKUP_UPLOAD_MB: int = 25
+
+    # ----------------------------------------------------------
     # Password screening
     # ----------------------------------------------------------
 
